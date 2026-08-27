@@ -1,0 +1,513 @@
+{
+  "success": true,
+  "claimId": "QON_OPPS_TEST_001",
+  "input": {
+    "billType": "131",
+    "fromDate": "2026-01-01T00:00:00",
+    "throughDate": "2026-01-02T00:00:00",
+    "providerCcn": "010001",
+    "lineCount": 5
+  },
+  "ioce": {
+    "processing_information": {
+      "claim_id": "QON_OPPS_TEST_001",
+      "return_code": {
+        "code": 0,
+        "description": ""
+      },
+      "lines_processed": 5,
+      "internal_version": 102,
+      "version": "27.0.2",
+      "time_started": 1784317360422,
+      "time_ended": 0,
+      "debug_flag": "0",
+      "comment_data": ""
+    },
+    "version": "27.0.2",
+    "claim_processed_flag": "0",
+    "claim_processed_flag_description": "Claim processed",
+    "apc_return_buffer_flag": "1",
+    "nopps_bill_flag": "0",
+    "claim_disposition": "4",
+    "claim_disposition_description": "N/A",
+    "claim_disposition_value_description": "Only pre-payment edits present: claim denied, rejected, suspended, returned to provider, or single-day claim with all line items denied or rejected",
+    "claim_rejection_disposition": "0",
+    "claim_rejection_disposition_description": "",
+    "claim_rejection_disposition_value_description": "",
+    "claim_rejection_edit_list": [],
+    "claim_rejection_edit_disposition_description": "",
+    "claim_denial_disposition": "0",
+    "claim_denial_disposition_description": "",
+    "claim_denial_disposition_value_description": "",
+    "claim_denial_edit_list": [],
+    "claim_denial_edit_disposition_description": "",
+    "claim_return_to_provider_disposition": "1",
+    "claim_return_to_provider_disposition_description": "One or more edits present that cause the whole claim to be returned to the provider. A claim returned to the provider means that the provider can resubmit the claim once the problems are corrected.",
+    "claim_return_to_provider_disposition_value_description": "One or more edits present that cause the claim to be returned to provider",
+    "claim_return_to_provider_edit_list": [
+      {
+        "edit": "001",
+        "description": "The principal diagnosis field is blank, there are no diagnoses entered on the claim, or the entered diagnosis code is not valid."
+      },
+      {
+        "edit": "041",
+        "description": "The revenue code is not in the list of valid revenue codes or the revenue code is reported prior to/exceeding its NUBC effective date."
+      },
+      {
+        "edit": "022",
+        "description": "The modifier is not in the list of valid modifier entries and the revenue code is not 540."
+      },
+      {
+        "edit": "092",
+        "description": "A device-intensive procedure is reported without a device code."
+      }
+    ],
+    "claim_return_to_provider_edit_disposition_description": "One or more edits present that cause the whole claim to be rejected. A claim rejection means that the provider can correct and resubmit the claim but cannot appeal the claim rejection.",
+    "claim_suspension_disposition": "0",
+    "claim_suspension_disposition_description": "",
+    "claim_suspension_disposition_value_description": "",
+    "claim_suspension_edit_list": [],
+    "claim_suspension_edit_disposition_description": "",
+    "line_rejection_disposition": "1",
+    "line_rejection_disposition_description": "One or more edits present that cause one or more individual line items to be rejected. A line item rejection means that the claim can be processed for payment with some line items rejected for payment. The line item can be corrected and resubmitted but cannot be appealed.",
+    "line_rejection_disposition_value_description": "One or more edits present that cause one or more line items to be rejected",
+    "line_rejection_edit_list": [
+      {
+        "edit": "112",
+        "description": "The reported line item is a non-covered service as it is for informational reporting purposes only. Any HCPCS identified as being an information only service is assigned a non-covered status indicator and is line item rejected with no impact on payment."
+      },
+      {
+        "edit": "040",
+        "description": "The procedure is identified as part of another procedure on the claim coded on the same day, where the modifier was either not coded or is not an NCCI modifier. Only the code in column 2 of a code pair is rejected; the column 1 code of the pair is not marked as an edit."
+      }
+    ],
+    "line_rejection_edit_disposition_description": "One or more edits present that cause the whole claim to be rejected. A claim rejection means that the provider can correct and resubmit the claim but cannot appeal the claim rejection.",
+    "line_denial_disposition": "0",
+    "line_denial_disposition_description": "",
+    "line_denial_disposition_value_description": "",
+    "line_denial_edit_list": [],
+    "line_denial_edit_disposition_description": "",
+    "condition_code_output_list": [],
+    "value_code_output_list": [],
+    "principal_diagnosis_code": {
+      "diagnosis": "S3215XK",
+      "description": "Type 2 fracture of sacrum, subs for fx w nonunion",
+      "present_on_admission": "U",
+      "edit_list": []
+    },
+    "reason_for_visit_diagnosis_code_list": [
+      {
+        "diagnosis": "S3215XK",
+        "description": "Type 2 fracture of sacrum, subs for fx w nonunion",
+        "present_on_admission": "U",
+        "edit_list": []
+      }
+    ],
+    "secondary_diagnosis_code_list": [
+      {
+        "diagnosis": "S72044D",
+        "description": "Nondisp fx of base of nk of r femr, 7thD",
+        "present_on_admission": "N",
+        "edit_list": []
+      },
+      {
+        "diagnosis": "17210",
+        "description": "",
+        "present_on_admission": "Y",
+        "edit_list": [
+          {
+            "edit": "001",
+            "description": "The principal diagnosis field is blank, there are no diagnoses entered on the claim, or the entered diagnosis code is not valid."
+          }
+        ]
+      }
+    ],
+    "line_item_list": [
+      {
+        "service_date": "2026-01-01T00:00:00",
+        "revenue_code": "9999",
+        "hcpcs": "27279",
+        "hcpcs_description": "Arthrd si jt plmt tartclr dv",
+        "units_input": 1,
+        "charge": 435.0,
+        "action_flag_input": "0",
+        "action_flag_output": "0",
+        "action_flag_output_description": "OCE line item denial or rejection is not ignored",
+        "rejection_denial_flag": "0",
+        "rejection_denial_flag_description": "Line item not denied or rejected",
+        "payment_method_flag": "0",
+        "payment_method_flag_description": "OPPS Pricer determines payment for service",
+        "hcpcs_apc": "05116",
+        "hcpcs_apc_description": "Level 6 Musculoskeletal Procedures",
+        "payment_apc": "05116",
+        "payment_apc_description": "Level 6 Musculoskeletal Procedures",
+        "units_output": 1,
+        "status_indicator": "J1",
+        "status_indicator_description": "Hospital Part B services paid through a comprehensive APC",
+        "payment_indicator": "1",
+        "payment_indicator_description": "Paid standard hospital OPPS amount (status indicator: J1, J2, R, S, T, U, V, X)",
+        "packaging_flag": {
+          "flag": "0",
+          "description": "Not packaged"
+        },
+        "payment_adjustment_flag01": {
+          "flag": "0",
+          "description": "No payment adjustment"
+        },
+        "payment_adjustment_flag02": {
+          "flag": "0",
+          "description": "No payment adjustment"
+        },
+        "discounting_formula": 1,
+        "discounting_formula_description": "",
+        "revenue_code_description": "",
+        "composite_adjustment_flag": "00",
+        "hcpcs_modifier_input_list": [],
+        "hcpcs_modifier_output_list": [],
+        "hcpcs_edit_list": [
+          {
+            "edit": "092",
+            "description": "A device-intensive procedure is reported without a device code."
+          }
+        ],
+        "revenue_edit_list": [
+          {
+            "edit": "041",
+            "description": "The revenue code is not in the list of valid revenue codes or the revenue code is reported prior to/exceeding its NUBC effective date."
+          }
+        ],
+        "service_date_edit_list": []
+      },
+      {
+        "service_date": "2026-01-01T00:00:00",
+        "revenue_code": "0360",
+        "hcpcs": "29305",
+        "hcpcs_description": "Appl hip spica cast 1 leg",
+        "units_input": 1,
+        "charge": 191.78,
+        "action_flag_input": "0",
+        "action_flag_output": "0",
+        "action_flag_output_description": "OCE line item denial or rejection is not ignored",
+        "rejection_denial_flag": "0",
+        "rejection_denial_flag_description": "Line item not denied or rejected",
+        "payment_method_flag": "0",
+        "payment_method_flag_description": "OPPS Pricer determines payment for service",
+        "hcpcs_apc": "05102",
+        "hcpcs_apc_description": "Level 2 Strapping and Cast Application",
+        "payment_apc": "00000",
+        "payment_apc_description": "",
+        "units_output": 1,
+        "status_indicator": "N",
+        "status_indicator_description": "Items and Services packaged into APC rates",
+        "payment_indicator": "9",
+        "payment_indicator_description": "No additional payment, payment included in line items with APCs (status indicator: N)",
+        "packaging_flag": {
+          "flag": "1",
+          "description": "Packaged service (status indicator N or no HCPCS code and certain revenue codes)"
+        },
+        "payment_adjustment_flag01": {
+          "flag": "0",
+          "description": "No payment adjustment"
+        },
+        "payment_adjustment_flag02": {
+          "flag": "0",
+          "description": "No payment adjustment"
+        },
+        "discounting_formula": 1,
+        "discounting_formula_description": "",
+        "revenue_code_description": "",
+        "composite_adjustment_flag": "00",
+        "hcpcs_modifier_input_list": [
+          {
+            "hcpcs_modifier": "22",
+            "description": "Unusual procedural services",
+            "edit_list": []
+          },
+          {
+            "hcpcs_modifier": "ZZ",
+            "description": "",
+            "edit_list": [
+              {
+                "edit": "022",
+                "description": "The modifier is not in the list of valid modifier entries and the revenue code is not 540."
+              }
+            ]
+          }
+        ],
+        "hcpcs_modifier_output_list": [],
+        "hcpcs_edit_list": [],
+        "revenue_edit_list": [],
+        "service_date_edit_list": []
+      },
+      {
+        "service_date": "2026-01-01T00:00:00",
+        "revenue_code": "0610",
+        "hcpcs": "72196",
+        "hcpcs_description": "Mri pelvis w/dye",
+        "units_input": 1,
+        "charge": 140.67,
+        "action_flag_input": "0",
+        "action_flag_output": "0",
+        "action_flag_output_description": "OCE line item denial or rejection is not ignored",
+        "rejection_denial_flag": "1",
+        "rejection_denial_flag_description": "Line item denied or rejected",
+        "payment_method_flag": "0",
+        "payment_method_flag_description": "OPPS Pricer determines payment for service",
+        "hcpcs_apc": "05572",
+        "hcpcs_apc_description": "Level 2 Imaging with Contrast",
+        "payment_apc": "00000",
+        "payment_apc_description": "",
+        "units_output": 1,
+        "status_indicator": "N",
+        "status_indicator_description": "Items and Services packaged into APC rates",
+        "payment_indicator": "9",
+        "payment_indicator_description": "No additional payment, payment included in line items with APCs (status indicator: N)",
+        "packaging_flag": {
+          "flag": "1",
+          "description": "Packaged service (status indicator N or no HCPCS code and certain revenue codes)"
+        },
+        "payment_adjustment_flag01": {
+          "flag": "0",
+          "description": "No payment adjustment"
+        },
+        "payment_adjustment_flag02": {
+          "flag": "0",
+          "description": "No payment adjustment"
+        },
+        "discounting_formula": 1,
+        "discounting_formula_description": "",
+        "revenue_code_description": "",
+        "composite_adjustment_flag": "00",
+        "hcpcs_modifier_input_list": [],
+        "hcpcs_modifier_output_list": [],
+        "hcpcs_edit_list": [
+          {
+            "edit": "040",
+            "description": "The procedure is identified as part of another procedure on the claim coded on the same day, where the modifier was either not coded or is not an NCCI modifier. Only the code in column 2 of a code pair is rejected; the column 1 code of the pair is not marked as an edit."
+          }
+        ],
+        "revenue_edit_list": [],
+        "service_date_edit_list": []
+      },
+      {
+        "service_date": "2026-01-01T00:00:00",
+        "revenue_code": "0610",
+        "hcpcs": "72197",
+        "hcpcs_description": "Mri pelvis w/o & w/dye",
+        "units_input": 1,
+        "charge": 600.25,
+        "action_flag_input": "0",
+        "action_flag_output": "0",
+        "action_flag_output_description": "OCE line item denial or rejection is not ignored",
+        "rejection_denial_flag": "0",
+        "rejection_denial_flag_description": "Line item not denied or rejected",
+        "payment_method_flag": "0",
+        "payment_method_flag_description": "OPPS Pricer determines payment for service",
+        "hcpcs_apc": "05572",
+        "hcpcs_apc_description": "Level 2 Imaging with Contrast",
+        "payment_apc": "00000",
+        "payment_apc_description": "",
+        "units_output": 1,
+        "status_indicator": "N",
+        "status_indicator_description": "Items and Services packaged into APC rates",
+        "payment_indicator": "9",
+        "payment_indicator_description": "No additional payment, payment included in line items with APCs (status indicator: N)",
+        "packaging_flag": {
+          "flag": "1",
+          "description": "Packaged service (status indicator N or no HCPCS code and certain revenue codes)"
+        },
+        "payment_adjustment_flag01": {
+          "flag": "0",
+          "description": "No payment adjustment"
+        },
+        "payment_adjustment_flag02": {
+          "flag": "0",
+          "description": "No payment adjustment"
+        },
+        "discounting_formula": 1,
+        "discounting_formula_description": "",
+        "revenue_code_description": "",
+        "composite_adjustment_flag": "00",
+        "hcpcs_modifier_input_list": [],
+        "hcpcs_modifier_output_list": [],
+        "hcpcs_edit_list": [],
+        "revenue_edit_list": [],
+        "service_date_edit_list": []
+      },
+      {
+        "service_date": "2026-01-01T00:00:00",
+        "revenue_code": "0610",
+        "hcpcs": "2010F",
+        "hcpcs_description": "Vital signs recorded",
+        "units_input": 2,
+        "charge": 45.98,
+        "action_flag_input": "0",
+        "action_flag_output": "0",
+        "action_flag_output_description": "OCE line item denial or rejection is not ignored",
+        "rejection_denial_flag": "3",
+        "rejection_denial_flag_description": "Line item not denied or rejected; identified for informational alert only",
+        "payment_method_flag": "1",
+        "payment_method_flag_description": "Service not paid based on coverage or billing rules",
+        "hcpcs_apc": "00000",
+        "hcpcs_apc_description": "",
+        "payment_apc": "00000",
+        "payment_apc_description": "",
+        "units_output": 2,
+        "status_indicator": "E1",
+        "status_indicator_description": "Non-allowed item or service",
+        "payment_indicator": "3",
+        "payment_indicator_description": "Not paid (status indicator: Q, Q1, Q2, Q3, Q4, M, W, Y, E, E1, E2) or not paid under OPPS (status indicator: B, C, Z)",
+        "packaging_flag": {
+          "flag": "0",
+          "description": "Not packaged"
+        },
+        "payment_adjustment_flag01": {
+          "flag": "0",
+          "description": "No payment adjustment"
+        },
+        "payment_adjustment_flag02": {
+          "flag": "0",
+          "description": "No payment adjustment"
+        },
+        "discounting_formula": 1,
+        "discounting_formula_description": "",
+        "revenue_code_description": "",
+        "composite_adjustment_flag": "00",
+        "hcpcs_modifier_input_list": [],
+        "hcpcs_modifier_output_list": [],
+        "hcpcs_edit_list": [
+          {
+            "edit": "112",
+            "description": "The reported line item is a non-covered service as it is for informational reporting purposes only. Any HCPCS identified as being an information only service is assigned a non-covered status indicator and is line item rejected with no impact on payment."
+          }
+        ],
+        "revenue_edit_list": [],
+        "service_date_edit_list": []
+      }
+    ]
+  },
+  "opps": {
+    "claim_id": "QON_OPPS_TEST_001",
+    "blood_deductible": 0.0,
+    "final_cbsa": "10",
+    "final_wage_index": 0.9049000144004822,
+    "total_claim_charges": 1227.030029296875,
+    "total_claim_deductible": 0.0,
+    "total_claim_outlier_payment": 0.0,
+    "total_claim_payment": 16808.669921875,
+    "blood_pints_used": 0,
+    "calculation_version": "2026.2",
+    "return_code": {
+      "code": "01",
+      "description": "PROCESSED",
+      "explanation": "Processed"
+    },
+    "service_lines": [
+      {
+        "blood_deductible": 0.0,
+        "coinsurance_amount": 1736.0,
+        "line_number": 1,
+        "payment": 16808.669921875,
+        "reduced_coinsurance_amount": 0.0,
+        "reimbursement_amount": 15072.669921875,
+        "total_deductible": 0.0,
+        "return_code": {
+          "code": "01",
+          "description": "PROCESSED",
+          "explanation": "Processed"
+        }
+      },
+      {
+        "blood_deductible": 0.0,
+        "coinsurance_amount": 0.0,
+        "line_number": 2,
+        "payment": 0.0,
+        "reduced_coinsurance_amount": 0.0,
+        "reimbursement_amount": 0.0,
+        "total_deductible": 0.0,
+        "return_code": {
+          "code": "42",
+          "description": "INVALID APC OR PACKAGING FLAG",
+          "explanation": "APC equal to '00000' OR Packaging Flag = '1' or '2' or '4'"
+        }
+      },
+      {
+        "blood_deductible": 0.0,
+        "coinsurance_amount": 0.0,
+        "line_number": 3,
+        "payment": 0.0,
+        "reduced_coinsurance_amount": 0.0,
+        "reimbursement_amount": 0.0,
+        "total_deductible": 0.0,
+        "return_code": {
+          "code": "46",
+          "description": "INVALID DENIAL",
+          "explanation": "Line Item Denial/Reject Flag not equal zero AND Line Item Action Flag not equal to 1"
+        }
+      },
+      {
+        "blood_deductible": 0.0,
+        "coinsurance_amount": 0.0,
+        "line_number": 4,
+        "payment": 0.0,
+        "reduced_coinsurance_amount": 0.0,
+        "reimbursement_amount": 0.0,
+        "total_deductible": 0.0,
+        "return_code": {
+          "code": "42",
+          "description": "INVALID APC OR PACKAGING FLAG",
+          "explanation": "APC equal to '00000' OR Packaging Flag = '1' or '2' or '4'"
+        }
+      },
+      {
+        "blood_deductible": 0.0,
+        "coinsurance_amount": 0.0,
+        "line_number": 5,
+        "payment": 0.0,
+        "reduced_coinsurance_amount": 0.0,
+        "reimbursement_amount": 0.0,
+        "total_deductible": 0.0,
+        "return_code": {
+          "code": "40",
+          "description": "STATUS INDICATOR INVALID",
+          "explanation": "Status indicator invalid"
+        }
+      }
+    ]
+  },
+  "opsfProvider": {
+    "provider_ccn": "010001",
+    "effective_date": 20260101,
+    "national_provider_identifier": "1164403861",
+    "fiscal_year_begin_date": 20231001,
+    "export_date": 20260717,
+    "termination_date": 20991231,
+    "waiver_indicator": "N",
+    "intermediary_number": "10111",
+    "provider_type": "07",
+    "special_locality_indicator": "",
+    "change_code_wage_index_reclassification": "N",
+    "msa_actual_geographic_location": "2180",
+    "msa_wage_index_location": "",
+    "cost_of_living_adjustment": 0.0,
+    "state_code": "01",
+    "tops_indicator": "N",
+    "hospital_quality_indicator": "1",
+    "operating_cost_to_charge_ratio": 0.142,
+    "cbsa_actual_geographic_location": "20020",
+    "cbsa_wage_index_location": "10",
+    "special_wage_index": null,
+    "special_payment_indicator": "Y",
+    "esrd_children_quality_indicator": null,
+    "device_cost_to_charge_ratio": 0.347,
+    "county_code": "01069",
+    "payment_cbsa": "01",
+    "payment_model_adjustment": 1.0,
+    "medicare_performance_adjustment": null,
+    "supplemental_wage_index_indicator": "1",
+    "supplemental_wage_index": 0.9009,
+    "last_updated": "20260112",
+    "carrier_code": "10112",
+    "locality_code": "00"
+  }
+}

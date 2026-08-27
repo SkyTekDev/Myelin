@@ -1,0 +1,91 @@
+{
+  "claimId": "QON_OPPS_TEST_001",
+  "fromDate": "2026-01-01",
+  "throughDate": "2026-01-02",
+  "billType": "131",
+  "patientStatus": "01",
+  "providerNumber": "010001",
+  "patientControlNumber": "QON-TEST-001",
+  "patientAge": 65,
+  "patientSex": "M",
+  "oppsFlag": 1,
+  "principalDiagnosis": {
+    "code": "S3215XK",
+    "poa": "U"
+  },
+  "secondaryDiagnoses": [
+    {
+      "code": "S72044D",
+      "poa": "N"
+    },
+    {
+      "code": "17210",
+      "poa": "Y"
+    }
+  ],
+  "conditionCodes": [
+    "15",
+    "25"
+  ],
+  "valueCodes": [
+    {
+      "code": "59",
+      "amount": 43.02
+    }
+  ],
+  "claimLines": [
+    {
+      "claimLineId": 1,
+      "lineNumber": 1,
+      "revenueCode": "9999",
+      "hcpcs": "27279",
+      "dateOfService": "2026-01-01",
+      "units": 1,
+      "chargeAmount": 435.00,
+      "modifiers": []
+    },
+    {
+      "claimLineId": 2,
+      "lineNumber": 2,
+      "revenueCode": "0360",
+      "hcpcs": "29305",
+      "dateOfService": "2026-01-01",
+      "units": 1,
+      "chargeAmount": 191.78,
+      "modifiers": [
+        "22",
+        "ZZ"
+      ]
+    },
+    {
+      "claimLineId": 3,
+      "lineNumber": 3,
+      "revenueCode": "0610",
+      "hcpcs": "72196",
+      "dateOfService": "2026-01-01",
+      "units": 1,
+      "chargeAmount": 140.67,
+      "modifiers": []
+    },
+    {
+      "claimLineId": 4,
+      "lineNumber": 4,
+      "revenueCode": "0610",
+      "hcpcs": "72197",
+      "dateOfService": "2026-01-01",
+      "units": 1,
+      "chargeAmount": 600.25,
+      "modifiers": []
+    },
+    {
+      "claimLineId": 5,
+      "lineNumber": 5,
+      "revenueCode": "0610",
+      "hcpcs": "2010F",
+      "dateOfService": "2026-01-01",
+      "units": 2,
+      "chargeAmount": 45.98,
+      "modifiers": []
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+services:
+  ioce-opps-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: qon-ioce-opps-api:local
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      MYELIN_JAR_PATH: "/app/jars"
+      MYELIN_DB_PATH: "/app/data/myelin.db"
+      MYELIN_DOWNLOAD_CMS_ASSETS: "false"
+      # Set this only when the image contains more than one OPPS Pricer JAR.
+      # OPPS_JAR_PATH: "/app/jars/pricers/opps-pricer-application-2.16.0.jar"
+    restart: unless-stopped

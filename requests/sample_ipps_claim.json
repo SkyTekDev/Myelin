@@ -1,0 +1,39 @@
+{
+  "claimId": "QON_IPPS_TEST_001",
+  "admitDate": "2025-07-01",
+  "fromDate": "2025-07-01",
+  "throughDate": "2025-07-10",
+  "billType": "111",
+  "patientStatus": "01",
+  "providerNumber": "010001",
+  "npi": null,
+  "patientControlNumber": "QON-IPPS-TEST",
+  "patientAge": 65,
+  "patientSex": "M",
+  "admissionSource": "",
+  "lengthOfStay": 9,
+  "nonCoveredDays": 0,
+  "hmo": false,
+  "totalCharges": 50000.0,
+  "principalDiagnosis": {
+    "code": "A021",
+    "poa": "Y"
+  },
+  "admitDiagnosis": {
+    "code": "A021",
+    "poa": "Y"
+  },
+  "secondaryDiagnoses": [
+    {
+      "code": "I82411",
+      "poa": "N"
+    }
+  ],
+  "inpatientProcedures": [],
+  "conditionCodes": [],
+  "valueCodes": [],
+  "claimLines": [],
+  "reviewCode": "00",
+  "lifetimeReserveDays": 0,
+  "midnightAdjustmentGeolocation": ""
+}

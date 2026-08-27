@@ -3,6 +3,7 @@ from datetime import datetime
 from logging import Logger, getLogger
 from threading import current_thread
 
+from pathlib import Path
 import jpype
 from pydantic import BaseModel
 from sqlalchemy import Engine

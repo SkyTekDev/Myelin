@@ -1,0 +1,32 @@
+{
+  "claimId": 12345,
+  "fromDate": "2026-07-15",
+  "throughDate": "2026-07-15",
+  "billType": "131",
+  "patientStatus": "01",
+  "providerNumber": "123456",
+  "npi": "1234567890",
+  "patientControlNumber": "ABC123",
+  "patientAge": 65,
+  "patientSex": "M",
+  "oppsFlag": 1,
+  "principalDiagnosis": {
+    "code": "R079",
+    "poa": "U"
+  },
+  "secondaryDiagnoses": [],
+  "conditionCodes": [],
+  "valueCodes": [],
+  "claimLines": [
+    {
+      "claimLineId": 1,
+      "lineNumber": 1,
+      "revenueCode": "0450",
+      "hcpcs": "99284",
+      "dateOfService": "2026-07-15",
+      "units": 1,
+      "chargeAmount": 1500.00,
+      "modifiers": []
+    }
+  ]
+}

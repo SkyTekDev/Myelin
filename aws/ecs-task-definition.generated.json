@@ -1,0 +1,70 @@
+﻿{
+  "family": "qon-ioce-opps-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "1024",
+  "memory": "3072",
+  "executionRoleArn": "arn:aws:iam::997438683866:role/ecsTaskExecutionRole",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "containerDefinitions": [
+    {
+      "name": "qon-ioce-opps-api",
+      "image": "997438683866.dkr.ecr.us-west-2.amazonaws.com/qon-ioce-opps-api:v1",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp",
+          "appProtocol": "http"
+        }
+      ],
+      "environment": [
+        {
+          "name": "PORT",
+          "value": "8080"
+        },
+        {
+          "name": "MYELIN_JAR_PATH",
+          "value": "/app/jars"
+        },
+        {
+          "name": "MYELIN_DB_PATH",
+          "value": "/app/data/myelin.db"
+        },
+        {
+          "name": "MYELIN_DOWNLOAD_CMS_ASSETS",
+          "value": "false"
+        }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health/ready', timeout=4)\" || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 120
+      },
+      "linuxParameters": {
+        "initProcessEnabled": true
+      },
+      "readonlyRootFilesystem": false,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/qon-ioce-opps-api",
+          "awslogs-region": "us-west-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
+
