@@ -8,6 +8,10 @@ from threading import Lock
 from time import perf_counter
 from typing import Any
 
+from bridge.ipps_client import IppsProcessor
+from bridge.ipps_routes import router as ipps_router
+from bridge.provider_routes import router as provider_router
+
 import jpype
 from fastapi import FastAPI, HTTPException, Request
 from sqlalchemy import func, select
@@ -299,6 +303,10 @@ async def lifespan(app: FastAPI):
 
         logger.info("QON CMS I/OCE + OPPS API is ready")
 
+        app.state.ipps_processor = IppsProcessor(
+            myelin_engine=myelin_engine,
+        )
+
         yield
 
     finally:
@@ -317,7 +325,8 @@ app = FastAPI(
     version=BRIDGE_VERSION,
     lifespan=lifespan,
 )
-
+app.include_router(ipps_router)
+app.include_router(provider_router)
 
 @app.get("/health/live")
 def health_live() -> dict[str, Any]:

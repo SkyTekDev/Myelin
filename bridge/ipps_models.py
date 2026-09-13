@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date as DateType
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -22,7 +22,7 @@ class IppsDiagnosis(BaseModel):
 
 class IppsProcedure(BaseModel):
     code: str = Field(min_length=1, max_length=10)
-    date: date | None = None
+    date: DateType | None = None
     modifier: str = ""
 
     @field_validator("code")
@@ -44,7 +44,7 @@ class IppsValueCode(BaseModel):
 class IppsClaimLine(BaseModel):
     claimLineId: int | str | None = None
     lineNumber: int | None = None
-    dateOfService: date | None = None
+    dateOfService: DateType | None = None
     revenueCode: str = ""
     hcpcs: str = ""
     modifiers: list[str] = Field(default_factory=list, max_length=4)
@@ -64,9 +64,9 @@ class IppsClaimLine(BaseModel):
 
 class IppsClaimRequest(BaseModel):
     claimId: str = Field(min_length=1)
-    admitDate: date
-    fromDate: date
-    throughDate: date
+    admitDate: DateType
+    fromDate: DateType
+    throughDate: DateType
 
     billType: str = Field(default="111", min_length=3, max_length=3)
     patientStatus: str = Field(min_length=2, max_length=2)
@@ -76,7 +76,7 @@ class IppsClaimRequest(BaseModel):
     patientControlNumber: str | None = None
 
     patientAge: int | None = Field(default=None, ge=0, le=124)
-    patientDateOfBirth: date | None = None
+    patientDateOfBirth: DateType | None = None
     patientSex: SexValue
 
     admissionSource: str = ""
