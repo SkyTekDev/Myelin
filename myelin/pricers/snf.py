@@ -175,6 +175,8 @@ class SnfClient:
         hipps_code = ""
         hipps_units = 0
         hipps_date: datetime | None = None
+        if sum(line.revenue_code == self.REVENUE_CODE_FOR_HIPPS for line in claim.lines) != 1:
+            raise ProviderDataError("SNF02", "Use the segment-aware SNF bridge for multiple HIPPS lines.")
         for line in claim.lines:
             if line.revenue_code == self.REVENUE_CODE_FOR_HIPPS:
                 if hipps_date is None:
@@ -197,14 +199,11 @@ class SnfClient:
         claim_obj.setServiceFromDate(self.py_date_to_java_date(claim.from_date))
         claim_obj.setServiceThroughDate(self.py_date_to_java_date(claim.thru_date))
 
-        prior_pdpm_days = 0
         additional_snf = claim.additional_data or {}
         snf_data = additional_snf.get("snf", {}) or {}
-        prior_pdpm_days = (
-            snf_data.get("prior_pdpm_days", 0)
-            if isinstance(snf_data.get("prior_pdpm_days"), int)
-            else 0
-        )
+        prior_pdpm_days = snf_data.get("prior_pdpm_days")
+        if type(prior_pdpm_days) is not int or not 0 <= prior_pdpm_days <= 999:
+            raise ProviderDataError("SNF03", "An explicit nonnegative prior PDPM day count is required.")
         claim_obj.setPdpmPriorDays(self.java_integer_class(prior_pdpm_days))
         dx_list = self.array_list_class()
         # @TODO need to verify if we need to strip out decimal points from diagnosis codes

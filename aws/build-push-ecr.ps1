@@ -2,7 +2,9 @@ param(
     [string]$Region = "us-west-2",
     [string]$RepositoryName = "qon-ioce-opps-api",
     [string]$Tag = "",
-    [string]$Profile = ""
+    [string]$Profile = "",
+    # Bypass a broken Windows/Desktop credential store for this invocation only.
+    [switch]$UseTemporaryDockerConfig
 )
 
 $ErrorActionPreference = "Stop"
@@ -51,7 +53,7 @@ if ($LASTEXITCODE -ne 0) {
     }
 }
 
-Write-Host "Logging in to $registry..."
+Write-Host "Authenticating to $registry..."
 
 $password = aws ecr get-login-password `
     --region $Region `
@@ -61,26 +63,70 @@ if ($LASTEXITCODE -ne 0) {
     throw "Unable to retrieve an ECR login password."
 }
 
-$password | docker login `
-    --username AWS `
-    --password-stdin $registry
+$temporaryConfig = $null
+$dockerArgs = @()
+$savedDockerContext = $env:DOCKER_CONTEXT
+try {
+    if ($UseTemporaryDockerConfig) {
+        # Resolve the current endpoint before selecting an isolated config. Merely
+        # removing credsStore is insufficient: Docker may auto-detect wincred.
+        $endpoint = docker context inspect --format '{{.Endpoints.docker.Host}}'
+        if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($endpoint)) {
+            throw 'Unable to resolve the active Docker endpoint.'
+        }
+        $endpoint = $endpoint.Trim()
+        if (![string]::IsNullOrWhiteSpace($env:DOCKER_HOST) -and
+            [string]::IsNullOrWhiteSpace($env:DOCKER_CONTEXT)) {
+            $endpoint = $env:DOCKER_HOST
+        }
+        if ($endpoint -notmatch '^(npipe|unix)://') {
+            throw 'Temporary authentication currently supports local Docker named-pipe or Unix-socket endpoints only.'
+        }
+        $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
+        $temporaryConfig = Join-Path $tempRoot ('myelin-ecr-' + [Guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $temporaryConfig | Out-Null
+        $auth = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("AWS:$password"))
+        @{ auths = @{ $registry = @{ auth = $auth } } } |
+            ConvertTo-Json -Depth 4 |
+            Set-Content -LiteralPath (Join-Path $temporaryConfig 'config.json') -Encoding Ascii
+        $auth = $null
+        # Pin the original local engine; desktop-linux context metadata is not
+        # present in the isolated directory. Clear and restore the context env.
+        $env:DOCKER_CONTEXT = $null
+        $dockerArgs = @('--config', $temporaryConfig, '--host', $endpoint)
+        Write-Host 'Using temporary ECR authentication; Docker credential helpers are bypassed.'
+    }
+    else {
+        $password | docker login --username AWS --password-stdin $registry
+        if ($LASTEXITCODE -ne 0) {
+            throw 'Docker login to ECR failed. For a local credential-store failure, retry with -UseTemporaryDockerConfig.'
+        }
+    }
+    $password = $null
 
-if ($LASTEXITCODE -ne 0) {
-    throw "Docker login to ECR failed."
+    Write-Host "Building $imageUri..."
+    $buildContext = Split-Path -Parent $PSScriptRoot
+    docker @dockerArgs build --pull -t $imageUri $buildContext
+    if ($LASTEXITCODE -ne 0) { throw 'Docker build failed.' }
+
+    Write-Host "Pushing $imageUri..."
+    docker @dockerArgs push $imageUri
+    if ($LASTEXITCODE -ne 0) { throw 'Docker push failed.' }
 }
-
-Write-Host "Building $imageUri..."
-docker build --pull -t $imageUri .
-
-if ($LASTEXITCODE -ne 0) {
-    throw "Docker build failed."
-}
-
-Write-Host "Pushing $imageUri..."
-docker push $imageUri
-
-if ($LASTEXITCODE -ne 0) {
-    throw "Docker push failed."
+finally {
+    $password = $null
+    $auth = $null
+    $env:DOCKER_CONTEXT = $savedDockerContext
+    if ($temporaryConfig) {
+        # Verify the absolute deletion target remains the uniquely created temp
+        # child, never a caller-supplied path or the user's Docker config folder.
+        $resolvedTarget = [IO.Path]::GetFullPath($temporaryConfig)
+        if ([IO.Path]::GetDirectoryName($resolvedTarget) -ne $tempRoot.TrimEnd('\', '/') -or
+            [IO.Path]::GetFileName($resolvedTarget) -notmatch '^myelin-ecr-[a-f0-9]{32}$') {
+            throw 'Refusing cleanup outside the generated ECR temporary directory.'
+        }
+        Remove-Item -LiteralPath $resolvedTarget -Recurse -Force
+    }
 }
 
 Write-Host ""

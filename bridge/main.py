@@ -11,6 +11,8 @@ from typing import Any
 from bridge.ipps_client import IppsProcessor
 from bridge.ipps_routes import router as ipps_router
 from bridge.provider_routes import router as provider_router
+from bridge.snf_routes import router as snf_router
+from bridge.snf_client import SnfProcessor
 
 import jpype
 from fastapi import FastAPI, HTTPException, Request
@@ -307,6 +309,10 @@ async def lifespan(app: FastAPI):
             myelin_engine=myelin_engine,
         )
 
+        app.state.snf_processor = None
+        if env_bool('SNF_ENABLED'):
+            app.state.snf_processor = SnfProcessor(myelin_engine.db_manager.engine, JAR_PATH)
+
         yield
 
     finally:
@@ -327,6 +333,7 @@ app = FastAPI(
 )
 app.include_router(ipps_router)
 app.include_router(provider_router)
+app.include_router(snf_router)
 
 @app.get("/health/live")
 def health_live() -> dict[str, Any]:
