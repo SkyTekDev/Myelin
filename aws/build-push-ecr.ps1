@@ -4,13 +4,24 @@ param(
     [string]$Tag = "",
     [string]$Profile = "",
     # Bypass a broken Windows/Desktop credential store for this invocation only.
-    [switch]$UseTemporaryDockerConfig
+    [switch]$UseTemporaryDockerConfig,
+    # Resolve and push an existing local image without rebuilding it.
+    [string]$SourceImage = ""
 )
 
 $ErrorActionPreference = "Stop"
 
 if ([string]::IsNullOrWhiteSpace($Tag)) {
     $Tag = Get-Date -Format "yyyyMMdd-HHmmss"
+}
+
+$sourceImageId = $null
+if (-not [string]::IsNullOrWhiteSpace($SourceImage)) {
+    $sourceImageId = docker image inspect --format '{{.Id}}' $SourceImage
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($sourceImageId)) {
+        throw "SourceImage must identify an existing local Docker image. No image will be pulled."
+    }
+    $sourceImageId = $sourceImageId.Trim()
 }
 
 $awsProfileArgs = @()
@@ -104,10 +115,17 @@ try {
     }
     $password = $null
 
-    Write-Host "Building $imageUri..."
-    $buildContext = Split-Path -Parent $PSScriptRoot
-    docker @dockerArgs build --pull -t $imageUri $buildContext
-    if ($LASTEXITCODE -ne 0) { throw 'Docker build failed.' }
+    if ($sourceImageId) {
+        Write-Host "Tagging existing image $sourceImageId as $imageUri..."
+        docker @dockerArgs tag $sourceImageId $imageUri
+        if ($LASTEXITCODE -ne 0) { throw 'Docker image tagging failed.' }
+    }
+    else {
+        Write-Host "Building $imageUri..."
+        $buildContext = Split-Path -Parent $PSScriptRoot
+        docker @dockerArgs build --pull -t $imageUri $buildContext
+        if ($LASTEXITCODE -ne 0) { throw 'Docker build failed.' }
+    }
 
     Write-Host "Pushing $imageUri..."
     docker @dockerArgs push $imageUri

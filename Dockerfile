@@ -1,4 +1,4 @@
-FROM python:3.11-slim-bookworm
+FROM python:3.11.16-slim-bookworm@sha256:a36c24f9cbdf4fd0f52d67f0823eeac19c2028c637cecc392d97f980d4fec56b
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -28,11 +28,13 @@ WORKDIR /app
 # Install the pinned local Myelin source and API dependencies.
 COPY pyproject.toml README.md LICENSE ./
 COPY myelin ./myelin
-COPY requirements-bridge.txt ./
+COPY requirements-runtime.lock requirements-build.lock ./
 
-RUN python -m pip install --upgrade pip \
-    && python -m pip install . \
-    && python -m pip install -r requirements-bridge.txt
+# Locks target Linux amd64 / CPython 3.11. Validate deliberate dependency updates.
+RUN python -m pip install --only-binary=:all: --require-hashes -r requirements-runtime.lock \
+    && python -m pip install --only-binary=:all: --require-hashes -r requirements-build.lock \
+    && python -m pip install --no-deps --no-build-isolation . \
+    && python -m pip check
 
 # Copy the bridge application and the already-prepared CMS runtime assets.
 COPY bridge ./bridge

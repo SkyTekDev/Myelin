@@ -42,13 +42,17 @@ param(
     [string]$HealthCheckUrl = "",
 
     [ValidateRange(1, 600)]
-    [int]$HealthCheckTimeoutSeconds = 30
+    [int]$HealthCheckTimeoutSeconds = 30,
+
+    # Explicitly enable the accepted SNF integration in the selected container.
+    # Omitting this option preserves the current task's SNF configuration.
+    [switch]$EnableSnf
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$ScriptVersion = "4.0-windows-paramfile-fix"
+$ScriptVersion = "4.1-explicit-snf-enable"
 Write-Host "Deployment script version: $ScriptVersion" -ForegroundColor DarkGray
 
 function Write-Step {
@@ -622,6 +626,12 @@ Available containers: $availableNames
 "@
 }
 
+if ($EnableSnf -and $null -ne $containerDefinition.PSObject.Properties["secrets"]) {
+    if (@($containerDefinition.secrets | Where-Object { $_.name -eq "SNF_ENABLED" }).Count -gt 0) {
+        throw "SNF_ENABLED is supplied by an ECS secret. Update that setting before using -EnableSnf."
+    }
+}
+
 Write-Host "Task family: $($taskDefinition.family)"
 Write-Host "Container: $ContainerName"
 Write-Host "Current image: $($containerDefinition.image)"
@@ -829,6 +839,16 @@ $targetContainer = @($taskDefinition.containerDefinitions) |
     Select-Object -First 1
 
 $targetContainer.image = $imageUri
+
+if ($EnableSnf) {
+    $environment = @()
+    if ($null -ne $targetContainer.PSObject.Properties["environment"]) {
+        $environment = @($targetContainer.environment | Where-Object { $_.name -ne "SNF_ENABLED" })
+    }
+    $environment += [pscustomobject]@{ name = "SNF_ENABLED"; value = "true" }
+    $targetContainer | Add-Member -MemberType NoteProperty -Name environment -Value $environment -Force
+    Write-Host "SNF_ENABLED=true for container: $ContainerName"
+}
 
 # Preserve task-definition tags in the newly registered revision.
 if (
