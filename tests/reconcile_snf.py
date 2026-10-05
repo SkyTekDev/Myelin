@@ -10,6 +10,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from pydantic_core import to_json
 from bridge.snf_client import SnfProcessor
+from bridge.snf_release import CALCULATION_VERSIONS
 from bridge.snf_provider import provider_for_segment, SnfInputError
 from myelin.pricers.ipsf import IPSF
 
@@ -18,7 +19,7 @@ engine = create_engine(f"sqlite:///file:{(root / 'data/myelin.db').as_posix()}?m
 jpype.startJVM(convertStrings=True)
 processor = SnfProcessor(engine, root / 'jars')
 report = []
-for year, month in ((2023, 1), (2023, 6), (2024, 6), (2025, 6), (2026, 6)):
+for year, month in [(2023, 1)] + [(year, 6) for year in CALCULATION_VERSIONS]:
     start, end = date(year, month, 1), date(year, month, 3)
     with Session(engine) as session:
         ccns = session.scalars(select(IPSF.provider_ccn).where(IPSF.provider_type == '38',
@@ -27,6 +28,8 @@ for year, month in ((2023, 1), (2023, 6), (2024, 6), (2025, 6), (2026, 6)):
     for ccn in ccns:
         try:
             provider = provider_for_segment(engine, ccn, start, end)
+            if year >= 2027:
+                processor.validate_provider_year(provider, start)
             break
         except SnfInputError:
             continue

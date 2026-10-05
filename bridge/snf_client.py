@@ -2,6 +2,7 @@ import hashlib
 import json
 import os
 from decimal import Decimal
+from datetime import date
 from pathlib import Path
 from threading import Lock
 import jpype
@@ -9,7 +10,7 @@ from pydantic_core import to_json
 from myelin.pricers.snf import SnfClient
 from myelin.pricers.url_loader import UrlLoader
 from bridge.snf_models import SnfRequest, SnfResponse, SegmentResult
-from bridge.snf_provider import provider_for_segment, SnfInputError
+from bridge.snf_provider import provider_for_segment, prior_fiscal_year_provider, SnfInputError
 from bridge.snf_release import JAR_FILENAME, JAR_SHA256, CALCULATION_VERSIONS
 
 
@@ -56,6 +57,8 @@ class SnfProcessor:
                 providers = [provider_for_segment(self.engine, request.providerCcn, s.fromDate, s.throughDate)
                              for s in request.segments]
                 for segment, provider in zip(request.segments, providers):
+                    self.validate_provider_year(provider, segment.fromDate)
+                for segment, provider in zip(request.segments, providers):
                     payload = dict(providerData=provider, claimData=dict(
                         providerCcn=request.providerCcn, hippsCode=segment.hippsCode,
                         serviceFromDate=segment.fromDate.isoformat(), serviceThroughDate=segment.throughDate.isoformat(),
@@ -72,3 +75,27 @@ class SnfProcessor:
                                totalPayment=sum((Decimal(str(x)) for x in amounts), Decimal(0)), segments=results)
         except SnfInputError as exc:
             return SnfResponse(claimId=request.claimId, status="UnableToPrice", reason=str(exc))
+
+    def validate_provider_year(self, provider, start):
+        if start < date(2026, 10, 1):
+            return
+        try:
+            previous, prior_end = prior_fiscal_year_provider(self.engine, provider["providerCcn"], start)
+        except SnfInputError as exc:
+            raise SnfInputError("Prior fiscal-year provider wage data cannot be verified: " + str(exc)) from exc
+        if previous is None:
+            # A newly opened provider has no prior-year cap. CMS specifies blank
+            # supplemental fields; an unexplained prior-year value is rejected.
+            if provider.get("supplementalWageIndexIndicator") or provider.get("supplementalWageIndex", 0):
+                raise SnfInputError("New SNF provider has unexplained prior fiscal-year wage inputs.")
+            return
+        baseline = self.calculate(dict(providerData=previous, claimData=dict(
+            providerCcn=provider["providerCcn"], hippsCode="BARD1", serviceFromDate=prior_end.isoformat(),
+            serviceThroughDate=prior_end.isoformat(), serviceUnits=1, pdpmPriorDays=0, diagnosisCodes=["Z4789"])))
+        wage = baseline.get("paymentData", {}).get("finalWageIndex")
+        if (baseline.get("returnCodeData", {}).get("code") != "00" or wage is None or wage <= 0
+                or baseline.get("calculationVersion") != CALCULATION_VERSIONS[prior_end.year]):
+            raise SnfInputError("Prior fiscal-year CMS final wage index cannot be verified.")
+        if (provider.get("supplementalWageIndexIndicator") != "1"
+                or provider.get("supplementalWageIndex") != wage):
+            raise SnfInputError("SNF supplemental wage inputs do not match the prior fiscal-year CMS final wage index; refresh or correct provider data.")
