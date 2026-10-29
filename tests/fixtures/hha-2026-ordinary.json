@@ -1,0 +1,1786 @@
+{
+  "pricerRelease": "2.6.0",
+  "calculationVersion": "2026.0",
+  "fixtureBasis": "Independent published-CMS Decimal arithmetic and standalone executable parity",
+  "transportNormalization": {
+    "optionalNullPaymentFields": [
+      "finalCbsa",
+      "finalWageIndex"
+    ],
+    "reason": "CMS REST JSON omits optional geography nulls emitted by the embedded Jackson mapper; all other output fields remain exact comparisons."
+  },
+  "synthetic": true,
+  "liveProviderDatabaseUsed": false,
+  "comparisons": [
+    {
+      "name": "rural_alabama",
+      "request": {
+        "claimId": "HHA-CONTRACT-TEST",
+        "providerCcn": "017999",
+        "billType": "0329",
+        "hippsCode": "1FC11",
+        "admissionDate": "2026-06-01",
+        "fromDate": "2026-06-01",
+        "throughDate": "2026-06-30",
+        "noticeReceiptDate": "2026-06-01",
+        "periodType": "Full30Day",
+        "serviceCountyFips": "01023",
+        "cbsaCode": "01",
+        "geographyBasis": "SubmittedCmsValueCodes",
+        "visits": [
+          {
+            "visitId": "1",
+            "serviceDate": "2026-06-01",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "5",
+            "serviceDate": "2026-06-05",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "10",
+            "serviceDate": "2026-06-10",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "15",
+            "serviceDate": "2026-06-15",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "20",
+            "serviceDate": "2026-06-20",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "28",
+            "serviceDate": "2026-06-28",
+            "discipline": "SN",
+            "outlierUnits": 4
+          }
+        ]
+      },
+      "cmsInput": {
+        "providerData": {
+          "providerCcn": "017999",
+          "effectiveDate": "2026-01-01",
+          "vbpAdjustment": "1.0",
+          "countyCode": "01023",
+          "cbsaActualGeographicLocation": "99901"
+        },
+        "claimData": {
+          "providerCcn": "017999",
+          "typeOfBill": "329",
+          "admissionDate": "2026-06-01",
+          "serviceFromDate": "2026-06-01",
+          "serviceThroughDate": "2026-06-30",
+          "noticeReceiptDate": "2026-06-01",
+          "hhrgInputCode": "1FC11",
+          "hhrgNumberOfDays": 30,
+          "initialPaymentQualityReportingProgramIndicator": "0",
+          "partialEpisodePaymentIndicator": "N",
+          "lateFilingPenaltyWaiverIndicator": "N",
+          "lupaSourceAdmissionIndicator": "1",
+          "adjustmentIndicator": "0",
+          "priorPaymentTotal": "0",
+          "priorOutlierTotal": "0",
+          "revenueLines": [
+            {
+              "revenueCode": "0420",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0430",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0440",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0550",
+              "quantityOfCoveredVisits": 6,
+              "quantityOfOutlierUnits": 24,
+              "earliestLineItemDate": "2026-06-01"
+            },
+            {
+              "revenueCode": "0560",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0570",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            }
+          ]
+        }
+      },
+      "standalone": {
+        "calculationVersion": "2026.0",
+        "paymentData": {
+          "totalPayment": "1602.87",
+          "hhrgPayment": "1602.87",
+          "hhrgWeight": "1.0804",
+          "lateSubmissionPenaltyAmount": "0.00",
+          "outlierPayment": "0.00",
+          "revenuePayments": [
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "193.42",
+              "revenueCode": "0420"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "194.74",
+              "revenueCode": "0430"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "210.25",
+              "revenueCode": "0440"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "1035.06",
+              "dollarRate": "176.96",
+              "revenueCode": "0550"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "283.64",
+              "revenueCode": "0560"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "80.12",
+              "revenueCode": "0570"
+            }
+          ],
+          "standardizedPayment": "2202.09",
+          "totalQuantityOfCoveredVisits": 6,
+          "valueBasedPurchasingAdjustmentAmount": "0.00"
+        },
+        "returnCodeData": {
+          "code": "00",
+          "description": "FINAL PAYMENT WHERE NO OUTLIER APPLIES",
+          "explanation": "Final payment where no outlier applies"
+        }
+      },
+      "bridge": {
+        "claimId": "HHA-CONTRACT-TEST",
+        "status": "Success",
+        "reasonCode": "HHA_ORDINARY_PERIOD_ESTIMATED",
+        "reason": "CMS CY 2026 ordinary-period HH PPS calculation completed.",
+        "pricingMethod": "HH_PPS",
+        "totalPayment": "1602.87",
+        "pricerRelease": "2.6.0",
+        "calculationVersion": "2026.0",
+        "providerData": {
+          "providerCcn": "017999",
+          "effectiveDate": "2026-01-01",
+          "vbpAdjustment": "1.0",
+          "countyCode": "01023",
+          "cbsaActualGeographicLocation": "99901"
+        },
+        "providerEvidence": {
+          "source": "IPSF",
+          "providerRowId": 1,
+          "providerCcn": "017999",
+          "providerType": "36",
+          "effectiveDate": "2026-01-01",
+          "terminationDate": null,
+          "rawTerminationDate": null,
+          "lookupThroughDate": "2026-06-30",
+          "federalPpsBlend": "0",
+          "specialProviderUpdateFactor": "1.0",
+          "qualityReportingSourceField": "federal_pps_blend",
+          "valueBasedPurchasingSourceField": "special_provider_update_factor",
+          "sourceRowFingerprint": "ee1af701be458f92614a1791599aff8f8bfafdd1701b181177b4dfd20363460f",
+          "initialPaymentQualityReportingProgramIndicator": "0",
+          "pricerJarSha256": "7a70ae359434f4919d3aa171d0a2e79c98079d8d01b27d328171f23517f2d6f4",
+          "pricerSourceUrl": "https://www.cms.gov/files/zip/hha-pricer-2026-0-v2-6-0-executable-jar.zip",
+          "hippsReference": "hrg-2026.csv",
+          "hippsCode": "1FC11",
+          "caseMixWeight": "1.0804",
+          "lupaVisitThreshold": 4,
+          "priorAgencyTotalsUsed": false
+        },
+        "geographyEvidence": {
+          "submittedCbsaCode": "01",
+          "cbsaCode": "99901",
+          "serviceCountyFips": "01023",
+          "wageIndex": "0.6367",
+          "wageIndexEffectiveDate": "2026-01-01",
+          "wageIndexReference": "cbsa-wage-index-2026.csv",
+          "geographyBasis": "SubmittedCmsValueCodes",
+          "countyMappingVerified": false,
+          "limitations": [
+            "County existence and county-to-CBSA/rural-area mapping were not independently verified; submitted CMS value codes are used."
+          ],
+          "jarSha256": "7a70ae359434f4919d3aa171d0a2e79c98079d8d01b27d328171f23517f2d6f4"
+        },
+        "cms": {
+          "calculationVersion": "2026.0",
+          "paymentData": {
+            "finalCbsa": null,
+            "finalWageIndex": null,
+            "totalPayment": "1602.87",
+            "hhrgPayment": "1602.87",
+            "hhrgWeight": "1.0804",
+            "lateSubmissionPenaltyAmount": "0.00",
+            "outlierPayment": "0.00",
+            "revenuePayments": [
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "193.42",
+                "revenueCode": "0420"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "194.74",
+                "revenueCode": "0430"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "210.25",
+                "revenueCode": "0440"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "1035.06",
+                "dollarRate": "176.96",
+                "revenueCode": "0550"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "283.64",
+                "revenueCode": "0560"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "80.12",
+                "revenueCode": "0570"
+              }
+            ],
+            "standardizedPayment": "2202.09",
+            "totalQuantityOfCoveredVisits": 6,
+            "valueBasedPurchasingAdjustmentAmount": "0.00"
+          },
+          "returnCodeData": {
+            "code": "00",
+            "description": "FINAL PAYMENT WHERE NO OUTLIER APPLIES",
+            "explanation": "Final payment where no outlier applies"
+          }
+        },
+        "limitations": [
+          "Medicare PPS payment estimate only; beneficiary eligibility, coverage and final remittance are not determined.",
+          "HIPPS, complete covered in-person visits and service location are supplied by the caller; no OASIS grouping is performed.",
+          "Agency outlier history is not used; any computed outlier outcome is unsupported.",
+          "County existence and county-to-CBSA/rural-area mapping were not independently verified; submitted CMS value codes are used."
+        ]
+      },
+      "expectedPayment": "1602.87",
+      "matched": true
+    },
+    {
+      "name": "urban_abilene",
+      "request": {
+        "claimId": "HHA-CONTRACT-TEST",
+        "providerCcn": "017999",
+        "billType": "0329",
+        "hippsCode": "1FC11",
+        "admissionDate": "2026-06-01",
+        "fromDate": "2026-06-01",
+        "throughDate": "2026-06-30",
+        "noticeReceiptDate": "2026-06-01",
+        "periodType": "Full30Day",
+        "serviceCountyFips": "48441",
+        "cbsaCode": "10180",
+        "geographyBasis": "SubmittedCmsValueCodes",
+        "visits": [
+          {
+            "visitId": "1",
+            "serviceDate": "2026-06-01",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "5",
+            "serviceDate": "2026-06-05",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "10",
+            "serviceDate": "2026-06-10",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "15",
+            "serviceDate": "2026-06-15",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "20",
+            "serviceDate": "2026-06-20",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "28",
+            "serviceDate": "2026-06-28",
+            "discipline": "SN",
+            "outlierUnits": 4
+          }
+        ]
+      },
+      "cmsInput": {
+        "providerData": {
+          "providerCcn": "017999",
+          "effectiveDate": "2026-01-01",
+          "vbpAdjustment": "1.0",
+          "countyCode": "48441",
+          "cbsaActualGeographicLocation": "10180"
+        },
+        "claimData": {
+          "providerCcn": "017999",
+          "typeOfBill": "329",
+          "admissionDate": "2026-06-01",
+          "serviceFromDate": "2026-06-01",
+          "serviceThroughDate": "2026-06-30",
+          "noticeReceiptDate": "2026-06-01",
+          "hhrgInputCode": "1FC11",
+          "hhrgNumberOfDays": 30,
+          "initialPaymentQualityReportingProgramIndicator": "0",
+          "partialEpisodePaymentIndicator": "N",
+          "lateFilingPenaltyWaiverIndicator": "N",
+          "lupaSourceAdmissionIndicator": "1",
+          "adjustmentIndicator": "0",
+          "priorPaymentTotal": "0",
+          "priorOutlierTotal": "0",
+          "revenueLines": [
+            {
+              "revenueCode": "0420",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0430",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0440",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0550",
+              "quantityOfCoveredVisits": 6,
+              "quantityOfOutlierUnits": 24,
+              "earliestLineItemDate": "2026-06-01"
+            },
+            {
+              "revenueCode": "0560",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0570",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            }
+          ]
+        }
+      },
+      "standalone": {
+        "calculationVersion": "2026.0",
+        "paymentData": {
+          "totalPayment": "2084.49",
+          "hhrgPayment": "2084.49",
+          "hhrgWeight": "1.0804",
+          "lateSubmissionPenaltyAmount": "0.00",
+          "outlierPayment": "0.00",
+          "revenuePayments": [
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "193.42",
+              "revenueCode": "0420"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "194.74",
+              "revenueCode": "0430"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "210.25",
+              "revenueCode": "0440"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "1346.06",
+              "dollarRate": "176.96",
+              "revenueCode": "0550"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "283.64",
+              "revenueCode": "0560"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "80.12",
+              "revenueCode": "0570"
+            }
+          ],
+          "standardizedPayment": "2202.09",
+          "totalQuantityOfCoveredVisits": 6,
+          "valueBasedPurchasingAdjustmentAmount": "0.00"
+        },
+        "returnCodeData": {
+          "code": "00",
+          "description": "FINAL PAYMENT WHERE NO OUTLIER APPLIES",
+          "explanation": "Final payment where no outlier applies"
+        }
+      },
+      "bridge": {
+        "claimId": "HHA-CONTRACT-TEST",
+        "status": "Success",
+        "reasonCode": "HHA_ORDINARY_PERIOD_ESTIMATED",
+        "reason": "CMS CY 2026 ordinary-period HH PPS calculation completed.",
+        "pricingMethod": "HH_PPS",
+        "totalPayment": "2084.49",
+        "pricerRelease": "2.6.0",
+        "calculationVersion": "2026.0",
+        "providerData": {
+          "providerCcn": "017999",
+          "effectiveDate": "2026-01-01",
+          "vbpAdjustment": "1.0",
+          "countyCode": "48441",
+          "cbsaActualGeographicLocation": "10180"
+        },
+        "providerEvidence": {
+          "source": "IPSF",
+          "providerRowId": 1,
+          "providerCcn": "017999",
+          "providerType": "36",
+          "effectiveDate": "2026-01-01",
+          "terminationDate": null,
+          "rawTerminationDate": null,
+          "lookupThroughDate": "2026-06-30",
+          "federalPpsBlend": "0",
+          "specialProviderUpdateFactor": "1.0",
+          "qualityReportingSourceField": "federal_pps_blend",
+          "valueBasedPurchasingSourceField": "special_provider_update_factor",
+          "sourceRowFingerprint": "ee1af701be458f92614a1791599aff8f8bfafdd1701b181177b4dfd20363460f",
+          "initialPaymentQualityReportingProgramIndicator": "0",
+          "pricerJarSha256": "7a70ae359434f4919d3aa171d0a2e79c98079d8d01b27d328171f23517f2d6f4",
+          "pricerSourceUrl": "https://www.cms.gov/files/zip/hha-pricer-2026-0-v2-6-0-executable-jar.zip",
+          "hippsReference": "hrg-2026.csv",
+          "hippsCode": "1FC11",
+          "caseMixWeight": "1.0804",
+          "lupaVisitThreshold": 4,
+          "priorAgencyTotalsUsed": false
+        },
+        "geographyEvidence": {
+          "submittedCbsaCode": "10180",
+          "cbsaCode": "10180",
+          "serviceCountyFips": "48441",
+          "wageIndex": "0.9287",
+          "wageIndexEffectiveDate": "2026-01-01",
+          "wageIndexReference": "cbsa-wage-index-2026.csv",
+          "geographyBasis": "SubmittedCmsValueCodes",
+          "countyMappingVerified": false,
+          "limitations": [
+            "County existence and county-to-CBSA/rural-area mapping were not independently verified; submitted CMS value codes are used."
+          ],
+          "jarSha256": "7a70ae359434f4919d3aa171d0a2e79c98079d8d01b27d328171f23517f2d6f4"
+        },
+        "cms": {
+          "calculationVersion": "2026.0",
+          "paymentData": {
+            "finalCbsa": null,
+            "finalWageIndex": null,
+            "totalPayment": "2084.49",
+            "hhrgPayment": "2084.49",
+            "hhrgWeight": "1.0804",
+            "lateSubmissionPenaltyAmount": "0.00",
+            "outlierPayment": "0.00",
+            "revenuePayments": [
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "193.42",
+                "revenueCode": "0420"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "194.74",
+                "revenueCode": "0430"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "210.25",
+                "revenueCode": "0440"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "1346.06",
+                "dollarRate": "176.96",
+                "revenueCode": "0550"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "283.64",
+                "revenueCode": "0560"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "80.12",
+                "revenueCode": "0570"
+              }
+            ],
+            "standardizedPayment": "2202.09",
+            "totalQuantityOfCoveredVisits": 6,
+            "valueBasedPurchasingAdjustmentAmount": "0.00"
+          },
+          "returnCodeData": {
+            "code": "00",
+            "description": "FINAL PAYMENT WHERE NO OUTLIER APPLIES",
+            "explanation": "Final payment where no outlier applies"
+          }
+        },
+        "limitations": [
+          "Medicare PPS payment estimate only; beneficiary eligibility, coverage and final remittance are not determined.",
+          "HIPPS, complete covered in-person visits and service location are supplied by the caller; no OASIS grouping is performed.",
+          "Agency outlier history is not used; any computed outlier outcome is unsupported.",
+          "County existence and county-to-CBSA/rural-area mapping were not independently verified; submitted CMS value codes are used."
+        ]
+      },
+      "expectedPayment": "2084.49",
+      "matched": true
+    },
+    {
+      "name": "qrp_reduced",
+      "request": {
+        "claimId": "HHA-CONTRACT-TEST",
+        "providerCcn": "017998",
+        "billType": "0329",
+        "hippsCode": "1FC11",
+        "admissionDate": "2026-06-01",
+        "fromDate": "2026-06-01",
+        "throughDate": "2026-06-30",
+        "noticeReceiptDate": "2026-06-01",
+        "periodType": "Full30Day",
+        "serviceCountyFips": "01023",
+        "cbsaCode": "01",
+        "geographyBasis": "SubmittedCmsValueCodes",
+        "visits": [
+          {
+            "visitId": "1",
+            "serviceDate": "2026-06-01",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "5",
+            "serviceDate": "2026-06-05",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "10",
+            "serviceDate": "2026-06-10",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "15",
+            "serviceDate": "2026-06-15",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "20",
+            "serviceDate": "2026-06-20",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "28",
+            "serviceDate": "2026-06-28",
+            "discipline": "SN",
+            "outlierUnits": 4
+          }
+        ]
+      },
+      "cmsInput": {
+        "providerData": {
+          "providerCcn": "017998",
+          "effectiveDate": "2026-01-01",
+          "vbpAdjustment": "1.0",
+          "countyCode": "01023",
+          "cbsaActualGeographicLocation": "99901"
+        },
+        "claimData": {
+          "providerCcn": "017998",
+          "typeOfBill": "329",
+          "admissionDate": "2026-06-01",
+          "serviceFromDate": "2026-06-01",
+          "serviceThroughDate": "2026-06-30",
+          "noticeReceiptDate": "2026-06-01",
+          "hhrgInputCode": "1FC11",
+          "hhrgNumberOfDays": 30,
+          "initialPaymentQualityReportingProgramIndicator": "2",
+          "partialEpisodePaymentIndicator": "N",
+          "lateFilingPenaltyWaiverIndicator": "N",
+          "lupaSourceAdmissionIndicator": "1",
+          "adjustmentIndicator": "0",
+          "priorPaymentTotal": "0",
+          "priorOutlierTotal": "0",
+          "revenueLines": [
+            {
+              "revenueCode": "0420",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0430",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0440",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0550",
+              "quantityOfCoveredVisits": 6,
+              "quantityOfOutlierUnits": 24,
+              "earliestLineItemDate": "2026-06-01"
+            },
+            {
+              "revenueCode": "0560",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0570",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            }
+          ]
+        }
+      },
+      "standalone": {
+        "calculationVersion": "2026.0",
+        "paymentData": {
+          "totalPayment": "1571.57",
+          "hhrgPayment": "1571.57",
+          "hhrgWeight": "1.0804",
+          "lateSubmissionPenaltyAmount": "0.00",
+          "outlierPayment": "0.00",
+          "revenuePayments": [
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "189.64",
+              "revenueCode": "0420"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "190.94",
+              "revenueCode": "0430"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "206.14",
+              "revenueCode": "0440"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "1014.79",
+              "dollarRate": "173.51",
+              "revenueCode": "0550"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "278.10",
+              "revenueCode": "0560"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "78.55",
+              "revenueCode": "0570"
+            }
+          ],
+          "standardizedPayment": "2202.09",
+          "totalQuantityOfCoveredVisits": 6,
+          "valueBasedPurchasingAdjustmentAmount": "0.00"
+        },
+        "returnCodeData": {
+          "code": "00",
+          "description": "FINAL PAYMENT WHERE NO OUTLIER APPLIES",
+          "explanation": "Final payment where no outlier applies"
+        }
+      },
+      "bridge": {
+        "claimId": "HHA-CONTRACT-TEST",
+        "status": "Success",
+        "reasonCode": "HHA_ORDINARY_PERIOD_ESTIMATED",
+        "reason": "CMS CY 2026 ordinary-period HH PPS calculation completed.",
+        "pricingMethod": "HH_PPS",
+        "totalPayment": "1571.57",
+        "pricerRelease": "2.6.0",
+        "calculationVersion": "2026.0",
+        "providerData": {
+          "providerCcn": "017998",
+          "effectiveDate": "2026-01-01",
+          "vbpAdjustment": "1.0",
+          "countyCode": "01023",
+          "cbsaActualGeographicLocation": "99901"
+        },
+        "providerEvidence": {
+          "source": "IPSF",
+          "providerRowId": 2,
+          "providerCcn": "017998",
+          "providerType": "36",
+          "effectiveDate": "2026-01-01",
+          "terminationDate": null,
+          "rawTerminationDate": null,
+          "lookupThroughDate": "2026-06-30",
+          "federalPpsBlend": "2",
+          "specialProviderUpdateFactor": "1.0",
+          "qualityReportingSourceField": "federal_pps_blend",
+          "valueBasedPurchasingSourceField": "special_provider_update_factor",
+          "sourceRowFingerprint": "571ba1e30f41875ee072f31c061b0c14aa903bd3e092ad22efe9d7284b7a8ee8",
+          "initialPaymentQualityReportingProgramIndicator": "2",
+          "pricerJarSha256": "7a70ae359434f4919d3aa171d0a2e79c98079d8d01b27d328171f23517f2d6f4",
+          "pricerSourceUrl": "https://www.cms.gov/files/zip/hha-pricer-2026-0-v2-6-0-executable-jar.zip",
+          "hippsReference": "hrg-2026.csv",
+          "hippsCode": "1FC11",
+          "caseMixWeight": "1.0804",
+          "lupaVisitThreshold": 4,
+          "priorAgencyTotalsUsed": false
+        },
+        "geographyEvidence": {
+          "submittedCbsaCode": "01",
+          "cbsaCode": "99901",
+          "serviceCountyFips": "01023",
+          "wageIndex": "0.6367",
+          "wageIndexEffectiveDate": "2026-01-01",
+          "wageIndexReference": "cbsa-wage-index-2026.csv",
+          "geographyBasis": "SubmittedCmsValueCodes",
+          "countyMappingVerified": false,
+          "limitations": [
+            "County existence and county-to-CBSA/rural-area mapping were not independently verified; submitted CMS value codes are used."
+          ],
+          "jarSha256": "7a70ae359434f4919d3aa171d0a2e79c98079d8d01b27d328171f23517f2d6f4"
+        },
+        "cms": {
+          "calculationVersion": "2026.0",
+          "paymentData": {
+            "finalCbsa": null,
+            "finalWageIndex": null,
+            "totalPayment": "1571.57",
+            "hhrgPayment": "1571.57",
+            "hhrgWeight": "1.0804",
+            "lateSubmissionPenaltyAmount": "0.00",
+            "outlierPayment": "0.00",
+            "revenuePayments": [
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "189.64",
+                "revenueCode": "0420"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "190.94",
+                "revenueCode": "0430"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "206.14",
+                "revenueCode": "0440"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "1014.79",
+                "dollarRate": "173.51",
+                "revenueCode": "0550"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "278.10",
+                "revenueCode": "0560"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "78.55",
+                "revenueCode": "0570"
+              }
+            ],
+            "standardizedPayment": "2202.09",
+            "totalQuantityOfCoveredVisits": 6,
+            "valueBasedPurchasingAdjustmentAmount": "0.00"
+          },
+          "returnCodeData": {
+            "code": "00",
+            "description": "FINAL PAYMENT WHERE NO OUTLIER APPLIES",
+            "explanation": "Final payment where no outlier applies"
+          }
+        },
+        "limitations": [
+          "Medicare PPS payment estimate only; beneficiary eligibility, coverage and final remittance are not determined.",
+          "HIPPS, complete covered in-person visits and service location are supplied by the caller; no OASIS grouping is performed.",
+          "Agency outlier history is not used; any computed outlier outcome is unsupported.",
+          "County existence and county-to-CBSA/rural-area mapping were not independently verified; submitted CMS value codes are used."
+        ]
+      },
+      "expectedPayment": "1571.57",
+      "matched": true
+    },
+    {
+      "name": "negative_vbp",
+      "request": {
+        "claimId": "HHA-CONTRACT-TEST",
+        "providerCcn": "017997",
+        "billType": "0329",
+        "hippsCode": "1FC11",
+        "admissionDate": "2026-06-01",
+        "fromDate": "2026-06-01",
+        "throughDate": "2026-06-30",
+        "noticeReceiptDate": "2026-06-01",
+        "periodType": "Full30Day",
+        "serviceCountyFips": "01023",
+        "cbsaCode": "01",
+        "geographyBasis": "SubmittedCmsValueCodes",
+        "visits": [
+          {
+            "visitId": "1",
+            "serviceDate": "2026-06-01",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "5",
+            "serviceDate": "2026-06-05",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "10",
+            "serviceDate": "2026-06-10",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "15",
+            "serviceDate": "2026-06-15",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "20",
+            "serviceDate": "2026-06-20",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "28",
+            "serviceDate": "2026-06-28",
+            "discipline": "SN",
+            "outlierUnits": 4
+          }
+        ]
+      },
+      "cmsInput": {
+        "providerData": {
+          "providerCcn": "017997",
+          "effectiveDate": "2026-01-01",
+          "vbpAdjustment": "0.95",
+          "countyCode": "01023",
+          "cbsaActualGeographicLocation": "99901"
+        },
+        "claimData": {
+          "providerCcn": "017997",
+          "typeOfBill": "329",
+          "admissionDate": "2026-06-01",
+          "serviceFromDate": "2026-06-01",
+          "serviceThroughDate": "2026-06-30",
+          "noticeReceiptDate": "2026-06-01",
+          "hhrgInputCode": "1FC11",
+          "hhrgNumberOfDays": 30,
+          "initialPaymentQualityReportingProgramIndicator": "0",
+          "partialEpisodePaymentIndicator": "N",
+          "lateFilingPenaltyWaiverIndicator": "N",
+          "lupaSourceAdmissionIndicator": "1",
+          "adjustmentIndicator": "0",
+          "priorPaymentTotal": "0",
+          "priorOutlierTotal": "0",
+          "revenueLines": [
+            {
+              "revenueCode": "0420",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0430",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0440",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0550",
+              "quantityOfCoveredVisits": 6,
+              "quantityOfOutlierUnits": 24,
+              "earliestLineItemDate": "2026-06-01"
+            },
+            {
+              "revenueCode": "0560",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0570",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            }
+          ]
+        }
+      },
+      "standalone": {
+        "calculationVersion": "2026.0",
+        "paymentData": {
+          "totalPayment": "1522.73",
+          "hhrgPayment": "1522.73",
+          "hhrgWeight": "1.0804",
+          "lateSubmissionPenaltyAmount": "0.00",
+          "outlierPayment": "0.00",
+          "revenuePayments": [
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "193.42",
+              "revenueCode": "0420"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "194.74",
+              "revenueCode": "0430"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "210.25",
+              "revenueCode": "0440"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "1035.06",
+              "dollarRate": "176.96",
+              "revenueCode": "0550"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "283.64",
+              "revenueCode": "0560"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "80.12",
+              "revenueCode": "0570"
+            }
+          ],
+          "standardizedPayment": "2202.09",
+          "totalQuantityOfCoveredVisits": 6,
+          "valueBasedPurchasingAdjustmentAmount": "-80.14"
+        },
+        "returnCodeData": {
+          "code": "00",
+          "description": "FINAL PAYMENT WHERE NO OUTLIER APPLIES",
+          "explanation": "Final payment where no outlier applies"
+        }
+      },
+      "bridge": {
+        "claimId": "HHA-CONTRACT-TEST",
+        "status": "Success",
+        "reasonCode": "HHA_ORDINARY_PERIOD_ESTIMATED",
+        "reason": "CMS CY 2026 ordinary-period HH PPS calculation completed.",
+        "pricingMethod": "HH_PPS",
+        "totalPayment": "1522.73",
+        "pricerRelease": "2.6.0",
+        "calculationVersion": "2026.0",
+        "providerData": {
+          "providerCcn": "017997",
+          "effectiveDate": "2026-01-01",
+          "vbpAdjustment": "0.95",
+          "countyCode": "01023",
+          "cbsaActualGeographicLocation": "99901"
+        },
+        "providerEvidence": {
+          "source": "IPSF",
+          "providerRowId": 3,
+          "providerCcn": "017997",
+          "providerType": "36",
+          "effectiveDate": "2026-01-01",
+          "terminationDate": null,
+          "rawTerminationDate": null,
+          "lookupThroughDate": "2026-06-30",
+          "federalPpsBlend": "0",
+          "specialProviderUpdateFactor": "0.95",
+          "qualityReportingSourceField": "federal_pps_blend",
+          "valueBasedPurchasingSourceField": "special_provider_update_factor",
+          "sourceRowFingerprint": "035edd55281052d260dbe9eb76230dca2f4cc0ef8bd0b12e0ac476e59fa622b6",
+          "initialPaymentQualityReportingProgramIndicator": "0",
+          "pricerJarSha256": "7a70ae359434f4919d3aa171d0a2e79c98079d8d01b27d328171f23517f2d6f4",
+          "pricerSourceUrl": "https://www.cms.gov/files/zip/hha-pricer-2026-0-v2-6-0-executable-jar.zip",
+          "hippsReference": "hrg-2026.csv",
+          "hippsCode": "1FC11",
+          "caseMixWeight": "1.0804",
+          "lupaVisitThreshold": 4,
+          "priorAgencyTotalsUsed": false
+        },
+        "geographyEvidence": {
+          "submittedCbsaCode": "01",
+          "cbsaCode": "99901",
+          "serviceCountyFips": "01023",
+          "wageIndex": "0.6367",
+          "wageIndexEffectiveDate": "2026-01-01",
+          "wageIndexReference": "cbsa-wage-index-2026.csv",
+          "geographyBasis": "SubmittedCmsValueCodes",
+          "countyMappingVerified": false,
+          "limitations": [
+            "County existence and county-to-CBSA/rural-area mapping were not independently verified; submitted CMS value codes are used."
+          ],
+          "jarSha256": "7a70ae359434f4919d3aa171d0a2e79c98079d8d01b27d328171f23517f2d6f4"
+        },
+        "cms": {
+          "calculationVersion": "2026.0",
+          "paymentData": {
+            "finalCbsa": null,
+            "finalWageIndex": null,
+            "totalPayment": "1522.73",
+            "hhrgPayment": "1522.73",
+            "hhrgWeight": "1.0804",
+            "lateSubmissionPenaltyAmount": "0.00",
+            "outlierPayment": "0.00",
+            "revenuePayments": [
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "193.42",
+                "revenueCode": "0420"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "194.74",
+                "revenueCode": "0430"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "210.25",
+                "revenueCode": "0440"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "1035.06",
+                "dollarRate": "176.96",
+                "revenueCode": "0550"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "283.64",
+                "revenueCode": "0560"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "80.12",
+                "revenueCode": "0570"
+              }
+            ],
+            "standardizedPayment": "2202.09",
+            "totalQuantityOfCoveredVisits": 6,
+            "valueBasedPurchasingAdjustmentAmount": "-80.14"
+          },
+          "returnCodeData": {
+            "code": "00",
+            "description": "FINAL PAYMENT WHERE NO OUTLIER APPLIES",
+            "explanation": "Final payment where no outlier applies"
+          }
+        },
+        "limitations": [
+          "Medicare PPS payment estimate only; beneficiary eligibility, coverage and final remittance are not determined.",
+          "HIPPS, complete covered in-person visits and service location are supplied by the caller; no OASIS grouping is performed.",
+          "Agency outlier history is not used; any computed outlier outcome is unsupported.",
+          "County existence and county-to-CBSA/rural-area mapping were not independently verified; submitted CMS value codes are used."
+        ]
+      },
+      "expectedPayment": "1522.73",
+      "matched": true
+    },
+    {
+      "name": "positive_vbp",
+      "request": {
+        "claimId": "HHA-CONTRACT-TEST",
+        "providerCcn": "017996",
+        "billType": "0329",
+        "hippsCode": "1FC11",
+        "admissionDate": "2026-06-01",
+        "fromDate": "2026-06-01",
+        "throughDate": "2026-06-30",
+        "noticeReceiptDate": "2026-06-01",
+        "periodType": "Full30Day",
+        "serviceCountyFips": "01023",
+        "cbsaCode": "01",
+        "geographyBasis": "SubmittedCmsValueCodes",
+        "visits": [
+          {
+            "visitId": "1",
+            "serviceDate": "2026-06-01",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "5",
+            "serviceDate": "2026-06-05",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "10",
+            "serviceDate": "2026-06-10",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "15",
+            "serviceDate": "2026-06-15",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "20",
+            "serviceDate": "2026-06-20",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "28",
+            "serviceDate": "2026-06-28",
+            "discipline": "SN",
+            "outlierUnits": 4
+          }
+        ]
+      },
+      "cmsInput": {
+        "providerData": {
+          "providerCcn": "017996",
+          "effectiveDate": "2026-01-01",
+          "vbpAdjustment": "1.05",
+          "countyCode": "01023",
+          "cbsaActualGeographicLocation": "99901"
+        },
+        "claimData": {
+          "providerCcn": "017996",
+          "typeOfBill": "329",
+          "admissionDate": "2026-06-01",
+          "serviceFromDate": "2026-06-01",
+          "serviceThroughDate": "2026-06-30",
+          "noticeReceiptDate": "2026-06-01",
+          "hhrgInputCode": "1FC11",
+          "hhrgNumberOfDays": 30,
+          "initialPaymentQualityReportingProgramIndicator": "0",
+          "partialEpisodePaymentIndicator": "N",
+          "lateFilingPenaltyWaiverIndicator": "N",
+          "lupaSourceAdmissionIndicator": "1",
+          "adjustmentIndicator": "0",
+          "priorPaymentTotal": "0",
+          "priorOutlierTotal": "0",
+          "revenueLines": [
+            {
+              "revenueCode": "0420",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0430",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0440",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0550",
+              "quantityOfCoveredVisits": 6,
+              "quantityOfOutlierUnits": 24,
+              "earliestLineItemDate": "2026-06-01"
+            },
+            {
+              "revenueCode": "0560",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0570",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            }
+          ]
+        }
+      },
+      "standalone": {
+        "calculationVersion": "2026.0",
+        "paymentData": {
+          "totalPayment": "1683.01",
+          "hhrgPayment": "1683.01",
+          "hhrgWeight": "1.0804",
+          "lateSubmissionPenaltyAmount": "0.00",
+          "outlierPayment": "0.00",
+          "revenuePayments": [
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "193.42",
+              "revenueCode": "0420"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "194.74",
+              "revenueCode": "0430"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "210.25",
+              "revenueCode": "0440"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "1035.06",
+              "dollarRate": "176.96",
+              "revenueCode": "0550"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "283.64",
+              "revenueCode": "0560"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "80.12",
+              "revenueCode": "0570"
+            }
+          ],
+          "standardizedPayment": "2202.09",
+          "totalQuantityOfCoveredVisits": 6,
+          "valueBasedPurchasingAdjustmentAmount": "80.14"
+        },
+        "returnCodeData": {
+          "code": "00",
+          "description": "FINAL PAYMENT WHERE NO OUTLIER APPLIES",
+          "explanation": "Final payment where no outlier applies"
+        }
+      },
+      "bridge": {
+        "claimId": "HHA-CONTRACT-TEST",
+        "status": "Success",
+        "reasonCode": "HHA_ORDINARY_PERIOD_ESTIMATED",
+        "reason": "CMS CY 2026 ordinary-period HH PPS calculation completed.",
+        "pricingMethod": "HH_PPS",
+        "totalPayment": "1683.01",
+        "pricerRelease": "2.6.0",
+        "calculationVersion": "2026.0",
+        "providerData": {
+          "providerCcn": "017996",
+          "effectiveDate": "2026-01-01",
+          "vbpAdjustment": "1.05",
+          "countyCode": "01023",
+          "cbsaActualGeographicLocation": "99901"
+        },
+        "providerEvidence": {
+          "source": "IPSF",
+          "providerRowId": 4,
+          "providerCcn": "017996",
+          "providerType": "36",
+          "effectiveDate": "2026-01-01",
+          "terminationDate": null,
+          "rawTerminationDate": null,
+          "lookupThroughDate": "2026-06-30",
+          "federalPpsBlend": "0",
+          "specialProviderUpdateFactor": "1.05",
+          "qualityReportingSourceField": "federal_pps_blend",
+          "valueBasedPurchasingSourceField": "special_provider_update_factor",
+          "sourceRowFingerprint": "6615c28046e99f30a5ce761fd20a29081ebb7ececfcf33d9ad38055b85ec857c",
+          "initialPaymentQualityReportingProgramIndicator": "0",
+          "pricerJarSha256": "7a70ae359434f4919d3aa171d0a2e79c98079d8d01b27d328171f23517f2d6f4",
+          "pricerSourceUrl": "https://www.cms.gov/files/zip/hha-pricer-2026-0-v2-6-0-executable-jar.zip",
+          "hippsReference": "hrg-2026.csv",
+          "hippsCode": "1FC11",
+          "caseMixWeight": "1.0804",
+          "lupaVisitThreshold": 4,
+          "priorAgencyTotalsUsed": false
+        },
+        "geographyEvidence": {
+          "submittedCbsaCode": "01",
+          "cbsaCode": "99901",
+          "serviceCountyFips": "01023",
+          "wageIndex": "0.6367",
+          "wageIndexEffectiveDate": "2026-01-01",
+          "wageIndexReference": "cbsa-wage-index-2026.csv",
+          "geographyBasis": "SubmittedCmsValueCodes",
+          "countyMappingVerified": false,
+          "limitations": [
+            "County existence and county-to-CBSA/rural-area mapping were not independently verified; submitted CMS value codes are used."
+          ],
+          "jarSha256": "7a70ae359434f4919d3aa171d0a2e79c98079d8d01b27d328171f23517f2d6f4"
+        },
+        "cms": {
+          "calculationVersion": "2026.0",
+          "paymentData": {
+            "finalCbsa": null,
+            "finalWageIndex": null,
+            "totalPayment": "1683.01",
+            "hhrgPayment": "1683.01",
+            "hhrgWeight": "1.0804",
+            "lateSubmissionPenaltyAmount": "0.00",
+            "outlierPayment": "0.00",
+            "revenuePayments": [
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "193.42",
+                "revenueCode": "0420"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "194.74",
+                "revenueCode": "0430"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "210.25",
+                "revenueCode": "0440"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "1035.06",
+                "dollarRate": "176.96",
+                "revenueCode": "0550"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "283.64",
+                "revenueCode": "0560"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "80.12",
+                "revenueCode": "0570"
+              }
+            ],
+            "standardizedPayment": "2202.09",
+            "totalQuantityOfCoveredVisits": 6,
+            "valueBasedPurchasingAdjustmentAmount": "80.14"
+          },
+          "returnCodeData": {
+            "code": "00",
+            "description": "FINAL PAYMENT WHERE NO OUTLIER APPLIES",
+            "explanation": "Final payment where no outlier applies"
+          }
+        },
+        "limitations": [
+          "Medicare PPS payment estimate only; beneficiary eligibility, coverage and final remittance are not determined.",
+          "HIPPS, complete covered in-person visits and service location are supplied by the caller; no OASIS grouping is performed.",
+          "Agency outlier history is not used; any computed outlier outcome is unsupported.",
+          "County existence and county-to-CBSA/rural-area mapping were not independently verified; submitted CMS value codes are used."
+        ]
+      },
+      "expectedPayment": "1683.01",
+      "matched": true
+    },
+    {
+      "name": "county_transition",
+      "request": {
+        "claimId": "HHA-CONTRACT-TEST",
+        "providerCcn": "017999",
+        "billType": "0329",
+        "hippsCode": "1FC21",
+        "admissionDate": "2026-06-01",
+        "fromDate": "2026-06-01",
+        "throughDate": "2026-06-30",
+        "noticeReceiptDate": "2026-06-01",
+        "periodType": "Full30Day",
+        "serviceCountyFips": "01129",
+        "cbsaCode": "50001",
+        "geographyBasis": "SubmittedCmsValueCodes",
+        "visits": [
+          {
+            "visitId": "1",
+            "serviceDate": "2026-06-01",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "5",
+            "serviceDate": "2026-06-05",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "10",
+            "serviceDate": "2026-06-10",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "15",
+            "serviceDate": "2026-06-15",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "20",
+            "serviceDate": "2026-06-20",
+            "discipline": "SN",
+            "outlierUnits": 4
+          },
+          {
+            "visitId": "28",
+            "serviceDate": "2026-06-28",
+            "discipline": "SN",
+            "outlierUnits": 4
+          }
+        ]
+      },
+      "cmsInput": {
+        "providerData": {
+          "providerCcn": "017999",
+          "effectiveDate": "2026-01-01",
+          "vbpAdjustment": "1.0",
+          "countyCode": "01129",
+          "cbsaActualGeographicLocation": "50001"
+        },
+        "claimData": {
+          "providerCcn": "017999",
+          "typeOfBill": "329",
+          "admissionDate": "2026-06-01",
+          "serviceFromDate": "2026-06-01",
+          "serviceThroughDate": "2026-06-30",
+          "noticeReceiptDate": "2026-06-01",
+          "hhrgInputCode": "1FC21",
+          "hhrgNumberOfDays": 30,
+          "initialPaymentQualityReportingProgramIndicator": "0",
+          "partialEpisodePaymentIndicator": "N",
+          "lateFilingPenaltyWaiverIndicator": "N",
+          "lupaSourceAdmissionIndicator": "1",
+          "adjustmentIndicator": "0",
+          "priorPaymentTotal": "0",
+          "priorOutlierTotal": "0",
+          "revenueLines": [
+            {
+              "revenueCode": "0420",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0430",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0440",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0550",
+              "quantityOfCoveredVisits": 6,
+              "quantityOfOutlierUnits": 24,
+              "earliestLineItemDate": "2026-06-01"
+            },
+            {
+              "revenueCode": "0560",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            },
+            {
+              "revenueCode": "0570",
+              "quantityOfCoveredVisits": 0,
+              "quantityOfOutlierUnits": 0,
+              "earliestLineItemDate": null
+            }
+          ]
+        }
+      },
+      "standalone": {
+        "calculationVersion": "2026.0",
+        "paymentData": {
+          "totalPayment": "1762.31",
+          "hhrgPayment": "1762.31",
+          "hhrgWeight": "1.1372",
+          "lateSubmissionPenaltyAmount": "0.00",
+          "outlierPayment": "0.00",
+          "revenuePayments": [
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "193.42",
+              "revenueCode": "0420"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "194.74",
+              "revenueCode": "0430"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "210.25",
+              "revenueCode": "0440"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "1081.17",
+              "dollarRate": "176.96",
+              "revenueCode": "0550"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "283.64",
+              "revenueCode": "0560"
+            },
+            {
+              "addOnVisitAmount": "0.00",
+              "cost": "0.00",
+              "dollarRate": "80.12",
+              "revenueCode": "0570"
+            }
+          ],
+          "standardizedPayment": "2317.86",
+          "totalQuantityOfCoveredVisits": 6,
+          "valueBasedPurchasingAdjustmentAmount": "0.00"
+        },
+        "returnCodeData": {
+          "code": "00",
+          "description": "FINAL PAYMENT WHERE NO OUTLIER APPLIES",
+          "explanation": "Final payment where no outlier applies"
+        }
+      },
+      "bridge": {
+        "claimId": "HHA-CONTRACT-TEST",
+        "status": "Success",
+        "reasonCode": "HHA_ORDINARY_PERIOD_ESTIMATED",
+        "reason": "CMS CY 2026 ordinary-period HH PPS calculation completed.",
+        "pricingMethod": "HH_PPS",
+        "totalPayment": "1762.31",
+        "pricerRelease": "2.6.0",
+        "calculationVersion": "2026.0",
+        "providerData": {
+          "providerCcn": "017999",
+          "effectiveDate": "2026-01-01",
+          "vbpAdjustment": "1.0",
+          "countyCode": "01129",
+          "cbsaActualGeographicLocation": "50001"
+        },
+        "providerEvidence": {
+          "source": "IPSF",
+          "providerRowId": 1,
+          "providerCcn": "017999",
+          "providerType": "36",
+          "effectiveDate": "2026-01-01",
+          "terminationDate": null,
+          "rawTerminationDate": null,
+          "lookupThroughDate": "2026-06-30",
+          "federalPpsBlend": "0",
+          "specialProviderUpdateFactor": "1.0",
+          "qualityReportingSourceField": "federal_pps_blend",
+          "valueBasedPurchasingSourceField": "special_provider_update_factor",
+          "sourceRowFingerprint": "ee1af701be458f92614a1791599aff8f8bfafdd1701b181177b4dfd20363460f",
+          "initialPaymentQualityReportingProgramIndicator": "0",
+          "pricerJarSha256": "7a70ae359434f4919d3aa171d0a2e79c98079d8d01b27d328171f23517f2d6f4",
+          "pricerSourceUrl": "https://www.cms.gov/files/zip/hha-pricer-2026-0-v2-6-0-executable-jar.zip",
+          "hippsReference": "hrg-2026.csv",
+          "hippsCode": "1FC21",
+          "caseMixWeight": "1.1372",
+          "lupaVisitThreshold": 4,
+          "priorAgencyTotalsUsed": false
+        },
+        "geographyEvidence": {
+          "submittedCbsaCode": "50001",
+          "cbsaCode": "50001",
+          "serviceCountyFips": "01129",
+          "wageIndex": "0.6800",
+          "wageIndexEffectiveDate": "2026-01-01",
+          "wageIndexReference": "cbsa-wage-index-2026.csv",
+          "geographyBasis": "SubmittedCmsValueCodes",
+          "countyMappingVerified": true,
+          "limitations": [],
+          "transitionSourceUrl": "https://www.cms.gov/files/zip/cy-2026-final-hh-pps-wage-index.zip",
+          "sourceSha256": "c8734767077549704faf9627a8c92b34cb8ce13626379500239e07defc2aeca3",
+          "csvSha256": "0a5c37ae6d44bad3550671925c34a8874498b6192812d4b7f1fdefe5f6a89bda",
+          "jarSha256": "7a70ae359434f4919d3aa171d0a2e79c98079d8d01b27d328171f23517f2d6f4"
+        },
+        "cms": {
+          "calculationVersion": "2026.0",
+          "paymentData": {
+            "finalCbsa": null,
+            "finalWageIndex": null,
+            "totalPayment": "1762.31",
+            "hhrgPayment": "1762.31",
+            "hhrgWeight": "1.1372",
+            "lateSubmissionPenaltyAmount": "0.00",
+            "outlierPayment": "0.00",
+            "revenuePayments": [
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "193.42",
+                "revenueCode": "0420"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "194.74",
+                "revenueCode": "0430"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "210.25",
+                "revenueCode": "0440"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "1081.17",
+                "dollarRate": "176.96",
+                "revenueCode": "0550"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "283.64",
+                "revenueCode": "0560"
+              },
+              {
+                "addOnVisitAmount": "0.00",
+                "cost": "0.00",
+                "dollarRate": "80.12",
+                "revenueCode": "0570"
+              }
+            ],
+            "standardizedPayment": "2317.86",
+            "totalQuantityOfCoveredVisits": 6,
+            "valueBasedPurchasingAdjustmentAmount": "0.00"
+          },
+          "returnCodeData": {
+            "code": "00",
+            "description": "FINAL PAYMENT WHERE NO OUTLIER APPLIES",
+            "explanation": "Final payment where no outlier applies"
+          }
+        },
+        "limitations": [
+          "Medicare PPS payment estimate only; beneficiary eligibility, coverage and final remittance are not determined.",
+          "HIPPS, complete covered in-person visits and service location are supplied by the caller; no OASIS grouping is performed.",
+          "Agency outlier history is not used; any computed outlier outcome is unsupported."
+        ]
+      },
+      "expectedPayment": "1762.31",
+      "matched": true
+    }
+  ]
+}

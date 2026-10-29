@@ -13,6 +13,8 @@ from bridge.ipps_routes import router as ipps_router
 from bridge.provider_routes import router as provider_router
 from bridge.snf_routes import router as snf_router
 from bridge.snf_client import SnfProcessor
+from bridge.hha_client import HhaProcessor
+from bridge.hha_routes import router as hha_router, readiness as hha_readiness
 
 import jpype
 from fastapi import FastAPI, HTTPException, Request
@@ -28,7 +30,7 @@ from bridge.claim_mapper import to_myelin_claim
 from bridge.opps_client import WindowsSafeOppsClient
 
 
-BRIDGE_VERSION = "0.4.0"
+BRIDGE_VERSION = "0.5.0"
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 JAR_PATH = Path(
@@ -313,6 +315,10 @@ async def lifespan(app: FastAPI):
         if env_bool('SNF_ENABLED'):
             app.state.snf_processor = SnfProcessor(myelin_engine.db_manager.engine, JAR_PATH)
 
+        app.state.hha_processor = None
+        if env_bool('HHA_ENABLED'):
+            app.state.hha_processor = HhaProcessor(myelin_engine.db_manager.engine, JAR_PATH)
+
         yield
 
     finally:
@@ -323,10 +329,10 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="QON CMS I/OCE and OPPS Pricer API",
+    title="QON CMS Pricing Bridge",
     description=(
-        "Runs an outpatient claim through CMS I/OCE and, when requested, "
-        "the CMS OPPS Pricer using CMS OPSF provider data."
+        "CMS I/OCE, OPPS and IPPS integrations, with optional SNF and "
+        "supplied-HIPPS home health payment estimators."
     ),
     version=BRIDGE_VERSION,
     lifespan=lifespan,
@@ -334,6 +340,7 @@ app = FastAPI(
 app.include_router(ipps_router)
 app.include_router(provider_router)
 app.include_router(snf_router)
+app.include_router(hha_router)
 
 @app.get("/health/live")
 def health_live() -> dict[str, Any]:
@@ -367,6 +374,7 @@ def health_ready(request: Request) -> dict[str, Any]:
         "oppsJar": request.app.state.opps_jar.name,
         "opsfRecordCount": request.app.state.opsf_record_count,
         "downloadsCmsAssetsAtStartup": DOWNLOAD_CMS_ASSETS,
+        "hha": hha_readiness(getattr(request.app.state, "hha_processor", None)),
     }
 
 
@@ -379,6 +387,7 @@ def version(request: Request) -> dict[str, Any]:
         "jarPath": str(JAR_PATH),
         "databasePath": str(DB_PATH),
         "downloadsCmsAssetsAtStartup": DOWNLOAD_CMS_ASSETS,
+        "hha": hha_readiness(getattr(request.app.state, "hha_processor", None)),
     }
 
 
