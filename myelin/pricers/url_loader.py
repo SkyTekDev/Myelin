@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import jpype
 
 
@@ -11,6 +13,10 @@ class UrlLoader:
         self.url_class_loader = jpype.JClass("java.net.URLClassLoader")
         self.url_class = jpype.JClass("java.net.URL")
         self.url_array_class = jpype.JClass("[Ljava.net.URL;")
+
+    def load_paths(self, paths):
+        """Load local JARs using escaped file URIs on every platform."""
+        self.load_urls([Path(path).expanduser().resolve().as_uri() for path in paths])
 
     def load_urls(self, urls):
         """
