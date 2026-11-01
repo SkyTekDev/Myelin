@@ -85,8 +85,8 @@ class HhaRouteChecks(unittest.TestCase):
         self.assertEqual(body["firstServiceDate"], "2026-01-01")
         self.assertEqual(body["lastServiceDate"], "2026-12-31")
         self.assertEqual(body["grouping"], "SuppliedHippsOnly")
-        self.assertEqual(body["supportedPayment"], "OrdinaryPeriodLupaPartialPeriodLateNoaAndOutlier")
-        self.assertEqual(body["supportedPeriodTypes"], ["Full30Day", "Partial30Day"])
+        self.assertEqual(body["supportedPayment"], "OrdinaryPeriodLupaPartialPeriodShortenedPeriodLateNoaAndOutlier")
+        self.assertEqual(body["supportedPeriodTypes"], ["Full30Day", "Partial30Day", "Shortened30Day"])
 
     def test_outlier_context_and_raw_policy_evidence_cross_http_boundary(self):
         cases=json.loads((Path(__file__).parent/'fixtures/hha-2026-outlier.json').read_text())['comparisons']

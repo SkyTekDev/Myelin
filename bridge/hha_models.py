@@ -215,6 +215,43 @@ class HhaPartialPeriodPayment(HhaPartialPeriodContext):
     _billable_dates = field_validator("firstBillableDate", "lastBillableDate", mode="before")(_calendar_date)
 
 
+class HhaShortenedPeriodContext(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    eventType: Literal["Discharge", "Death"]
+    patientStatus: Literal["01", "20"]
+    eventDate: date
+    noSubsequentCareWithin30Days: StrictBool
+
+    _event_date = field_validator("eventDate", mode="before")(_calendar_date)
+
+    @model_validator(mode="after")
+    def supported_event(self):
+        if (self.patientStatus != ("01" if self.eventType == "Discharge" else "20")
+                or not self.noSubsequentCareWithin30Days):
+            raise ValueError("Shortened nonprorated periods require matching discharge/death status and no subsequent care within the original 30-day period.")
+        return self
+
+
+class HhaShortenedPeriodPayment(HhaShortenedPeriodContext):
+    firstBillableDate: date
+    lastBillableDate: date
+    statementDays: StrictInt = Field(ge=1, le=29)
+    periodDays: Literal[30]
+    paymentRatio: Annotated[Decimal, Field(ge=1, le=1, allow_inf_nan=False)]
+    adjustmentApplied: StrictBool
+
+    _billable_dates = field_validator("firstBillableDate", "lastBillableDate", mode="before")(_calendar_date)
+
+    @model_validator(mode="after")
+    def unprorated_statement(self):
+        start = self.eventDate - timedelta(days=self.statementDays - 1)
+        if (not start <= self.firstBillableDate <= self.lastBillableDate <= self.eventDate
+                or self.adjustmentApplied):
+            raise ValueError("Shortened statement evidence must preserve the original 30-day payment without proration.")
+        return self
+
+
 class HhaLupaVisitPayment(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -258,7 +295,7 @@ class HhaRequest(BaseModel):
     fromDate: date
     throughDate: date
     noticeReceiptDate: date
-    periodType: Literal["Full30Day", "Partial30Day"]
+    periodType: Literal["Full30Day", "Partial30Day", "Shortened30Day"]
     serviceCountyFips: StrictStr = Field(pattern=r"^[0-9]{5}$")
     cbsaCode: StrictStr = Field(pattern=r"^(?:[0-9]{2}|[0-9]{5})$")
     geographyBasis: Literal["SubmittedCmsValueCodes"]
@@ -267,6 +304,7 @@ class HhaRequest(BaseModel):
     partialPeriod: HhaPartialPeriodContext | None = None
     lateNoa: HhaLateNoaContext | None = None
     outlier: HhaOutlierContext | None = None
+    shortenedPeriod: HhaShortenedPeriodContext | None = None
 
     _claim_identity = field_validator("claimId")(_identifier)
     _dates = field_validator(
@@ -286,9 +324,13 @@ class HhaRequest(BaseModel):
             raise ValueError("The complete statement period must fall in CY 2026.")
         statement_days = (self.throughDate - self.fromDate).days + 1
         if self.periodType == "Full30Day":
-            if statement_days != 30 or self.partialPeriod is not None:
+            if statement_days != 30 or self.partialPeriod is not None or self.shortenedPeriod is not None:
                 raise ValueError("Full periods require 30 inclusive days and no partial-period context.")
-        elif (self.partialPeriod is None or not 1 <= statement_days <= 29
+        elif self.periodType == "Shortened30Day":
+            if (self.shortenedPeriod is None or self.partialPeriod is not None or not 1 <= statement_days <= 29
+                    or self.shortenedPeriod.eventDate != self.throughDate):
+                raise ValueError("Shortened periods require explicit discharge/death facts, an event matching Through, 1-29 statement days and no partial-period adjustment.")
+        elif (self.partialPeriod is None or self.shortenedPeriod is not None or not 1 <= statement_days <= 29
               or not self.throughDate < self.partialPeriod.nextCareStartDate <= self.fromDate + timedelta(days=29)):
             raise ValueError("A partial period requires explicit context, 1-29 statement days and subsequent care within the original period.")
         if self.outlier is not None and self.outlier.asOfDate < self.throughDate:
@@ -314,6 +356,13 @@ class HhaRequest(BaseModel):
             raise ValueError("Eligible outlier units may not exceed 32 across disciplines per day.")
         return self
 
+    @model_serializer(mode="wrap")
+    def omit_absent_shortened_period(self, handler):
+        result = handler(self)
+        if self.shortenedPeriod is None:
+            result.pop("shortenedPeriod", None)
+        return result
+
 
 class HhaResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -334,6 +383,7 @@ class HhaResponse(BaseModel):
     partialPeriod: HhaPartialPeriodPayment | None = None
     lateNoa: HhaLateNoaPayment | None = None
     outlier: HhaOutlierPayment | None = None
+    shortenedPeriod: HhaShortenedPeriodPayment | None = None
     limitations: list[str] = Field(default_factory=lambda: [
         "Payment estimate only; no eligibility or coverage determination."
     ])
@@ -341,7 +391,7 @@ class HhaResponse(BaseModel):
     @model_validator(mode="after")
     def complete_outcome(self):
         if self.status == "UnableToPrice":
-            if self.totalPayment is not None or self.lupa is not None or self.partialPeriod is not None or self.lateNoa is not None or self.outlier is not None:
+            if self.totalPayment is not None or self.lupa is not None or self.partialPeriod is not None or self.lateNoa is not None or self.outlier is not None or self.shortenedPeriod is not None:
                 raise ValueError("An unpriced outcome must not contain a total payment.")
         elif (
             self.totalPayment is None
@@ -360,6 +410,12 @@ class HhaResponse(BaseModel):
         if self.reasonCode == "HHA_PARTIAL_PERIOD_ESTIMATED":
             if self.partialPeriod is None or not self.partialPeriod.adjustmentApplied or self.lupa is not None:
                 raise ValueError("A partial-period estimate requires explicit applied adjustment evidence.")
+        if self.reasonCode == "HHA_SHORTENED_PERIOD_ESTIMATED":
+            if self.shortenedPeriod is None or self.lupa is not None or self.partialPeriod is not None:
+                raise ValueError("A shortened-period estimate requires nonprorated terminal-event evidence.")
+        if self.shortenedPeriod is not None and (self.partialPeriod is not None
+                or self.reasonCode != ("HHA_LUPA_ESTIMATED" if self.lupa is not None else "HHA_SHORTENED_PERIOD_ESTIMATED")):
+            raise ValueError("Shortened-period evidence cannot be mixed with a partial-period adjustment or another pricing reason.")
         if self.partialPeriod is not None:
             detail = self.partialPeriod
             if (detail.coveredDays != (detail.lastBillableDate - detail.firstBillableDate).days + 1
@@ -375,7 +431,7 @@ class HhaResponse(BaseModel):
         # Keep existing required null totals/calculation fields on failures.
         # Only the new optional field is omitted for historical ordinary shape.
         result = handler(self)
-        for field in ("lupa", "partialPeriod", "lateNoa", "outlier"):
+        for field in ("lupa", "partialPeriod", "lateNoa", "outlier", "shortenedPeriod"):
             if getattr(self, field) is None:
                 result.pop(field, None)
         return result

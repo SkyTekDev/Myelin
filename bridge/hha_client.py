@@ -159,6 +159,7 @@ class HhaProcessor:
         partial_detail = None
         late_detail = None
         outlier_detail = None
+        shortened_detail = None
         try:
             with self.lock:
                 hrg = self.hrg_rows.get(request.hippsCode)
@@ -193,6 +194,12 @@ class HhaProcessor:
                                           lastBillableDate=last, coveredDays=(last - first).days + 1,
                                           periodDays=30, paymentRatio=rounded(Decimal((last - first).days + 1) / 30),
                                           adjustmentApplied=not is_lupa)
+                if request.shortenedPeriod:
+                    shortened_detail = dict(**request.shortenedPeriod.model_dump(),
+                        firstBillableDate=min(visit.serviceDate for visit in request.visits),
+                        lastBillableDate=max(visit.serviceDate for visit in request.visits),
+                        statementDays=(request.throughDate-request.fromDate).days+1,
+                        periodDays=30, paymentRatio=Decimal("1.00"), adjustmentApplied=False)
                 if request.outlier is None or is_lupa:
                     total, lupa_detail, late_detail = apply_late_noa(request, provider, geography, hrg, cms,
                         total, lupa_detail, self.revenue_rows, LUPA_INCREMENTAL_FACTORS)
@@ -214,13 +221,15 @@ class HhaProcessor:
             ]
             if not geography.get("countyMappingVerified"):
                 limitations.extend(geography["limitations"])
+            if request.shortenedPeriod:
+                limitations.append("Discharge/death, event date and no subsequent care within the original 30-day period are submitted facts, not CWF or history verification; later home health care may require claim adjustment. The shortened statement does not prorate its period payment.")
             return HhaResponse(claimId=request.claimId, status="Success",
-                               reasonCode="HHA_LUPA_ESTIMATED" if is_lupa else "HHA_PARTIAL_PERIOD_ESTIMATED" if request.partialPeriod else "HHA_ORDINARY_PERIOD_ESTIMATED",
-                               reason="CMS CY 2026 LUPA calculation completed." if is_lupa else "CMS CY 2026 partial-period HH PPS calculation completed." if request.partialPeriod else "CMS CY 2026 ordinary-period HH PPS calculation completed.",
+                               reasonCode="HHA_LUPA_ESTIMATED" if is_lupa else "HHA_PARTIAL_PERIOD_ESTIMATED" if request.partialPeriod else "HHA_SHORTENED_PERIOD_ESTIMATED" if request.shortenedPeriod else "HHA_ORDINARY_PERIOD_ESTIMATED",
+                               reason="CMS CY 2026 LUPA calculation completed." if is_lupa else "CMS CY 2026 partial-period HH PPS calculation completed." if request.partialPeriod else "CMS CY 2026 shortened-statement HH PPS calculation completed without partial-period proration." if request.shortenedPeriod else "CMS CY 2026 ordinary-period HH PPS calculation completed.",
                                totalPayment=total, pricerRelease=PRICER_RELEASE, calculationVersion=cms["calculationVersion"],
                                providerData=payload["providerData"], providerEvidence=evidence,
                                geographyEvidence=geography, cms=cms, limitations=limitations, lupa=lupa_detail,
-                               partialPeriod=partial_detail, lateNoa=late_detail, outlier=outlier_detail)
+                               partialPeriod=partial_detail, lateNoa=late_detail, outlier=outlier_detail, shortenedPeriod=shortened_detail)
         except HhaInputError as exc:
             return HhaResponse(claimId=request.claimId, status="UnableToPrice", reasonCode=exc.code, reason=exc.reason,
                                pricerRelease=PRICER_RELEASE, calculationVersion=cms.get("calculationVersion"),

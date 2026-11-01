@@ -1,6 +1,6 @@
 # Supplied-HIPPS Home Health first pass
 
-The optional HH bridge prices ordinary, LUPA, partial-period, late-NOA and outlier CY 2026 original `329`/`0329` claims
+The optional HH bridge prices ordinary, LUPA, partial-period, shortened discharge/death, late-NOA and outlier CY 2026 original `329`/`0329` claims
 using a supplied HIPPS code and the pinned CMS HHA 2.6.0 executable. It uses
 the existing Myelin JVM and HHA Java bindings with a dedicated validated mapper.
 It does not use the generic `HhaClient.create_input_claim()` defaults.
@@ -47,11 +47,12 @@ The provider must exist with usable dated reference data in the running image.
 - `hippsCode`: five-character supplied code present in the pinned 2026 HHRG table.
 - `admissionDate`: actual start of care. `fromDate`/`throughDate`: explicit
   statement dates, both within CY 2026. Full periods span 30 inclusive days;
-  supported partial periods span 1-29 inclusive days.
-- `noticeReceiptDate`: accepted NOA date, from admission through admission plus
-  five days. Missing/late notices and waiver processing are outside this pass.
+  supported partial periods and shortened discharge/death statements span 1-29 inclusive days.
+- `noticeReceiptDate`: accepted NOA date. Receipts later than admission plus five
+  days require the explicit `lateNoa` no-exception context described below.
 - `periodType`: `Full30Day`, confirming the period has no partial-period event,
-  or `Partial30Day` with the explicit `partialPeriod` facts below.
+  `Partial30Day` with the explicit `partialPeriod` facts below, or `Shortened30Day`
+  with explicit `shortenedPeriod` discharge/death facts.
 - `serviceCountyFips`: five-digit patient service-county FIPS from CMS value code
   85; `cbsaCode`: CMS value-code 61 wage area, preserving leading zeros. The
   two-digit CMS rural state code or full `999xx` rural code is accepted.
@@ -121,7 +122,7 @@ An initial or only period without a covered SN, PT, OT or SLP visit is outside
 this implementation and returns `HHA_LUPA_CONTEXT_UNSUPPORTED`. Continuing
 periods may contain only MSW or aide visits.
 
-Outliers, late NOA, separately paid services, 034X,
+Separately paid services, 034X,
 revisions/cancellations, and OASIS grouping remain outside this pass.
 Claim/visit facts and assessment-derived HIPPS remain the submitting system's
 responsibility. A `Success` result is a PPS payment estimate, not coverage,
@@ -304,3 +305,46 @@ Outliers use the pinned per-unit rates, capped eligible daily units, a 0.37 fixe
 Partial-period and late-NOA calculations apply in CMS order: period adjustment, outlier and cap, NOA reduction on both components, then HHVBP. The existing later-period NOA application adjustment also includes the allowed outlier. Raw CMS remains separate from policy-adjusted net amounts. Existing requests without outlier context retain their input/response shapes.
 
 The 25-case fixture contains complete unmodified standalone CMS output and independent published-rate Decimal expectations, including cap equality/denial, zero history, all six disciplines, urban geography, QRP/VBP, partial periods, late NOA, zero payment, LUPA non-applicability, and the three-visit standardized-payment branch. Twenty public API cases are supplied for retained local verification. Rules: [CY 2026 CR14304](https://www.cms.gov/files/document/r13488cp.pdf) and [CMS pricer decision sequence](https://www.cms.gov/files/document/r10919cp.pdf).
+
+## Shortened discharge/death statements without proration
+
+Use `periodType: "Shortened30Day"` for an original CY 2026 statement of 1-29
+inclusive days ending in discharge to home/self-care or death, with all four facts:
+
+```json
+"shortenedPeriod": {
+  "eventType": "Discharge",
+  "patientStatus": "01",
+  "eventDate": "2026-06-15",
+  "noSubsequentCareWithin30Days": true
+}
+```
+
+For death, use `eventType: "Death"` and `patientStatus: "20"`. The event date
+must equal the actual statement Through date, and all covered visits must be
+within that statement. No `partialPeriod` context may be present. The caller
+attests that there is no subsequent home health care within the original 30-day
+window. A transfer or qualifying discharge/readmission needs the existing partial
+payment path; an unspecified short statement never implies either payment rule.
+
+The real statement Through date is submitted unchanged to CMS. The payment input
+retains `hhrgNumberOfDays: 30` and `partialEpisodePaymentIndicator: "N"`. LUPA
+thresholds, per-visit/add-on rules, outlier thresholds, annual cap and late-NOA
+rules continue to apply. In particular, shortening the statement does not cap the
+existing admission-based NOA delay at the event date: raw CMS and policy evidence
+retain the original sequence and 30-day penalty denominator, even if the accepted
+NOA is later than discharge/death. No artificial period extension is submitted.
+
+A successful response includes `shortenedPeriod` with the original event facts,
+first/last billable dates, actual `statementDays`, `periodDays: 30`,
+`paymentRatio: "1.00"` and `adjustmentApplied: false`. Non-LUPA pricing uses
+`HHA_SHORTENED_PERIOD_ESTIMATED`; LUPA retains `HHA_LUPA_ESTIMATED`. The optional
+field is omitted from historical ordinary/partial requests and responses and from
+unpriced outcomes. There is no database schema change.
+
+These boundaries follow [CMS Claims Processing Manual chapter 10](https://www.cms.gov/regulations-and-guidance/guidance/manuals/downloads/clm104c10.pdf),
+sections 10.1.5, 10.1.15-17 and 40.2, with partial-payment triggers defined in
+[42 CFR 484.235](https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-G/part-484/subpart-E/section-484.235).
+The captured synthetic fixtures in `tests/fixtures/hha-2026-shortened.json` retain
+complete unmodified standalone CMS outputs for all payment branches, including
+late NOA after the event date. Run `tests.test_hha_shortened` with the other HH tests.

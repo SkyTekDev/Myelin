@@ -28,7 +28,7 @@ def release_info() -> dict:
         "lastServiceDate": LAST_SERVICE_DATE.isoformat(),
         "supportedBillTypes": ["329", "0329"],
         "supportedPeriodType": "Full30Day",
-        "supportedPeriodTypes": ["Full30Day", "Partial30Day"],
+        "supportedPeriodTypes": ["Full30Day", "Partial30Day", "Shortened30Day"],
         "grouping": "SuppliedHippsOnly",
-        "supportedPayment": "OrdinaryPeriodLupaPartialPeriodLateNoaAndOutlier",
+        "supportedPayment": "OrdinaryPeriodLupaPartialPeriodShortenedPeriodLateNoaAndOutlier",
     }
