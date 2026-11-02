@@ -144,6 +144,7 @@ data/
 !bridge/data/
 bridge/data/*
 !bridge/data/hha-provider-annual-2026-v1.json
+!bridge/data/hha-geography-2026-v1.json
 
 # Generated Stubs
 /myelin/jpype-stubs/

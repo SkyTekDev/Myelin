@@ -79,7 +79,7 @@ def main():
             data.update(overrides)
             model = HhaRequest.model_validate(data)
             provider = provider_for_period(processor.engine, model.providerCcn, model.fromDate, model.throughDate)
-            geography = resolve_geography(model.serviceCountyFips, model.cbsaCode, processor.wage_rows)
+            geography = resolve_geography(model.serviceCountyFips, model.cbsaCode, processor.wage_rows, processor.geography_catalog)
             payload = processor.build_payload(model, provider, geography)
             with urlopen(Request(args.standalone_url.rstrip("/") + "/v2/price-claim",
                                  data=to_json(payload), headers={"Content-Type": "application/json"}), timeout=30) as response:

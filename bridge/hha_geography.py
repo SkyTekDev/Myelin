@@ -1,10 +1,4 @@
-"""Validate submitted CMS HH geography; never infer a county/CBSA from ZIP.
-
-The pinned CMS wage-index release lists 41 counties affected by transition
-codes, including counties whose transition expired for 2026. It does not
-provide a complete FIPS-to-CBSA crosswalk. Other submitted county/area pairs
-remain explicit caller inputs and are identified as unverified in evidence.
-"""
+"""Validate supplied service county and area against reviewed CY2026 sources."""
 
 import csv
 from datetime import date, datetime
@@ -16,6 +10,7 @@ from pathlib import Path
 import re
 
 from bridge.hha_provider import HhaInputError
+from bridge.hha_geography_catalog import GeographyCatalog
 
 
 TRANSITION_SOURCE_URL = "https://www.cms.gov/files/zip/cy-2026-final-hh-pps-wage-index.zip"
@@ -74,13 +69,8 @@ def _wage_index(row: dict) -> tuple[Decimal, str]:
     return wage, effective.isoformat()
 
 
-def resolve_geography(county_fips: str, submitted_cbsa: str, wage_rows: dict[str, dict]) -> dict:
-    """Return evidence for explicit CMS value-code 85 county and 61 area inputs.
-
-    Only listed transition counties have an independently verified county-to-
-    area mapping. Rural state matching is additional validation, not proof
-    that an arbitrary county belongs to a rural area.
-    """
+def resolve_geography(county_fips: str, submitted_cbsa: str, wage_rows: dict[str, dict], catalog: GeographyCatalog) -> dict:
+    """Require a known county, its exact published HH area, and matching wage."""
     if (not isinstance(county_fips, str) or not re.fullmatch(r"[0-9]{5}", county_fips)
             or county_fips[:2] not in FIPS_STATE_NAMES or county_fips[2:] == "000"):
         raise HhaInputError("HHA_COUNTY_INVALID", "Supply a five-digit service-county FIPS code with a valid state and nonzero county code.")
@@ -103,6 +93,11 @@ def resolve_geography(county_fips: str, submitted_cbsa: str, wage_rows: dict[str
         name = row.get("name")
         if not isinstance(name, str) or name.strip().upper() != FIPS_STATE_NAMES[county_fips[:2]]:
             raise HhaInputError("HHA_RURAL_STATE_MISMATCH", "The submitted rural CMS area and service-county FIPS refer to different states.")
+    mapped = catalog.county_entry(county_fips)
+    if cbsa != mapped['cmsWageIndexCode']:
+        raise HhaInputError('HHA_COUNTY_CBSA_MISMATCH', 'The submitted area does not match the reviewed CY2026 service-county wage area.')
+    if wage != Decimal(mapped['wageIndex']):
+        raise HhaInputError('HHA_WAGE_REFERENCE_MISMATCH', 'The selected wage index differs from the reviewed county wage reference.')
     result = {
         "submittedCbsaCode": submitted_cbsa,
         "cbsaCode": cbsa,
@@ -111,10 +106,9 @@ def resolve_geography(county_fips: str, submitted_cbsa: str, wage_rows: dict[str
         "wageIndexEffectiveDate": effective,
         "wageIndexReference": "cbsa-wage-index-2026.csv",
         "geographyBasis": "SubmittedCmsValueCodes",
-        "countyMappingVerified": transition is not None,
-        "limitations": [] if transition is not None else [
-            "County existence and county-to-CBSA/rural-area mapping were not independently verified; submitted CMS value codes are used."
-        ],
+        "countyMappingVerified": True,
+        "countyMappingEvidence": catalog.mapping_evidence(county_fips),
+        "limitations": [],
     }
     if transition is not None:
         result.update({
@@ -125,10 +119,11 @@ def resolve_geography(county_fips: str, submitted_cbsa: str, wage_rows: dict[str
     return result
 
 
-def validate_geography_references(wage_rows: dict[str, dict]) -> None:
-    """Fail startup unless pinned transitions reconcile with the HHA JAR table."""
+def validate_geography_references(wage_rows: dict[str, dict], catalog: GeographyCatalog) -> None:
+    """Revalidate every reviewed county's wage and the original transitions."""
+    catalog.validate_rates(wage_rows)
     # Each processor startup revalidates bytes even if a previous processor in
     # this interpreter initialized this small immutable lookup successfully.
     _transition_counties.cache_clear()
     for county, row in _transition_counties().items():
-        resolve_geography(county, row["cmsWageIndexCode"], wage_rows)
+        resolve_geography(county, row["cmsWageIndexCode"], wage_rows, catalog)

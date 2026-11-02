@@ -36,6 +36,8 @@ class HhaCmsIntegrationChecks(unittest.TestCase):
                                  federal_pps_blend=qrp, special_provider_update_factor=vbp,
                                  vbp_adjustment=0.12345, termination_date=None))
             session.commit()
+        from tests.hha_geography_fixture import seed_geography
+        seed_geography(cls.db)
         cls.processor = HhaProcessor(cls.db, cls.jar_root)
 
     @classmethod
@@ -73,7 +75,7 @@ class HhaCmsIntegrationChecks(unittest.TestCase):
         from bridge.hha_provider import provider_for_period
         from bridge.hha_geography import resolve_geography
         provider = provider_for_period(self.db, model.providerCcn, model.fromDate, model.throughDate)
-        geo = resolve_geography(model.serviceCountyFips, model.cbsaCode, self.processor.wage_rows)
+        geo = resolve_geography(model.serviceCountyFips, model.cbsaCode, self.processor.wage_rows, self.processor.geography_catalog)
         payload = self.processor.build_payload(model, provider, geo)
         claim = payload["claimData"]
         self.assertEqual(claim["hhrgNumberOfDays"], 30)

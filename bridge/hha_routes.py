@@ -10,8 +10,12 @@ router = APIRouter(prefix="/api/v1/hha", tags=["HHA"])
 
 
 def readiness(processor) -> dict:
-    return {"enabled": processor is not None,
-            "ready": processor is not None and jpype.isJVMStarted(), **release_info()}
+    result = {"enabled": processor is not None,
+              "ready": processor is not None and jpype.isJVMStarted(), **release_info()}
+    catalog = getattr(processor, 'geography_catalog', None)
+    if catalog is not None:
+        result['geographyReference'] = catalog.reference_info
+    return result
 
 
 @router.get("/ready")

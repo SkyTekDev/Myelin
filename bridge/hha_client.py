@@ -15,6 +15,7 @@ from pydantic_core import to_json
 
 from bridge.hha_geography import resolve_geography, validate_geography_references
 from bridge.hha_models import HhaRequest, HhaResponse
+from bridge.hha_geography_catalog import load_catalog
 from bridge.hha_late_noa import apply as apply_late_noa
 from bridge.hha_outlier import process_period as process_outlier_period, lupa_evidence as outlier_lupa_evidence
 from bridge.hha_provider import HhaInputError, provider_for_period
@@ -73,7 +74,8 @@ class HhaProcessor:
             for field in ("ruralDollarRate", "nonruralDollarRate", "ruralUnsubmittedDollarRate", "nonruralUnsubmittedDollarRate"):
                 if money(row[field]) <= 0:
                     raise RuntimeError("Invalid HHA per-visit rate reference.")
-        validate_geography_references(self.wage_rows)
+        self.geography_catalog = load_catalog(engine)
+        validate_geography_references(self.wage_rows, self.geography_catalog)
         # Only use the existing Java bindings. Do not invoke the generic claim
         # mapper or its rolling-year, geography, notice, and unit defaults.
         self.client = HhaClient.__new__(HhaClient)
@@ -172,7 +174,7 @@ class HhaProcessor:
                         and not any(visit.discipline in SKILLED_PRIORITY for visit in request.visits)):
                     raise HhaInputError("HHA_LUPA_CONTEXT_UNSUPPORTED", "An initial or only LUPA period requires a covered skilled nursing or therapy visit.")
                 provider = provider_for_period(self.engine, request.providerCcn, request.fromDate, request.throughDate)
-                geography = resolve_geography(request.serviceCountyFips, request.cbsaCode, self.wage_rows)
+                geography = resolve_geography(request.serviceCountyFips, request.cbsaCode, self.wage_rows, self.geography_catalog)
                 geography.update(jarSha256=JAR_SHA256, wageIndexReference="cbsa-wage-index-2026.csv")
                 payload = self.build_payload(request, provider, geography)
                 cms = self.calculate(payload)

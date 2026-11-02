@@ -69,7 +69,7 @@ class HhaPartialPeriodChecks(unittest.TestCase):
         from bridge.hha_geography import resolve_geography
         request = HhaRequest.model_validate(data)
         provider = provider_for_period(self.db, request.providerCcn, request.fromDate, request.throughDate)
-        geography = resolve_geography(request.serviceCountyFips, request.cbsaCode, self.processor.wage_rows)
+        geography = resolve_geography(request.serviceCountyFips, request.cbsaCode, self.processor.wage_rows, self.processor.geography_catalog)
         payload = self.processor.build_payload(request, provider, geography)
         self.assertEqual(payload["claimData"]["hhrgNumberOfDays"], 13)
         self.assertEqual(payload["claimData"]["partialEpisodePaymentIndicator"], "Y")

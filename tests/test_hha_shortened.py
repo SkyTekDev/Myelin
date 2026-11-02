@@ -94,7 +94,7 @@ class HhaShortenedChecks(unittest.TestCase):
         for name,payload in request_cases():
             request=HhaRequest.model_validate(payload)
             provider=provider_for_period(self.db,request.providerCcn,request.fromDate,request.throughDate)
-            geo=resolve_geography(request.serviceCountyFips,request.cbsaCode,self.processor.wage_rows)
+            geo=resolve_geography(request.serviceCountyFips,request.cbsaCode,self.processor.wage_rows, self.processor.geography_catalog)
             cms=self.processor.build_payload(request,provider,geo)["claimData"]
             with self.subTest(case=name):
                 self.assertEqual(cms["serviceThroughDate"],payload["throughDate"])

@@ -318,14 +318,53 @@ Rates, 432 HIPPS weights/thresholds, and 489 wage rows come directly from the
 hash-verified JAR. CMS's wage CSV uses Windows-1252 encoding. Both accepted
 runtime years and returned calculation version are explicitly pinned to 2026.
 
-The bridge also pins the 41 county transition rows from the
-[official CY 2026 HH wage-index release](https://www.cms.gov/files/zip/cy-2026-final-hh-pps-wage-index.zip).
-It checks current transition assignments, including expired transition codes,
-and validates rural state names against FIPS; CMS rural state numbers differ
-from FIPS state numbers. The release does not contain a complete county-FIPS
-crosswalk. Other county-to-CBSA/rural assignments remain caller supplied and
-return `countyMappingVerified=false` plus an explicit limitation. Patient ZIP
-and agency geography are never substituted.
+New calculations validate service-county membership and the exact submitted HH
+wage area against the approved release in Myelin's reference DB. The reviewed
+import package is `bridge/data/hha-geography-2026-v1.json`, SHA-256
+`b4d5e582fa73d2eb15f6ee02781ad8bfccab9db8a780eba006df3b0d5063688d`.
+The reviewed sources cover 3,222 county entries (50 states, DC and Puerto Rico),
+with 3,221 accepted mappings. CMS's FY2026 county register establishes county
+identity; Census July2023 delineations and the CY2026 HH workbook corroborate
+metro/division assignments. Published HH wages and the 41 transition/expired
+transition rows supply the payment areas. Every accepted wage is reconciled
+with the HHA JAR. ZIP and agency addresses never select the service county.
+The submitter still attests to the patient's actual location.
+
+One county, Stanly NC (`37167`), has conflicting source classifications and
+returns `HHA_GEOGRAPHY_SOURCE_CONFLICT` rather than choosing an interpretation.
+Unknown/obsolete FIPS use `HHA_COUNTY_NOT_FOUND`; inconsistent county/area pairs
+use `HHA_COUNTY_CBSA_MISMATCH` or the existing specific state/transition guard.
+Metropolitan divisions and Connecticut's current planning regions are explicit;
+the CMS rural state code is not the FIPS state number. All successful new
+responses have `countyMappingVerified=true` and `countyMappingEvidence` binding
+catalog/entry hashes, exact area/wage, year interval, complete source hashes and
+source row locators. The .NET API independently checks its own bundled copy.
+
+Regenerate only from the four retained, hash-pinned files using the optional
+Excel preparation dependency and `scripts/prepare_hha_geography.py --sources
+<retained-directory> --output <new-catalog.json>`. The directory must contain
+`fy2026-ipps-fr-county-cbsa-crosswalk-file.zip`,
+`cy-2026-final-hh-pps-wage-index.zip`, `list1_2023.xlsx` and `r13488cp.pdf`.
+Preparation requires exact source bytes, expected counts and complete
+cross-source reconciliation; a changed source requires review. The FY2026
+register's CBSA column is labeled FY2025, so it is not used without the
+independent Census/HH checks. SourceConflict entries cannot authorize payment.
+The JSON catalog is the reviewed import package. Load it into the Myelin DB
+before enabling HH using the recurring process below. At startup, Myelin
+reconstructs and verifies the complete DB release against its original catalog
+hash and reconciles all accepted wages with the CMS JAR; pricing uses the cached
+snapshot. There is no runtime JSON fallback, automatic schema creation or
+download. Ship the matching .NET verifier/pin and retain prior DB releases and
+approved API resources for historical receipts. No MCService schema change is
+needed.
+
+The November 2 applied pass passed 352 full pytest tests, 162 supplemental
+unittest tests and both standalone SNF checks. The .NET API saved 23 geographic
+scenarios to local MCService: 15 accepted payments and eight unpriced retries.
+The API runner passed 765 checks and a separate SELECT-only SQL audit passed
+2,051. All 139 prior HH claims and the original provider DB were preserved.
+All 13 .NET regression suites also passed, including 1,815 HH checks. Rebuilding
+the catalog from retained sources reproduced the exact reviewed checksum.
 
 The official transition-source ZIP SHA-256 is
 `c8734767077549704faf9627a8c92b34cb8ce13626379500239e07defc2aeca3`.
@@ -353,6 +392,72 @@ zero HRG allowance, zero outlier allowance, zero late penalty and the final tota
 
 These rules follow the [2026 rate update](https://www.cms.gov/files/document/mm14304-home-health-prospective-payment-system-cy-2026-rate-update.pdf)
 and [CMS Pricer input layout](https://www.cms.gov/files/document/r10839CP.pdf).
+
+## Recurring geography database load
+
+Load one immutable release per calendar payment year/revision. The initial
+release has 3,222 counties, 3,221 verified mappings and source conflict `37167`.
+The importer creates `hha_geography_releases` and `hha_geography_counties` plus
+five sealing triggers from `bridge/references/hha-geography-schema-v1.sql` in
+the same transaction as the data. Release rows retain exact source manifests,
+dates, counts, operator and timestamp; county rows retain exact four-decimal
+wage text, source-row locators and entry hashes. Sealed releases cannot be
+edited, deleted or extended. Corrections append a new revision.
+
+Run from the Myelin checkout with its prepared Python environment:
+
+```powershell
+$hhCatalog = '.\bridge\data\hha-geography-2026-v1.json'
+$hhDatabase = '.\data\myelin.db'
+$hhHash = 'b4d5e582fa73d2eb15f6ee02781ad8bfccab9db8a780eba006df3b0d5063688d'
+$hhRun = Join-Path '.\artifacts\hh-geography-loads' ([datetime]::UtcNow.ToString('yyyyMMddTHHmmssfffZ'))
+New-Item -ItemType Directory -Path $hhRun | Out-Null
+python -B scripts/import_hha_geography.py --catalog $hhCatalog --database $hhDatabase --expected-catalog-sha256 $hhHash --revision 1 --report (Join-Path $hhRun 'preview.json')
+python -B scripts/import_hha_geography.py --catalog $hhCatalog --database $hhDatabase --expected-catalog-sha256 $hhHash --revision 1 --apply --backup (Join-Path $hhRun 'before.db') --report (Join-Path $hhRun 'apply.json')
+python -B scripts/import_hha_geography.py --catalog $hhCatalog --database $hhDatabase --expected-catalog-sha256 $hhHash --revision 1 --report (Join-Path $hhRun 'repeat.json')
+```
+
+Review the preview before applying to the intended existing SQLite DB. Add
+`--operator` if the OS user does not identify the responsible operator. Reports
+and backups require fresh paths. A new apply verifies a complete online backup,
+all unrelated table fingerprints and earlier releases, and DB integrity before
+commit. A failure rolls back the new schema/data. An exact repeat returns
+`AlreadyLoaded` and makes no DB changes. Conflicting version/hash identities,
+corrupt data or incomplete schemas are refused rather than repaired silently.
+
+Restart Myelin to refresh its cache. `/api/v1/hha/ready` exposes
+`geographyReference` with the DB store, year/revision, hash and county counts.
+Missing, unsealed or altered required data prevents HH readiness. The .NET API
+continues independently validating the identical payment proof using its own
+reviewed catalog. Loading future years/revisions does not activate new payment
+support; review the CMS rules/pricer and both approved registries first.
+
+Treat geography as a recurring reference load when documenting load processes:
+prepare each annual final CMS HH release and applicable corrections. Monitor
+monthly, weekly during October–December (our recommended cadence). Use the
+[CMS final HH wage-index files](https://www.cms.gov/medicare/payment/prospective-payment-systems/home-health-pps/home-health-pps-wage-index),
+corroborating county/Census sources, and the OMB definitions actually adopted
+by CMS for that payment year. Retain raw downloads, hashes, diffs, unresolved
+conflicts, load reports and API/SQL/regression evidence.
+
+For QA, load the same reviewed package into a staging copy of QA's own DB,
+preserving its other reference data. Build a new Myelin image with that DB and
+matching code/schema assets, then validate readiness, priced/unpriced claims,
+saved evidence and historical replay through the deployed API. Keep the prior
+image/task revision and complete DB backup for rollback. External DB mounts
+need coordinated restoration while services are stopped. Provider-history
+imports remain a separate process; no claims or receipts belong in this data
+package. MedicareServiceAPI's `docs/HH-reference-loads.md` contains the full
+operator and QA runbook.
+
+The November 2 DB-backed local load added one release and 3,222 counties;
+all 242,266 IPSF and 132,823 OPSF rows were preserved. Independent reference-DB
+verification passed 3,237 checks and unchanged repeats returned AlreadyLoaded.
+The full suite passed 366 pytest tests and 176 supplemental unittest tests;
+both standalone SNF checks and all 13 .NET suites passed. The actual .NET API
+passed 765 live checks for 23 retained claims; independent MCService SQL passed
+2,051 checks. All 162 earlier HH claims were unchanged and 134 distinct prior
+successful receipts replayed without new calculations.
 
 ## Response and failures
 
