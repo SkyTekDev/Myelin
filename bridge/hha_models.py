@@ -277,6 +277,70 @@ class HhaLupaPayment(HhaLupaContext):
     visitPayments: list[HhaLupaVisitPayment] = Field(min_length=1, max_length=1000)
 
 
+class HhaA9272Context(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    benefitYear: Literal[2026]
+    asOfDate: date
+    remainingPartBDeductible: Annotated[Decimal, Field(ge=0, le=283, decimal_places=2, allow_inf_nan=False)]
+    basis: Literal["SubmittedRemainingPartBDeductible"]
+    excludesCurrentClaim: StrictBool
+    medicarePrimary: StrictBool
+    _asof = field_validator("asOfDate", mode="before")(_calendar_date)
+
+    @model_validator(mode="after")
+    def explicit_benefit_basis(self):
+        if self.asOfDate.year != 2026 or not self.excludesCurrentClaim or not self.medicarePrimary:
+            raise ValueError("Device benefits require explicit primary Medicare and a CY2026 snapshot excluding this claim.")
+        return self
+
+
+class HhaA9272Line(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    claimLineNumber: StrictInt = Field(ge=1)
+    serviceDate: date
+    revenueCode: Literal["0270", "0271", "0272", "0273", "0279"]
+    hcpcsCode: Literal["A9272"]
+    units: StrictInt = Field(ge=1, le=1000)
+    billedCharge: Annotated[Decimal, Field(gt=0, le=Decimal("9999999999999999.99"), decimal_places=2, allow_inf_nan=False)]
+    _service = field_validator("serviceDate", mode="before")(_calendar_date)
+
+
+class HhaA9272LinePayment(HhaA9272Line):
+    unitRate: Money
+    allowedAmount: Money
+    appliedDeductible: Money
+    coinsuranceAmount: Money
+    beneficiaryLiabilityAmount: Money
+    medicarePaymentBeforeSequestration: Money
+
+
+class HhaA9272Payment(HhaA9272Context):
+    ppsPayment: Money
+    rateEvidence: dict[str, Any]
+    linePayments: list[HhaA9272LinePayment] = Field(min_length=1, max_length=1000)
+    totalDeviceAllowance: Money
+    totalAppliedDeductible: Money
+    totalCoinsurance: Money
+    totalBeneficiaryLiability: Money
+    totalDeviceMedicarePaymentBeforeSequestration: Money
+    totalMedicarePaymentBeforeSequestration: Money
+    remainingPartBDeductibleAfterClaim: Money
+    allowanceBasis: Literal["NationalDeviceFeeBeforeCostSharing"]
+
+    @model_validator(mode="after")
+    def reconcile_device_amounts(self):
+        sums = {key: sum(getattr(row,key) for row in self.linePayments) for key in
+            ("allowedAmount", "appliedDeductible", "coinsuranceAmount", "beneficiaryLiabilityAmount", "medicarePaymentBeforeSequestration")}
+        if (self.totalDeviceAllowance != sums["allowedAmount"] or self.totalAppliedDeductible != sums["appliedDeductible"]
+                or self.totalCoinsurance != sums["coinsuranceAmount"] or self.totalBeneficiaryLiability != sums["beneficiaryLiabilityAmount"]
+                or self.totalDeviceMedicarePaymentBeforeSequestration != sums["medicarePaymentBeforeSequestration"]
+                or self.totalDeviceAllowance != self.totalBeneficiaryLiability+self.totalDeviceMedicarePaymentBeforeSequestration
+                or self.totalMedicarePaymentBeforeSequestration != self.ppsPayment+self.totalDeviceMedicarePaymentBeforeSequestration
+                or self.remainingPartBDeductibleAfterClaim != self.remainingPartBDeductible-self.totalAppliedDeductible):
+            raise ValueError("Device allowances, beneficiary liability and Medicare payment must reconcile.")
+        return self
+
+
 class HhaRequest(BaseModel):
     """CY 2026 original 329 full periods with an already assigned HIPPS code.
 
@@ -305,6 +369,8 @@ class HhaRequest(BaseModel):
     lateNoa: HhaLateNoaContext | None = None
     outlier: HhaOutlierContext | None = None
     shortenedPeriod: HhaShortenedPeriodContext | None = None
+    a9272: HhaA9272Context | None = None
+    a9272Lines: list[HhaA9272Line] | None = Field(default=None, min_length=1, max_length=1000)
 
     _claim_identity = field_validator("claimId")(_identifier)
     _dates = field_validator(
@@ -322,6 +388,13 @@ class HhaRequest(BaseModel):
     def period_and_visits(self):
         if not FIRST_SERVICE_DATE <= self.fromDate <= self.throughDate <= LAST_SERVICE_DATE:
             raise ValueError("The complete statement period must fall in CY 2026.")
+        if bool(self.a9272Lines) != (self.a9272 is not None):
+            raise ValueError("A9272 lines require matching explicit beneficiary context; context without devices is invalid.")
+        if self.a9272Lines:
+            if (len({row.claimLineNumber for row in self.a9272Lines}) != len(self.a9272Lines)
+                    or any(not self.fromDate <= row.serviceDate <= self.throughDate for row in self.a9272Lines)
+                    or self.a9272.asOfDate < self.throughDate):
+                raise ValueError("Device lines require unique bindings, dates within the statement and a benefit snapshot as of Through or later.")
         statement_days = (self.throughDate - self.fromDate).days + 1
         if self.periodType == "Full30Day":
             if statement_days != 30 or self.partialPeriod is not None or self.shortenedPeriod is not None:
@@ -384,12 +457,16 @@ class HhaResponse(BaseModel):
     lateNoa: HhaLateNoaPayment | None = None
     outlier: HhaOutlierPayment | None = None
     shortenedPeriod: HhaShortenedPeriodPayment | None = None
+    a9272: HhaA9272Payment | None = None
     limitations: list[str] = Field(default_factory=lambda: [
         "Payment estimate only; no eligibility or coverage determination."
     ])
 
     @model_validator(mode="after")
     def complete_outcome(self):
+        pps_total = self.totalPayment if self.a9272 is None else self.a9272.ppsPayment
+        if self.a9272 is not None and (self.status != "Success" or self.totalPayment != pps_total+self.a9272.totalDeviceAllowance):
+            raise ValueError("Combined allowance must reconcile to PPS and separately evidenced device allowance.")
         if self.status == "UnableToPrice":
             if self.totalPayment is not None or self.lupa is not None or self.partialPeriod is not None or self.lateNoa is not None or self.outlier is not None or self.shortenedPeriod is not None:
                 raise ValueError("An unpriced outcome must not contain a total payment.")
@@ -405,7 +482,7 @@ class HhaResponse(BaseModel):
         if self.reasonCode == "HHA_LUPA_ESTIMATED":
             if (self.lupa is None
                     or len({visit.visitId for visit in self.lupa.visitPayments}) != len(self.lupa.visitPayments)
-                    or sum(visit.totalPayment for visit in self.lupa.visitPayments) != self.totalPayment):
+                    or sum(visit.totalPayment for visit in self.lupa.visitPayments) != pps_total):
                 raise ValueError("A LUPA estimate requires complete, unique, reconciled visit payments.")
         if self.reasonCode == "HHA_PARTIAL_PERIOD_ESTIMATED":
             if self.partialPeriod is None or not self.partialPeriod.adjustmentApplied or self.lupa is not None:
@@ -422,7 +499,7 @@ class HhaResponse(BaseModel):
                     or detail.paymentRatio != (Decimal(detail.coveredDays) / 30).quantize(Decimal(".01"), rounding="ROUND_HALF_UP")
                     or detail.adjustmentApplied == (self.lupa is not None)):
                 raise ValueError("Partial-period evidence must reconcile to dates, days and payment method.")
-        if self.lateNoa is not None and self.lateNoa.netPayment != self.totalPayment:
+        if self.lateNoa is not None and self.lateNoa.netPayment != pps_total:
             raise ValueError("Late NOA net payment must match the accepted estimate.")
         return self
 
@@ -431,7 +508,7 @@ class HhaResponse(BaseModel):
         # Keep existing required null totals/calculation fields on failures.
         # Only the new optional field is omitted for historical ordinary shape.
         result = handler(self)
-        for field in ("lupa", "partialPeriod", "lateNoa", "outlier", "shortenedPeriod"):
+        for field in ("lupa", "partialPeriod", "lateNoa", "outlier", "shortenedPeriod", "a9272"):
             if getattr(self, field) is None:
                 result.pop(field, None)
         return result

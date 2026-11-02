@@ -38,6 +38,8 @@ class HhaCmsIntegrationChecks(unittest.TestCase):
             session.commit()
         from tests.hha_geography_fixture import seed_geography
         seed_geography(cls.db)
+        from tests.hha_a9272_fixture import seed_rates
+        seed_rates(cls.db)
         cls.processor = HhaProcessor(cls.db, cls.jar_root)
 
     @classmethod

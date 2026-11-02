@@ -16,6 +16,8 @@ from pydantic_core import to_json
 from bridge.hha_geography import resolve_geography, validate_geography_references
 from bridge.hha_models import HhaRequest, HhaResponse
 from bridge.hha_geography_catalog import load_catalog
+from bridge.hha_separate_payment_rates import load_rates
+from bridge.hha_a9272 import calculate as calculate_a9272
 from bridge.hha_late_noa import apply as apply_late_noa
 from bridge.hha_outlier import process_period as process_outlier_period, lupa_evidence as outlier_lupa_evidence
 from bridge.hha_provider import HhaInputError, provider_for_period
@@ -65,6 +67,10 @@ class HhaProcessor:
             raise RuntimeError("Start Myelin JVM before HHA processor.")
         self.engine = engine
         self.lock = Lock()
+        try:
+            self.a9272_rates = load_rates(engine)
+        except HhaInputError:
+            self.a9272_rates = None
         self.hrg_rows = self._reference_rows(jar, "hrg-2026.csv", "code")
         self.wage_rows = self._reference_rows(jar, "cbsa-wage-index-2026.csv", "cbsa")
         self.revenue_rows = self._reference_rows(jar, "rev-2026.csv", "code")
@@ -225,13 +231,16 @@ class HhaProcessor:
                 limitations.extend(geography["limitations"])
             if request.shortenedPeriod:
                 limitations.append("Discharge/death, event date and no subsequent care within the original 30-day period are submitted facts, not CWF or history verification; later home health care may require claim adjustment. The shortened statement does not prorate its period payment.")
+            total, a9272_detail = calculate_a9272(request, total, self.a9272_rates)
+            if a9272_detail is not None:
+                limitations.append("Combined allowance includes the national device fee before beneficiary cost sharing. Device deductible/coinsurance and Medicare payment before sequestration use the submitted snapshot; no benefit ledger is adjudicated or reserved.")
             return HhaResponse(claimId=request.claimId, status="Success",
                                reasonCode="HHA_LUPA_ESTIMATED" if is_lupa else "HHA_PARTIAL_PERIOD_ESTIMATED" if request.partialPeriod else "HHA_SHORTENED_PERIOD_ESTIMATED" if request.shortenedPeriod else "HHA_ORDINARY_PERIOD_ESTIMATED",
                                reason="CMS CY 2026 LUPA calculation completed." if is_lupa else "CMS CY 2026 partial-period HH PPS calculation completed." if request.partialPeriod else "CMS CY 2026 shortened-statement HH PPS calculation completed without partial-period proration." if request.shortenedPeriod else "CMS CY 2026 ordinary-period HH PPS calculation completed.",
                                totalPayment=total, pricerRelease=PRICER_RELEASE, calculationVersion=cms["calculationVersion"],
                                providerData=payload["providerData"], providerEvidence=evidence,
                                geographyEvidence=geography, cms=cms, limitations=limitations, lupa=lupa_detail,
-                               partialPeriod=partial_detail, lateNoa=late_detail, outlier=outlier_detail, shortenedPeriod=shortened_detail)
+                               partialPeriod=partial_detail, lateNoa=late_detail, outlier=outlier_detail, shortenedPeriod=shortened_detail, a9272=a9272_detail)
         except HhaInputError as exc:
             return HhaResponse(claimId=request.claimId, status="UnableToPrice", reasonCode=exc.code, reason=exc.reason,
                                pricerRelease=PRICER_RELEASE, calculationVersion=cms.get("calculationVersion"),

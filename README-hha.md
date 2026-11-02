@@ -5,6 +5,8 @@ using a supplied HIPPS code and the pinned CMS HHA 2.6.0 executable. It uses
 the existing Myelin JVM and HHA Java bindings with a dedicated validated mapper.
 It does not use the generic `HhaClient.create_input_claim()` defaults.
 
+[CY 2026 A9272 separate devices](README-hha-a9272.md) adds versioned DB fees, explicit deductible/coinsurance assumptions, independent device detail and a reusable annual load process alongside the existing PPS estimate.
+
 ## Enable locally
 
 From the Myelin project directory:

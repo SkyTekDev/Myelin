@@ -15,6 +15,10 @@ def readiness(processor) -> dict:
     catalog = getattr(processor, 'geography_catalog', None)
     if catalog is not None:
         result['geographyReference'] = catalog.reference_info
+    if processor is not None and hasattr(processor, 'a9272_rates'):
+        rates = processor.a9272_rates
+        result['a9272Reference'] = dict(ready=rates is not None, store='MyelinDatabase',
+            catalogSha256=rates.sha256 if rates is not None else None)
     return result
 
 
