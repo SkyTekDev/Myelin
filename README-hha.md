@@ -137,10 +137,182 @@ Provider inputs are read from actual effective-dated IPSF type-36 rows:
   supported 0.95–1.05 range. The generic SNF/hospital `vbp_adjustment` is ignored.
 
 These field meanings follow [CMS's IPSF addendum, fields 18 and 30](https://www.cms.gov/files/document/r12452cp.pdf).
-The first pass requires a CY 2026 effective row, no reference change within the
-period, a unique latest effective record, and no elapsed termination date.
-This is a conservative reference-readiness policy, not a Medicare enrollment
-determination. Missing facts never become favorable defaults.
+A unique latest effective record, no reference change within the period, and no
+elapsed termination date remain required. Existing CY 2026 effective rows retain
+their original pricing/evidence contract. Older effective rows require a matching
+entry in the reviewed, SHA-256-pinned annual catalog described below. Missing
+facts never become favorable defaults; reference readiness is not an enrollment
+determination.
+
+### Reviewed CY 2026 annual provider references
+
+`bridge/data/hha-provider-annual-2026-v1.json` is a canonical JSON catalog, pinned
+by `bridge/hha_provider_annual.py` and independently by MedicareServiceAPI. It
+binds an older row's used facts, its complete retained CMS history, the history
+cutoff and next effective date, and two annual source facts:
+
+- The provider must occur on CMS's positive CY 2026 compliant or noncompliant APU
+  list, establishing QRP `0` or `2`. The excluded list does not supply an automatic
+  favorable default or exception.
+- Exact HHVBP continues to come from IPSF field 30. The agency-level HHVBP dataset's
+  CY 2026 payment-year percentage corroborates annual applicability at its published
+  precision. It never supplies extra precision or replaces the exact factor.
+  Rounding-boundary ties and conflicting percentages remain unsupported.
+
+The reviewed catalog also recognizes an explicit ineligible-APR outcome. This
+requires an actual row in the retained CY2024-performance/CY2026-payment dataset,
+literal `NA` payment year and percentage, both exact published footnotes saying
+the HHA is ineligible for an APR, and the two pinned CMS policy documents linking
+performance/payment years and confirming no payment adjustment when fewer than
+five measures produce no TPS. The retained exact IPSF factor must already be 1.
+An absent row, bare `NA`, another footnote, a non-neutral raw factor, or unknown
+QRP cannot establish this evidence. QRP remains independently `0` or `2`; the
+ineligible-APR rule does not imply QRP compliance or an APU exemption.
+The pinned policy roles are `PerformanceToPaymentYear` ([CMS model guide,
+PDF page 10](https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-model-guide))
+and `NoAprNoAdjustment` ([CMS FAQ Q4006, PDF pages 38-39](https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-faqs)).
+
+The first reviewed release contains 1,485 older-provider entries (1,424 QRP `0`
+and 61 QRP `2`), with full-history cutoff November 1, 2026. Its SHA-256 is
+`f422f6459620f453c31b17ae412b8966a3e90b952bd886256367dc552471a461`.
+All entries use the explicit ineligible-APR branch with an exact source factor
+of 1. Nine requested providers were excluded because the retained IPSF QRP
+indicator conflicted with their annual list. Catalog membership alone does not
+establish local readiness: selected local facts and the entire statement interval
+must still match. Existing per-CCN failures are returned at pricing time;
+generic HH service readiness does not attest annual coverage for every provider.
+Operators can verify the actual pinned catalog before deployment:
+
+```powershell
+.\.venv\Scripts\python.exe -B -c "from bridge.hha_provider_annual import load_annual_catalog; c = load_annual_catalog(); print(c.sha256, len(c.document['entries']))"
+```
+
+The selected local used facts must exactly match the retained CMS provider row.
+The actual statement must end on or before the history cutoff and before its
+next effective record, including a later record that changes provider type.
+Downloading a recent file, changing its export stamp, or copying an older factor
+does not establish annual payment evidence.
+
+Successful older-row results add `providerEvidence.annualPaymentEvidence`, with
+the catalog/entry/content fingerprints, local row identity, payment year,
+source URLs/hashes/row locators, annual factor facts, and history interval.
+The existing `sourceRowFingerprint` remains unchanged and binds the actual local
+row. This optional proof is absent on existing CY 2026 row results, preserving
+their saved response and receipt identities. Catalog corruption, missing annual
+facts, conflicting local facts, and uncovered periods remain unpriced.
+
+The package preparation tool reads retained official sources from a
+`HHAProviderAnnualSources/1` manifest: `paymentYear: 2026`, all three
+`qualityReportingSources` classifications (`Compliant`, `NonCompliant`,
+`Excluded`), `valueBasedPurchasingSource` (`datasetIdentifier: "56d7-4994"`),
+and `providerHistorySources`. Every source has a package-relative `file`, official
+`sourceUrl`, lowercase `sourceSha256`, and `publishedDate` or `cutoffDate`.
+For the explicit ineligible-APR branch, `valueBasedPurchasingSource.policySources`
+also retains both policy PDFs, each with its `basis` role, package-relative `file`,
+official `sourceUrl`, pinned `sourceSha256`, and reviewed `rowLocator`.
+Provider snapshots must request each CCN's full history from 1980 through an actual
+cutoff date using the official CSV export; filtering to type 36 is not permitted.
+The tool parses the actual PDF/CSV files, reports excluded/conflicting references,
+and writes a new self-contained package. It does not access a provider database.
+
+```powershell
+.\.venv\Scripts\python.exe -B scripts/prepare_hha_provider_reference.py `
+    --sources-manifest retained-sources/sources-manifest.json `
+    --output prepared-hha-reference
+$catalogSha256 = .\.venv\Scripts\python.exe -B -c "from bridge.hha_provider_annual import CATALOG_SHA256; print(CATALOG_SHA256)"
+.\.venv\Scripts\python.exe -B scripts/import_hha_provider_reference.py `
+    --package prepared-hha-reference --database runtime/myelin.db `
+    --expected-catalog-sha256 $catalogSha256 --report preview.json
+```
+
+Review the prepared catalog, per-CCN readiness, source/type counts, and preview
+before applying. Applying requires `--apply --backup <new-backup.db>` and a new
+report path. It verifies the complete logical backup, appends only missing IPSF
+history, preserves existing facts and export-stamp differences, verifies every
+other reference table, and commits atomically. Existing conflicts or ambiguous
+records stop an ordinary import; no truncate/update fallback is used. Catalog releases
+must be reviewed and shipped with matching pins in both applications. Annual
+proof needs no new MCService columns or runtime annual-fact table.
+An optional repeated `--ccn` limits the import to a reviewed subset after the
+entire source package and catalog have been verified. Each selected CCN retains
+its complete history, including other provider types. Dry runs list every
+existing-fact conflict and return `BlockedByConflicts`; applying any conflict is
+refused. No source or conflict is silently overwritten.
+
+An explicitly reviewed correction is supported with the paired
+`--conflict-review <review.json>` and
+`--expected-conflict-review-sha256 <independently-reviewed-hash>` options. The
+default remains append-only. The `HHAProviderConflictReview/1` manifest must bind
+the exact database SHA-256, package-manifest SHA-256, source-manifest SHA-256 and
+catalog SHA-256. Its `approvedRows` must cover exactly every selected conflict:
+CCN, effective date, retained local row id, complete old-row fingerprint, complete
+normalized source-row fingerprint, exact retained history source identity, and
+every changed field's exact `before`/`after` values. Export-date changes are
+explicitly included for a corrected row; export-stamp-only differences on other
+rows remain preserved. Duplicate, stale, missing or extra approvals fail closed.
+Both the old and replacement row must have raw provider type `36`.
+The exact reviewed database must be stable with no pending WAL/journal bytes,
+which are outside the pinned main database file's fingerprint.
+
+Review the actual source values rather than coercing them to the annual catalog.
+An authoritative correction to QRP `1` or a real termination date remains that
+raw value and can keep the provider unpriced. The annual catalog is not changed
+by the database import. Preview with the option pair, then apply with the same
+reviewed manifest, a new report path and the mandatory complete backup:
+
+```powershell
+.\.venv\Scripts\python.exe -B scripts/import_hha_provider_reference.py `
+    --package prepared-hha-reference --database data/myelin.db `
+    --expected-catalog-sha256 $catalogSha256 `
+    --conflict-review reviewed-corrections.json `
+    --expected-conflict-review-sha256 $reviewSha256 `
+    --apply --backup backups/myelin-before-reviewed-import.db `
+    --report reviewed-import-applied.json
+```
+
+Corrections retain each local row id and replace only its explicitly reviewed
+source fields. They share one atomic transaction with missing-history inserts.
+The importer verifies the complete backup, every unreviewed existing IPSF row,
+every corrected full row, every other reference table, and SQLite integrity
+before committing. Reports distinguish `rowsToUpdate` from `rowsUpdated`, retain
+the exact reviewed field changes and source hashes, and report
+`unreviewedProviderRowsUnchanged`. They do not claim all existing rows were
+unchanged when a reviewed correction was applied.
+
+### QA reference-data rollout
+
+`data/myelin.db` is Git-ignored, but the Dockerfile copies the build-context file
+into `/app/data/myelin.db`. A code commit alone does not deliver the verified
+provider history. Start with QA's current effective database as the release seed
+and preserve its other reference tables; copying the local database over QA could
+replace unrelated reference data. Check the task's database path and mounts,
+which can override the file baked into the image.
+
+Use the retained verified source package to dry-run the importer against that
+seed. If there are conflicts, independently review its exact old/source rows and
+create a QA-specific hash-pinned correction manifest. The local 17-row review is
+bound to database SHA-256
+`78b46bfbf8b6dabf7eb43150d81668fdbeb7284d648f49e01d617ed32a0e5a15`
+and exact old-row fingerprints; reuse it only if the current QA file and every
+approved row match. Apply with a complete verified backup, then run the default
+no-review preview again and require zero conflicts, inserts and updates. Record
+the resulting reference database hash as part of the data release.
+
+Package that prepared seed in a new private image, verify its database hash and
+the actual serving task's effective data, and redeploy it with the matching code.
+Both Myelin and MedicareServiceAPI must retain the same reviewed catalog pin
+`f422f6459620f453c31b17ae412b8966a3e90b952bd886256367dc552471a461`.
+The deployment helper preserves existing environment variables and mounts and
+has no HH enable switch: explicitly set `HHA_ENABLED=true` in Myelin and enable
+and configure HH in MedicareServiceAPI. Retain the previous private image/task
+definition and reference backup for rollback.
+
+This rollout copies reference data only; local MCService claims and synthetic
+test results are not release data, and no additional MCService migration is
+needed. The local SQL verification harness accepts loopback services only and
+does not establish QA readiness. Check the actual QA HH readiness, submit QA
+claims through its .NET API, and verify the results in its own MCService database
+as a separate deployment validation.
 
 Rates, 432 HIPPS weights/thresholds, and 489 wage rows come directly from the
 hash-verified JAR. CMS's wage CSV uses Windows-1252 encoding. Both accepted
@@ -216,7 +388,8 @@ Run from the project root using the existing virtual environment:
 ```powershell
 .\.venv\Scripts\python.exe -B -m unittest tests.test_hha_models tests.test_hha_provider `
     tests.test_hha_geography tests.test_hha_routes tests.test_hha_integration `
-    tests.test_hha_lupa tests.test_hha_partial -v
+    tests.test_hha_lupa tests.test_hha_partial tests.test_hha_provider_annual `
+    tests.test_hha_provider_reference -v
 ```
 
 These tests need no new test dependencies. They use isolated synthetic provider

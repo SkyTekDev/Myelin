@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from myelin.pricers.ipsf import IPSF
+from bridge.hha_provider_annual import AnnualProviderReferenceError, annual_payment_evidence
 
 
 class HhaInputError(ValueError):
@@ -57,8 +58,9 @@ def provider_for_period(engine, ccn: str, start: date, end: date) -> dict:
     by CMS's provider-specific-file addendum, not the hospital/SNF VBP field:
     https://www.cms.gov/files/document/r12452cp.pdf
 
-    A CY 2026 effective record is a conservative first-pass reference-readiness
-    requirement. An older record's rejection is not an enrollment determination.
+    Older effective records require a pinned CMS full-history/annual reference
+    entry covering the complete period and corroborating the actual used facts.
+    Missing reference evidence is not an enrollment determination.
     Patient service geography is deliberately resolved outside this function.
     Database exceptions propagate for the route to report service unavailability.
     """
@@ -92,11 +94,6 @@ def provider_for_period(engine, ccn: str, start: date, end: date) -> dict:
             raise HhaInputError(
                 "HHA_PROVIDER_TYPE_MISMATCH", "The effective IPSF provider record is not a home health agency."
             )
-        if effective.year != 2026:
-            raise HhaInputError(
-                "HHA_PROVIDER_REFERENCE_STALE", "First-pass CY 2026 HH pricing requires a CY 2026 effective provider record; refresh the reference data."
-            )
-
         # NULL and these sentinels are source representations of no termination.
         raw_termination = row.termination_date
         termination = None
@@ -125,7 +122,7 @@ def provider_for_period(engine, ccn: str, start: date, end: date) -> dict:
         fingerprint = hashlib.sha256(
             json.dumps(raw_used, sort_keys=True, separators=(",", ":")).encode("utf-8")
         ).hexdigest()
-        return {
+        result = {
             "providerData": {
                 "providerCcn": ccn,
                 "effectiveDate": effective.isoformat(),
@@ -148,3 +145,10 @@ def provider_for_period(engine, ccn: str, start: date, end: date) -> dict:
                 "sourceRowFingerprint": fingerprint,
             },
         }
+        if effective.year != 2026:
+            try:
+                result["providerEvidence"]["annualPaymentEvidence"] = annual_payment_evidence(
+                    result["providerEvidence"], start, end)
+            except AnnualProviderReferenceError as unsupported:
+                raise HhaInputError(unsupported.code, unsupported.reason) from None
+        return result
