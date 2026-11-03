@@ -17,7 +17,7 @@ from pydantic import (
     model_validator,
     model_serializer,
 )
-from bridge.hha_release import FIRST_SERVICE_DATE, LAST_SERVICE_DATE
+from bridge.hha_release import CY_2026, HhaRelease, release_for_through, require_statement_release
 
 
 Money = Annotated[Decimal, Field(ge=0, allow_inf_nan=False)]
@@ -61,7 +61,7 @@ class HhaLupaContext(BaseModel):
 
 class HhaOutlierContext(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    calendarYear: Literal[2026]
+    calendarYear: StrictInt
     asOfDate: date
     priorPaymentTotal: Annotated[Decimal, Field(ge=0, le=Decimal("999999999.99"), decimal_places=2, allow_inf_nan=False)]
     priorOutlierTotal: Annotated[Decimal, Field(ge=0, le=Decimal("999999999.99"), decimal_places=2, allow_inf_nan=False)]
@@ -70,13 +70,14 @@ class HhaOutlierContext(BaseModel):
     _asof = field_validator("asOfDate", mode="before")(_calendar_date)
     @model_validator(mode="after")
     def valid_snapshot(self):
-        if self.asOfDate.year != 2026 or not self.totalsExcludeCurrentClaim or self.priorOutlierTotal > self.priorPaymentTotal:
-            raise ValueError("Outlier history must be a CY2026 snapshot excluding this claim, with outliers within total payments.")
+        if (release_for_through(self.asOfDate) is None or self.asOfDate.year != self.calendarYear
+                or not self.totalsExcludeCurrentClaim or self.priorOutlierTotal > self.priorPaymentTotal):
+            raise ValueError("Outlier history must use an approved calendar year and exclude this claim, with outliers within total payments.")
         return self
 
 
 class HhaOutlierPayment(HhaOutlierContext):
-    fixedDollarLossRatio: Annotated[Decimal, Field(ge=Decimal(".37"), le=Decimal(".37"), allow_inf_nan=False)]
+    fixedDollarLossRatio: Money
     lossSharingRatio: Annotated[Decimal, Field(ge=Decimal(".8"), le=Decimal(".8"), allow_inf_nan=False)]
     capRatio: Annotated[Decimal, Field(ge=Decimal(".1"), le=Decimal(".1"), allow_inf_nan=False)]
     imputedCost: Money
@@ -96,6 +97,9 @@ class HhaOutlierPayment(HhaOutlierContext):
 
     @model_validator(mode="after")
     def reconcile(self):
+        release = release_for_through(self.asOfDate)
+        if release is None or self.fixedDollarLossRatio != release.fixed_dollar_loss_ratio:
+            raise ValueError('Outlier fixed dollar loss ratio must match the approved release.')
         pool = max(Decimal(0), (self.priorPaymentTotal*Decimal('.1')).quantize(Decimal('.01'),rounding='ROUND_HALF_UP')-self.priorOutlierTotal)
         candidate = (max(Decimal(0),self.imputedCost-self.thresholdAmount)*Decimal('.8')).quantize(Decimal('.01'),rounding='ROUND_HALF_UP') if self.appliesToPeriod else Decimal(0)
         if (self.availableOutlierPool != pool or self.candidateOutlierBeforeVbp != candidate
@@ -325,9 +329,9 @@ class HhaLupaPayment(HhaLupaContext):
 
 class HhaA9272Context(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    benefitYear: Literal[2026]
+    benefitYear: StrictInt
     asOfDate: date
-    remainingPartBDeductible: Annotated[Decimal, Field(ge=0, le=283, decimal_places=2, allow_inf_nan=False)]
+    remainingPartBDeductible: Annotated[Decimal, Field(ge=0, decimal_places=2, allow_inf_nan=False)]
     basis: Literal["SubmittedRemainingPartBDeductible"]
     excludesCurrentClaim: StrictBool
     medicarePrimary: StrictBool
@@ -335,8 +339,11 @@ class HhaA9272Context(BaseModel):
 
     @model_validator(mode="after")
     def explicit_benefit_basis(self):
-        if self.asOfDate.year != 2026 or not self.excludesCurrentClaim or not self.medicarePrimary:
-            raise ValueError("Device benefits require explicit primary Medicare and a CY2026 snapshot excluding this claim.")
+        release = release_for_through(self.asOfDate)
+        if (release is None or self.asOfDate.year != self.benefitYear
+                or self.remainingPartBDeductible > release.part_b_deductible
+                or not self.excludesCurrentClaim or not self.medicarePrimary):
+            raise ValueError("Device benefits require an approved benefit year and a primary Medicare snapshot excluding this claim.")
         return self
 
 
@@ -388,7 +395,7 @@ class HhaA9272Payment(HhaA9272Context):
 
 
 class HhaRequest(BaseModel):
-    """CY 2026 original 329 and replacement 327 periods with supplied HIPPS.
+    """Original 329 and replacement 327 periods with supplied HIPPS.
 
     Geography values attest to submitted CMS billing values. The API validates
     their format and available references; it does not geocode an address or
@@ -430,15 +437,19 @@ class HhaRequest(BaseModel):
             raise ValueError("Only HH original 0329 and adjustment 0327 claims are supported.")
         return value.removeprefix("0")
 
+    @property
+    def release(self) -> HhaRelease:
+        return require_statement_release(self.fromDate, self.throughDate)
+
     @model_validator(mode="after")
     def period_and_visits(self):
-        if not FIRST_SERVICE_DATE <= self.fromDate <= self.throughDate <= LAST_SERVICE_DATE:
-            raise ValueError("The complete statement period must fall in CY 2026.")
+        release = self.release
         if bool(self.a9272Lines) != (self.a9272 is not None):
             raise ValueError("A9272 lines require matching explicit beneficiary context; context without devices is invalid.")
         if self.a9272Lines:
             if (len({row.claimLineNumber for row in self.a9272Lines}) != len(self.a9272Lines)
                     or any(not self.fromDate <= row.serviceDate <= self.throughDate for row in self.a9272Lines)
+                    or self.a9272.benefitYear != self.fromDate.year or self.a9272.benefitYear != release.payment_year
                     or self.a9272.asOfDate < self.throughDate):
                 raise ValueError("Device lines require unique bindings, dates within the statement and a benefit snapshot as of Through or later.")
         statement_days = (self.throughDate - self.fromDate).days + 1
@@ -452,7 +463,8 @@ class HhaRequest(BaseModel):
         elif (self.partialPeriod is None or self.shortenedPeriod is not None or not 1 <= statement_days <= 29
               or not self.throughDate < self.partialPeriod.nextCareStartDate <= self.fromDate + timedelta(days=29)):
             raise ValueError("A partial period requires explicit context, 1-29 statement days and subsequent care within the original period.")
-        if self.outlier is not None and self.outlier.asOfDate < self.throughDate:
+        if self.outlier is not None and (self.outlier.calendarYear != release.payment_year
+                                         or self.outlier.asOfDate < self.throughDate):
             raise ValueError("Outlier history must be as of the statement Through date or later.")
         if self.admissionDate > self.fromDate:
             raise ValueError("Admission/start of care cannot follow the statement From date.")
@@ -497,7 +509,7 @@ class HhaResponse(BaseModel):
     reason: StrictStr = Field(min_length=1)
     pricingMethod: Literal["HH_PPS"] = "HH_PPS"
     totalPayment: Money | None = None
-    pricerRelease: StrictStr = "2.6.0"
+    pricerRelease: StrictStr = CY_2026.pricer_release
     calculationVersion: StrictStr | None = None
     providerData: dict[str, Any] = Field(default_factory=dict)
     providerEvidence: dict[str, Any] = Field(default_factory=dict)

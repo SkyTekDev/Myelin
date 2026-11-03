@@ -13,7 +13,7 @@ from bridge.hha_provider_annual import canonical_json
 
 CATALOG_FILENAME = 'hha-separate-payment-rates-2026-v1.json'
 CATALOG_SHA256 = '9c952692c6c27afb4c2357e9b417f0333c6de18e67968097655fd7f3f3e4a67e'
-APPROVED_RELEASES = {2026: (1, CATALOG_SHA256)}
+APPROVED_RELEASES = {2025: (1, '90c05423f8c13a82fc5cb03f5440395c1f39eb89b4fc8b3f2bf4f2a7af065e94'), 2026: (1, CATALOG_SHA256)}
 
 
 def _unique(pairs):

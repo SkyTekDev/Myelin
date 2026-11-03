@@ -1,4 +1,4 @@
-"""Validate supplied service county and area against reviewed CY2026 sources."""
+"""Validate supplied service county and area against the reviewed payment-year sources."""
 
 import csv
 from datetime import date, datetime
@@ -54,7 +54,7 @@ def _transition_counties() -> dict[str, dict]:
     return mapped
 
 
-def _wage_index(row: dict) -> tuple[Decimal, str]:
+def _wage_index(row: dict, year: int) -> tuple[Decimal, str]:
     try:
         wage = Decimal(str(row["geographicWageIndex"]))
         raw_date = row["effectiveDate"]
@@ -64,7 +64,7 @@ def _wage_index(row: dict) -> tuple[Decimal, str]:
             effective = datetime.strptime(str(raw_date), "%Y%m%d").date()
     except (KeyError, InvalidOperation, TypeError, ValueError):
         raise HhaInputError("HHA_WAGE_REFERENCE_INVALID", "The selected HH wage-index reference is invalid.") from None
-    if not wage.is_finite() or wage <= 0 or effective != date(2026, 1, 1):
+    if not wage.is_finite() or wage <= 0 or effective != date(year, 1, 1):
         raise HhaInputError("HHA_WAGE_REFERENCE_INVALID", "The selected HH wage-index reference is invalid.")
     return wage, effective.isoformat()
 
@@ -76,18 +76,19 @@ def resolve_geography(county_fips: str, submitted_cbsa: str, wage_rows: dict[str
         raise HhaInputError("HHA_COUNTY_INVALID", "Supply a five-digit service-county FIPS code with a valid state and nonzero county code.")
     if not isinstance(submitted_cbsa, str) or not re.fullmatch(r"(?:[0-9]{2}|[0-9]{5})", submitted_cbsa):
         raise HhaInputError("HHA_CBSA_INVALID", "Supply the CMS wage-index area code, preserving leading zeros.")
+    year = catalog.reference_info["paymentYear"]
     cbsa = "999" + submitted_cbsa if len(submitted_cbsa) == 2 else submitted_cbsa
     row = wage_rows.get(cbsa)
     if not isinstance(row, dict) or str(row.get("cbsa")) != cbsa:
-        raise HhaInputError("HHA_WAGE_REFERENCE_MISSING", "No validated CY 2026 wage-index row exists for the submitted area.")
-    wage, effective = _wage_index(row)
-    transition = _transition_counties().get(county_fips)
+        raise HhaInputError("HHA_WAGE_REFERENCE_MISSING", f"No validated CY {year} wage-index row exists for the submitted area.")
+    wage, effective = _wage_index(row, year)
+    transition = _transition_counties().get(county_fips) if year == 2026 else None
     if transition is not None:
         if cbsa != transition["cmsWageIndexCode"]:
             raise HhaInputError("HHA_COUNTY_CBSA_MISMATCH", "The service county requires a different CY 2026 CMS wage-index code.")
         if wage != Decimal(transition["wageIndex"]):
             raise HhaInputError("HHA_WAGE_REFERENCE_MISMATCH", "The selected wage index disagrees with the official CY 2026 county transition reference.")
-    elif cbsa.startswith("50"):
+    elif year == 2026 and cbsa.startswith("50"):
         raise HhaInputError("HHA_TRANSITION_COUNTY_MISMATCH", "A transition wage-index code requires its verified service county.")
     if cbsa.startswith("999"):
         name = row.get("name")
@@ -95,7 +96,7 @@ def resolve_geography(county_fips: str, submitted_cbsa: str, wage_rows: dict[str
             raise HhaInputError("HHA_RURAL_STATE_MISMATCH", "The submitted rural CMS area and service-county FIPS refer to different states.")
     mapped = catalog.county_entry(county_fips)
     if cbsa != mapped['cmsWageIndexCode']:
-        raise HhaInputError('HHA_COUNTY_CBSA_MISMATCH', 'The submitted area does not match the reviewed CY2026 service-county wage area.')
+        raise HhaInputError('HHA_COUNTY_CBSA_MISMATCH', f'The submitted area does not match the reviewed CY{year} service-county wage area.')
     if wage != Decimal(mapped['wageIndex']):
         raise HhaInputError('HHA_WAGE_REFERENCE_MISMATCH', 'The selected wage index differs from the reviewed county wage reference.')
     result = {
@@ -104,7 +105,7 @@ def resolve_geography(county_fips: str, submitted_cbsa: str, wage_rows: dict[str
         "serviceCountyFips": county_fips,
         "wageIndex": wage,
         "wageIndexEffectiveDate": effective,
-        "wageIndexReference": "cbsa-wage-index-2026.csv",
+        "wageIndexReference": f"cbsa-wage-index-{year}.csv",
         "geographyBasis": "SubmittedCmsValueCodes",
         "countyMappingVerified": True,
         "countyMappingEvidence": catalog.mapping_evidence(county_fips),
@@ -124,6 +125,8 @@ def validate_geography_references(wage_rows: dict[str, dict], catalog: Geography
     catalog.validate_rates(wage_rows)
     # Each processor startup revalidates bytes even if a previous processor in
     # this interpreter initialized this small immutable lookup successfully.
+    if catalog.reference_info["paymentYear"] != 2026:
+        return
     _transition_counties.cache_clear()
     for county, row in _transition_counties().items():
         resolve_geography(county, row["cmsWageIndexCode"], wage_rows, catalog)

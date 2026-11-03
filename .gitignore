@@ -144,7 +144,9 @@ data/
 !bridge/data/
 bridge/data/*
 !bridge/data/hha-provider-annual-2026-v1.json
+!bridge/data/hha-geography-2025-v1.json
 !bridge/data/hha-geography-2026-v1.json
+!bridge/data/hha-separate-payment-rates-2025-v1.json
 !bridge/data/hha-separate-payment-rates-2026-v1.json
 
 # Generated Stubs

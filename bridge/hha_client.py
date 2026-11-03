@@ -22,14 +22,12 @@ from bridge.hha_late_noa import apply as apply_late_noa
 from bridge.hha_outlier import process_period as process_outlier_period, lupa_evidence as outlier_lupa_evidence
 from bridge.hha_provider import HhaInputError, provider_for_period
 from bridge.hha_release import (
-    CALCULATION_VERSIONS, DISCIPLINE_REVENUES, JAR_FILENAME, JAR_SHA256,
-    PRICER_RELEASE, SOURCE_URL, LUPA_INCREMENTAL_FACTORS,
+    CY_2026, DISCIPLINE_REVENUES, HhaRelease, LUPA_INCREMENTAL_FACTORS,
 )
 from myelin.pricers.hha import HhaClient
 from myelin.pricers.url_loader import UrlLoader
 
 CENT = Decimal("0.01")
-BASE_RATES = {"0": Decimal("2038.22"), "2": Decimal("1998.41")}
 SKILLED_PRIORITY = {"SN": 0, "PT": 1, "OT": 2, "SLP": 3}
 
 
@@ -59,28 +57,29 @@ def adjusted(amount: Decimal, wage: Decimal) -> Decimal:
 
 
 class HhaProcessor:
-    def __init__(self, engine, jar_root):
-        jar = Path(os.getenv("HHA_JAR_PATH", str(Path(jar_root) / "pricers" / JAR_FILENAME))).expanduser().resolve()
-        if not jar.is_file() or hashlib.sha256(jar.read_bytes()).hexdigest() != JAR_SHA256:
+    def __init__(self, engine, jar_root, release: HhaRelease = CY_2026):
+        self.release = release
+        jar = Path(os.getenv("HHA_JAR_PATH", str(Path(jar_root) / "pricers" / release.jar_filename))).expanduser().resolve()
+        if not jar.is_file() or hashlib.sha256(jar.read_bytes()).hexdigest() != release.jar_sha256:
             raise RuntimeError("HHA Pricer release has not been reconciled.")
         if not jpype.isJVMStarted():
             raise RuntimeError("Start Myelin JVM before HHA processor.")
         self.engine = engine
         self.lock = Lock()
         try:
-            self.a9272_rates = load_rates(engine)
+            self.a9272_rates = load_rates(engine, release.payment_year)
         except HhaInputError:
             self.a9272_rates = None
-        self.hrg_rows = self._reference_rows(jar, "hrg-2026.csv", "code")
-        self.wage_rows = self._reference_rows(jar, "cbsa-wage-index-2026.csv", "cbsa")
-        self.revenue_rows = self._reference_rows(jar, "rev-2026.csv", "code")
+        self.hrg_rows = self._reference_rows(jar, self.release.hipps_reference, "code")
+        self.wage_rows = self._reference_rows(jar, self.release.wage_reference, "cbsa")
+        self.revenue_rows = self._reference_rows(jar, self.release.visit_reference, "code")
         if set(self.revenue_rows) != set(DISCIPLINE_REVENUES.values()):
             raise RuntimeError("Incomplete HHA per-visit rate reference.")
         for row in self.revenue_rows.values():
             for field in ("ruralDollarRate", "nonruralDollarRate", "ruralUnsubmittedDollarRate", "nonruralUnsubmittedDollarRate"):
                 if money(row[field]) <= 0:
                     raise RuntimeError("Invalid HHA per-visit rate reference.")
-        self.geography_catalog = load_catalog(engine)
+        self.geography_catalog = load_catalog(engine, release.payment_year)
         validate_geography_references(self.wage_rows, self.geography_catalog)
         # Only use the existing Java bindings. Do not invoke the generic claim
         # mapper or its rolling-year, geography, notice, and unit defaults.
@@ -92,8 +91,7 @@ class HhaProcessor:
         config = self.client.hha_pricer_config_class()
         config.setCsvIngestionConfiguration(self.client.hha_csv_ingest_class())
         years = self.client.array_list_class()
-        for year in CALCULATION_VERSIONS:
-            years.add(self.client.java_integer_class(year))
+        years.add(self.client.java_integer_class(release.payment_year))
         config.setSupportedYears(years)
         self.client.hha_data_table_class.loadDataTables(config)
         self.client.dispatch_obj = self.client.hha_pricer_dispatch_class(config)
@@ -101,14 +99,13 @@ class HhaProcessor:
         self.mapper = jpype.JClass("com.fasterxml.jackson.databind.ObjectMapper", loader=loader)()
         self.mapper.registerModule(jpype.JClass("com.fasterxml.jackson.datatype.jsr310.JavaTimeModule", loader=loader)())
 
-    @staticmethod
-    def _reference_rows(jar: Path, filename: str, key: str) -> dict:
+    def _reference_rows(self, jar: Path, filename: str, key: str) -> dict:
         with ZipFile(jar) as archive:
             # The pinned CMS wage table contains Windows-1252 place names.
             rows = list(csv.DictReader(io.StringIO(archive.read(filename).decode("cp1252"))))
         result = {}
         for row in rows:
-            if not row.get(key) or row[key] in result or row.get("effectiveDate") != "20260101":
+            if not row.get(key) or row[key] in result or row.get("effectiveDate") != self.release.effective_from.strftime("%Y%m%d"):
                 raise RuntimeError("Invalid HHA bundled reference data.")
             result[row[key]] = row
         if not result:
@@ -162,6 +159,8 @@ class HhaProcessor:
         }
 
     def process(self, request: HhaRequest) -> HhaResponse:
+        if request.release != self.release:
+            raise RuntimeError("Request and loaded HH pricing release differ.")
         provider, geography, cms, payload = {}, {}, {}, {}
         lupa_detail = None
         partial_detail = None
@@ -172,7 +171,7 @@ class HhaProcessor:
             with self.lock:
                 hrg = self.hrg_rows.get(request.hippsCode)
                 if hrg is None:
-                    raise HhaInputError("HHA_HIPPS_NOT_FOUND", "The supplied HIPPS code is not in the verified CY 2026 HHA reference.")
+                    raise HhaInputError("HHA_HIPPS_NOT_FOUND", f"The supplied HIPPS code is not in the verified CY {self.release.payment_year} HHA reference.")
                 is_lupa = len(request.visits) < int(hrg["threshold"])
                 if is_lupa and request.lupa is None:
                     raise HhaInputError("HHA_LUPA_CONTEXT_REQUIRED", "LUPA pricing requires explicit source-admission and first-or-only-period facts.")
@@ -181,12 +180,12 @@ class HhaProcessor:
                     raise HhaInputError("HHA_LUPA_CONTEXT_UNSUPPORTED", "An initial or only LUPA period requires a covered skilled nursing or therapy visit.")
                 provider = provider_for_period(self.engine, request.providerCcn, request.fromDate, request.throughDate)
                 geography = resolve_geography(request.serviceCountyFips, request.cbsaCode, self.wage_rows, self.geography_catalog)
-                geography.update(jarSha256=JAR_SHA256, wageIndexReference="cbsa-wage-index-2026.csv")
+                geography.update(jarSha256=self.release.jar_sha256, wageIndexReference=self.release.wage_reference)
                 payload = self.build_payload(request, provider, geography)
                 cms = self.calculate(payload)
                 code = cms.get("returnCodeData", {}).get("code") if isinstance(cms, dict) else None
                 if code in {"01", "02", "11"} and request.outlier is None:
-                    raise HhaInputError("HHA_OUTLIER_CONTEXT_REQUIRED", "Outlier pricing requires explicit provider CY2026 payment and outlier totals excluding this claim.")
+                    raise HhaInputError("HHA_OUTLIER_CONTEXT_REQUIRED", f"Outlier pricing requires explicit provider CY{self.release.payment_year} payment and outlier totals excluding this claim.")
                 if code not in ({"06", "14"} if is_lupa else {"00","01","02","09","11"} if request.outlier else {"09"} if request.partialPeriod else {"00"}):
                     raise HhaInputError("HHA_CMS_REJECTED", "CMS did not return a supported HH payment for the supplied visit threshold.")
                 if is_lupa:
@@ -215,17 +214,17 @@ class HhaProcessor:
                     outlier_detail = outlier_lupa_evidence(request, provider, geography, hrg, cms, self.revenue_rows)
             evidence = dict(provider["providerEvidence"],
                             initialPaymentQualityReportingProgramIndicator=provider["qualityReportingProgramIndicator"],
-                            pricerJarSha256=JAR_SHA256, pricerSourceUrl=SOURCE_URL,
-                            hippsReference="hrg-2026.csv", hippsCode=request.hippsCode,
+                            pricerJarSha256=self.release.jar_sha256, pricerSourceUrl=self.release.source_url,
+                            hippsReference=self.release.hipps_reference, hippsCode=request.hippsCode,
                             caseMixWeight=money(hrg["weight"]), lupaVisitThreshold=int(hrg["threshold"]),
                             priorAgencyTotalsUsed=request.outlier is not None and not is_lupa)
             if is_lupa:
-                evidence["visitRateReference"] = "rev-2026.csv"
+                evidence["visitRateReference"] = self.release.visit_reference
             limitations = [
                 "Medicare PPS payment estimate only; beneficiary eligibility, coverage and final remittance are not determined.",
                 "HIPPS, complete covered in-person visits and service location are supplied by the caller; no OASIS grouping is performed.",
                 ("Agency totals are submitted estimates, exclude this claim, and are not independently verified or reserved in a ledger." if request.outlier else
-                 "Agency outlier history is not used; an outlier outcome requires explicit CY2026 history."),
+                 f"Agency outlier history is not used; an outlier outcome requires explicit CY{self.release.payment_year} history."),
             ]
             if not geography.get("countyMappingVerified"):
                 limitations.extend(geography["limitations"])
@@ -238,19 +237,19 @@ class HhaProcessor:
                 limitations.append("Combined allowance includes the national device fee before beneficiary cost sharing. Device deductible/coinsurance and Medicare payment before sequestration use the submitted snapshot; no benefit ledger is adjudicated or reserved.")
             return HhaResponse(claimId=request.claimId, status="Success",
                                reasonCode="HHA_LUPA_ESTIMATED" if is_lupa else "HHA_PARTIAL_PERIOD_ESTIMATED" if request.partialPeriod else "HHA_SHORTENED_PERIOD_ESTIMATED" if request.shortenedPeriod else "HHA_ORDINARY_PERIOD_ESTIMATED",
-                               reason="CMS CY 2026 LUPA calculation completed." if is_lupa else "CMS CY 2026 partial-period HH PPS calculation completed." if request.partialPeriod else "CMS CY 2026 shortened-statement HH PPS calculation completed without partial-period proration." if request.shortenedPeriod else "CMS CY 2026 ordinary-period HH PPS calculation completed.",
-                               totalPayment=total, pricerRelease=PRICER_RELEASE, calculationVersion=cms["calculationVersion"],
+                               reason=f"CMS CY {self.release.payment_year} LUPA calculation completed." if is_lupa else f"CMS CY {self.release.payment_year} partial-period HH PPS calculation completed." if request.partialPeriod else f"CMS CY {self.release.payment_year} shortened-statement HH PPS calculation completed without partial-period proration." if request.shortenedPeriod else f"CMS CY {self.release.payment_year} ordinary-period HH PPS calculation completed.",
+                               totalPayment=total, pricerRelease=self.release.pricer_release, calculationVersion=cms["calculationVersion"],
                                providerData=payload["providerData"], providerEvidence=evidence,
                                geographyEvidence=geography, cms=cms, limitations=limitations, lupa=lupa_detail,
                                partialPeriod=partial_detail, lateNoa=late_detail, outlier=outlier_detail, shortenedPeriod=shortened_detail, a9272=a9272_detail)
         except HhaInputError as exc:
             return HhaResponse(claimId=request.claimId, status="UnableToPrice", reasonCode=exc.code, reason=exc.reason,
-                               pricerRelease=PRICER_RELEASE, calculationVersion=cms.get("calculationVersion"),
+                               pricerRelease=self.release.pricer_release, calculationVersion=cms.get("calculationVersion"),
                                providerData=payload.get("providerData", provider.get("providerData", {})),
                                providerEvidence=provider.get("providerEvidence", {}), geographyEvidence=geography, cms=cms)
 
     def validate_lupa_result(self, request: HhaRequest, provider: dict, geography: dict, hrg: dict, cms: dict):
-        if (cms.get("calculationVersion") != CALCULATION_VERSIONS[2026]
+        if (cms.get("calculationVersion") != self.release.calculation_version
                 or request.lupa is None or len(request.visits) >= int(hrg["threshold"])):
             raise RuntimeError("Unverified LUPA calculation identity or threshold.")
         payment = cms.get("paymentData")
@@ -300,7 +299,7 @@ class HhaProcessor:
                     allocations[visit.visitId] = dict(visitId=visit.visitId, discipline=discipline, revenueCode=revenue,
                         serviceDate=visit.serviceDate, basePayment=base, addOnPayment=visit_addon, totalPayment=base + visit_addon)
         if len(request.visits) > 4:
-            standardized = rounded(money(hrg["weight"]) * BASE_RATES["0"])
+            standardized = rounded(money(hrg["weight"]) * self.release.full_period_rate)
         expected_code = "14" if selected is not None else "06"
         if (cms.get("returnCodeData", {}).get("code") != expected_code
                 or money(payment.get("totalPayment")) != expected
@@ -323,14 +322,14 @@ class HhaProcessor:
             visitPayments=[allocations[visit.visitId] for visit in ordered])
 
     def validate_result(self, request: HhaRequest, provider: dict, geography: dict, hrg: dict, cms: dict) -> Decimal:
-        if cms.get("calculationVersion") != CALCULATION_VERSIONS[2026]:
+        if cms.get("calculationVersion") != self.release.calculation_version:
             raise RuntimeError("Unverified HHA calculation release.")
         payment = cms.get("paymentData")
         if not isinstance(payment, dict):
             raise RuntimeError("Missing CMS HHA payment data.")
         weight, wage = money(hrg["weight"]), money(geography["wageIndex"])
         qrp = provider["qualityReportingProgramIndicator"]
-        case_mix = rounded(weight * BASE_RATES[qrp])
+        case_mix = rounded(weight * self.release.period_rate(qrp))
         before_vbp = rounded(wage * Decimal("0.749") * case_mix) + rounded(Decimal("0.251") * case_mix)
         if request.partialPeriod:
             days = (max(visit.serviceDate for visit in request.visits) - min(visit.serviceDate for visit in request.visits)).days + 1
@@ -364,7 +363,7 @@ class HhaProcessor:
             standardized = sum(money(self.revenue_rows[DISCIPLINE_REVENUES[visit.discipline]]["nonruralDollarRate"]) for visit in request.visits)
             if len(request.visits) > 4:
                 ratio = (Decimal(days) / 30).quantize(Decimal("0.00000001"), rounding=ROUND_DOWN)
-                standardized = rounded(weight * BASE_RATES["0"] * ratio)
+                standardized = rounded(weight * self.release.full_period_rate * ratio)
             if (cms.get("returnCodeData", {}).get("code") != "09"
                     or money(payment.get("standardizedPayment")) != standardized):
                 raise RuntimeError("CMS HHA partial-period standardized payment does not reconcile.")
@@ -383,7 +382,7 @@ class HhaProcessor:
                 cost = discipline_cost
                 if money(component.get("cost")) != cost or money(component.get("dollarRate")) != rate:
                     raise RuntimeError("CMS HHA partial-period discipline costs or rates do not reconcile.")
-            if cost_before_vbp > before_vbp + adjusted(rounded(BASE_RATES[qrp] * Decimal(".37")), wage):
+            if cost_before_vbp > before_vbp + adjusted(rounded(self.release.period_rate(qrp) * self.release.fixed_dollar_loss_ratio), wage):
                 raise RuntimeError("CMS HHA partial-period costs require an unsupported outlier payment.")
             if payment.get("finalCbsa") is not None and payment["finalCbsa"] != geography["cbsaCode"]:
                 raise RuntimeError("CMS HHA partial-period wage area does not reconcile.")

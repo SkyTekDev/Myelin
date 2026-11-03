@@ -42,10 +42,10 @@ def _vbp_factor(value) -> Decimal:
         raise HhaInputError(
             "HHA_PROVIDER_VBP_INVALID", "The HH provider payment adjustment factor is missing or invalid."
         ) from None
-    # The expanded HHVBP Model caps the CY 2026 adjustment at +/-5 percent.
+    # The expanded HHVBP Model caps the supported payment adjustment at +/-5 percent.
     if not factor.is_finite() or not Decimal("0.95") <= factor <= Decimal("1.05"):
         raise HhaInputError(
-            "HHA_PROVIDER_VBP_INVALID", "The HH provider payment adjustment factor is outside the supported CY 2026 range."
+            "HHA_PROVIDER_VBP_INVALID", "The HH provider payment adjustment factor is outside the supported range."
         )
     return factor
 
@@ -145,7 +145,10 @@ def provider_for_period(engine, ccn: str, start: date, end: date) -> dict:
                 "sourceRowFingerprint": fingerprint,
             },
         }
-        if effective.year != 2026:
+        if effective.year != end.year:
+            if end.year != 2026:
+                raise HhaInputError("HHA_PROVIDER_REFERENCE_STALE",
+                    f"The older effective HH provider record lacks reviewed CY {end.year} annual payment evidence.")
             try:
                 result["providerEvidence"]["annualPaymentEvidence"] = annual_payment_evidence(
                     result["providerEvidence"], start, end)

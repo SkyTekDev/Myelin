@@ -72,7 +72,7 @@ class HhaRouteChecks(unittest.TestCase):
         self.app = FastAPI()
         self.app.include_router(router)
         self.processor = FakeProcessor()
-        self.app.state.hha_processor = self.processor
+        self.app.state.hha_processors = {2026: self.processor}
 
     def test_ready_returns_exact_release_and_supported_scope(self):
         status, body = request(self.app, "GET", "/api/v1/hha/ready")
@@ -80,9 +80,9 @@ class HhaRouteChecks(unittest.TestCase):
         self.assertTrue(body["enabled"])
         self.assertTrue(body["ready"])
         self.assertEqual(body["pricerRelease"], "2.6.0")
-        self.assertEqual(body["calculationYears"], [2026])
-        self.assertEqual(body["calculationVersions"], {"2026": "2026.0"})
-        self.assertEqual(body["firstServiceDate"], "2026-01-01")
+        self.assertEqual(body["calculationYears"], [2025, 2026])
+        self.assertEqual(body["calculationVersions"], {"2025": "2025.1", "2026": "2026.0"})
+        self.assertEqual(body["firstServiceDate"], "2025-01-01")
         self.assertEqual(body["lastServiceDate"], "2026-12-31")
         self.assertEqual(body["grouping"], "SuppliedHippsOnly")
         self.assertEqual(body["supportedPayment"], "OrdinaryPeriodLupaPartialPeriodShortenedPeriodLateNoaAndOutlier")
@@ -132,9 +132,9 @@ class HhaRouteChecks(unittest.TestCase):
         for missing in (False, True):
             with self.subTest(missing=missing):
                 if missing:
-                    del self.app.state.hha_processor
+                    del self.app.state.hha_processors
                 else:
-                    self.app.state.hha_processor = None
+                    self.app.state.hha_processors = None
                 for method, path, payload in [
                     ("GET", "/api/v1/hha/ready", None),
                     ("POST", "/api/v1/hha/process", request_data()),
@@ -147,8 +147,8 @@ class HhaRouteChecks(unittest.TestCase):
 
     def test_processor_without_a_running_jvm_is_unavailable(self):
         with patch("bridge.hha_routes.jpype.isJVMStarted", return_value=False):
-            self.assertTrue(readiness(self.processor)["enabled"])
-            self.assertFalse(readiness(self.processor)["ready"])
+            self.assertTrue(readiness({2026: self.processor})["enabled"])
+            self.assertFalse(readiness({2026: self.processor})["ready"])
             status, _ = request(self.app, "GET", "/api/v1/hha/ready")
             self.assertEqual(status, 503)
             status, _ = request(self.app, "POST", "/api/v1/hha/process", request_data())
@@ -199,7 +199,7 @@ class HhaRouteChecks(unittest.TestCase):
         self.assertFalse(self.processor.requests)
 
     def test_failure_is_sanitized_and_contains_no_claim_or_backend_details(self):
-        self.app.state.hha_processor = FakeProcessor("error")
+        self.app.state.hha_processors = {2026: FakeProcessor("error")}
         status, body = request(self.app, "POST", "/api/v1/hha/process", request_data())
         self.assertEqual(status, 503)
         self.assertEqual(body, {"detail": "HHA pricing failed; retry after checking service availability."})
@@ -208,7 +208,7 @@ class HhaRouteChecks(unittest.TestCase):
             self.assertNotIn(secret, encoded)
 
     def test_unpriced_outcome_is_explicit_with_null_total(self):
-        self.app.state.hha_processor = FakeProcessor("unpriced")
+        self.app.state.hha_processors = {2026: FakeProcessor("unpriced")}
         status, body = request(self.app, "POST", "/api/v1/hha/process", request_data())
         self.assertEqual(status, 200)
         self.assertEqual(body["status"], "UnableToPrice")
@@ -229,7 +229,7 @@ class HhaRouteChecks(unittest.TestCase):
         with (
             patch.object(main.app.state, "opps_jar", Path("opps-pricer-fixture.jar"), create=True),
             patch.object(main.app.state, "opsf_record_count", 1, create=True),
-            patch.object(main.app.state, "hha_processor", None, create=True),
+            patch.object(main.app.state, "hha_processors", None, create=True),
             patch.object(main.app.state, "ioce_client", object(), create=True),
             patch.object(main.app.state, "opps_client", object(), create=True),
             patch.object(main.jpype, "isJVMStarted", return_value=True),
@@ -237,13 +237,13 @@ class HhaRouteChecks(unittest.TestCase):
             status, body = request(main.app, "GET", "/api/v1/version")
             self.assertEqual(status, 200)
             self.assertFalse(body["hha"]["enabled"])
-            self.assertEqual(body["hha"]["calculationYears"], [2026])
+            self.assertEqual(body["hha"]["calculationYears"], [2025, 2026])
             status, body = request(main.app, "GET", "/health/ready")
             self.assertEqual(status, 200)
             self.assertFalse(body["hha"]["ready"])
             status, _ = request(main.app, "GET", "/api/v1/hha/ready")
             self.assertEqual(status, 503)
-            main.app.state.hha_processor = self.processor
+            main.app.state.hha_processors = {2026: self.processor}
             status, body = request(main.app, "GET", "/api/v1/version")
             self.assertEqual(status, 200)
             self.assertTrue(body["hha"]["ready"])
@@ -255,7 +255,7 @@ class HhaRouteChecks(unittest.TestCase):
             def process(self, payload):
                 assert payload.lateNoa.exceptionStatus == "NoException"
                 return HhaResponse.model_validate(case["bridge"])
-        self.app.state.hha_processor = Captured()
+        self.app.state.hha_processors = {2026: Captured()}
         status, body = request(self.app, "POST", "/api/v1/hha/process", case["request"])
         self.assertEqual(status, 200)
         self.assertEqual(body["totalPayment"], "1288.54")

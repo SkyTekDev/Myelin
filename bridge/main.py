@@ -14,6 +14,7 @@ from bridge.provider_routes import router as provider_router
 from bridge.snf_routes import router as snf_router
 from bridge.snf_client import SnfProcessor
 from bridge.hha_client import HhaProcessor
+from bridge.hha_release import APPROVED_RELEASES as HHA_RELEASES
 from bridge.hha_routes import router as hha_router, readiness as hha_readiness
 
 import jpype
@@ -315,9 +316,12 @@ async def lifespan(app: FastAPI):
         if env_bool('SNF_ENABLED'):
             app.state.snf_processor = SnfProcessor(myelin_engine.db_manager.engine, JAR_PATH)
 
-        app.state.hha_processor = None
+        app.state.hha_processors = {}
         if env_bool('HHA_ENABLED'):
-            app.state.hha_processor = HhaProcessor(myelin_engine.db_manager.engine, JAR_PATH)
+            app.state.hha_processors = {
+                year: HhaProcessor(myelin_engine.db_manager.engine, JAR_PATH, release)
+                for year, release in HHA_RELEASES.items()
+            }
 
         yield
 
@@ -374,7 +378,7 @@ def health_ready(request: Request) -> dict[str, Any]:
         "oppsJar": request.app.state.opps_jar.name,
         "opsfRecordCount": request.app.state.opsf_record_count,
         "downloadsCmsAssetsAtStartup": DOWNLOAD_CMS_ASSETS,
-        "hha": hha_readiness(getattr(request.app.state, "hha_processor", None)),
+        "hha": hha_readiness(getattr(request.app.state, "hha_processors", {})),
     }
 
 
@@ -387,7 +391,7 @@ def version(request: Request) -> dict[str, Any]:
         "jarPath": str(JAR_PATH),
         "databasePath": str(DB_PATH),
         "downloadsCmsAssetsAtStartup": DOWNLOAD_CMS_ASSETS,
-        "hha": hha_readiness(getattr(request.app.state, "hha_processor", None)),
+        "hha": hha_readiness(getattr(request.app.state, "hha_processors", {})),
     }
 
 

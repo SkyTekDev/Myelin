@@ -14,7 +14,7 @@ from bridge.hha_provider_annual import canonical_json
 CATALOG_FILENAME = 'hha-geography-2026-v1.json'
 CATALOG_SHA256 = 'b4d5e582fa73d2eb15f6ee02781ad8bfccab9db8a780eba006df3b0d5063688d'
 # A load does not activate a release. Pricing support and both registries need review.
-APPROVED_RELEASES = {2026: (1, CATALOG_SHA256)}
+APPROVED_RELEASES = {2025: (1, 'ff6f13f81f3acd187bd5e9cfda3c59ce51f6376d6da3aa0eb5a1b014ac8310f0'), 2026: (1, CATALOG_SHA256)}
 ENTRY_FIELDS = {'serviceCountyFips', 'countyName', 'stateFips', 'stateAbbreviation', 'status',
                 'baseWageIndexCode', 'cmsWageIndexCode', 'wageIndex', 'sourceRows'}
 SOURCE_ROW_FIELDS = {'county', 'census', 'hhUrban', 'transition', 'wage'}
@@ -46,12 +46,14 @@ def validate_document(raw, expected_sha256):
             or canonical_json(doc) != raw):
         raise ValueError('Invalid geography catalog version, dates or canonical encoding.')
     sources = doc['sources']
-    if not isinstance(sources, dict) or set(sources) != {
-            'countyRegister', 'censusDelineation', 'hhWageIndex', 'hhCountyWorkbook', 'policy'}:
+    members = ({'hhCountyWages', 'hhConnecticutRegions', 'hhTransitionCounties'} if year == 2025
+               else {'countyRegister', 'hhWageIndex', 'hhCountyWorkbook'})
+    expected = members | ({'policy'} if year == 2025 else {'censusDelineation', 'policy'})
+    if not isinstance(sources, dict) or set(sources) != expected:
         raise ValueError('Missing geography source provenance.')
     for name, source in sources.items():
         fields = {'sourceUrl', 'sourceSha256'}
-        if name in {'countyRegister', 'hhWageIndex', 'hhCountyWorkbook'}:
+        if name in members:
             fields |= {'memberName', 'memberSha256'}
         if not isinstance(source, dict) or set(source) != fields or not all(isinstance(v, str) for v in source.values()):
             raise ValueError('Invalid geography source fields.')

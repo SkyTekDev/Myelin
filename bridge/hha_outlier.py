@@ -25,14 +25,15 @@ def number(value):
 
 def expected(request, provider, geography, hrg, revenue_rows, is_lupa=False):
     context = request.outlier
+    release = request.release
     wage = number(geography['wageIndex'])
     vbp = number(provider['providerData']['vbpAdjustment'])
     qrp = provider['qualityReportingProgramIndicator']
-    base = Decimal('2038.22' if qrp == '0' else '1998.41')
+    base = release.period_rate(qrp)
     full_h = adjusted(rounded(number(hrg['weight']) * base), wage)
     days = (max(v.serviceDate for v in request.visits)-min(v.serviceDate for v in request.visits)).days+1
     h = rounded(full_h * rounded(Decimal(days)/30)) if request.partialPeriod else full_h
-    fdl = adjusted(rounded(base * Decimal('.37')), wage)
+    fdl = adjusted(rounded(base * release.fixed_dollar_loss_ratio), wage)
     components = []
     cost = Decimal('0.00')
     rural = geography['cbsaCode'].startswith('999')
@@ -66,8 +67,8 @@ def expected(request, provider, geography, hrg, revenue_rows, is_lupa=False):
         for discipline,revenue in (('PT','0420'),('OT','0430'),('SLP','0440'),('SN','0550'),('MSW','0560'),('HHA','0570')))
     if len(request.visits) > 4:
         ratio = (Decimal(days if request.partialPeriod else 30)/30).quantize(Decimal('.00000001'), rounding=ROUND_DOWN)
-        standardized = rounded(number(hrg['weight'])*Decimal('2038.22')*ratio) + rounded(cms_outlier/(Decimal('.749')*wage+Decimal('.251')))
-    detail = dict(**context.model_dump(), fixedDollarLossRatio=Decimal('.37'), lossSharingRatio=Decimal('.8'), capRatio=Decimal('.1'),
+        standardized = rounded(number(hrg['weight'])*release.full_period_rate*ratio) + rounded(cms_outlier/(Decimal('.749')*wage+Decimal('.251')))
+    detail = dict(**context.model_dump(), fixedDollarLossRatio=release.fixed_dollar_loss_ratio, lossSharingRatio=Decimal('.8'), capRatio=Decimal('.1'),
         imputedCost=cost, periodPaymentBeforeVbp=h if not is_lupa else Decimal('0.00'),
         fixedDollarLossAmount=fdl if not is_lupa else Decimal('0.00'), thresholdAmount=threshold if not is_lupa else Decimal('0.00'),
         candidateOutlierBeforeVbp=candidate, availableOutlierPool=pool, capLimited=limited,
@@ -84,7 +85,7 @@ def process_period(request, provider, geography, hrg, cms, revenue_rows):
     payment = cms['paymentData']
     fields = dict(totalPayment=calculated['cmsTotal'], hhrgPayment=calculated['cmsH'], outlierPayment=calculated['cmsO'],
         lateSubmissionPenaltyAmount=calculated['cmsPenalty'], valueBasedPurchasingAdjustmentAmount=calculated['cmsVbp'], standardizedPayment=calculated['standardized'], hhrgWeight=number(hrg['weight']))
-    if (cms.get('calculationVersion') != '2026.0' or cms.get('returnCodeData',{}).get('code') != calculated['rawCode']
+    if (cms.get('calculationVersion') != request.release.calculation_version or cms.get('returnCodeData',{}).get('code') != calculated['rawCode']
         or type(payment.get('totalQuantityOfCoveredVisits')) is not int or payment['totalQuantityOfCoveredVisits'] != len(request.visits)
         or any(number(payment.get(key)) != value for key,value in fields.items())
         or len(payment.get('revenuePayments',[])) != 6):

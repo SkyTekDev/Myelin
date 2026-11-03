@@ -1,4 +1,4 @@
-"""CY2026 ordinary, LUPA, partial-period, late-NOA and outlier payments with explicit inputs."""
+"""HH ordinary, LUPA, partial-period, late-NOA and outlier payments with explicit inputs."""
 
 from fastapi import APIRouter, HTTPException, Request
 import jpype
@@ -9,9 +9,10 @@ from bridge.hha_release import release_info
 router = APIRouter(prefix="/api/v1/hha", tags=["HHA"])
 
 
-def readiness(processor) -> dict:
-    result = {"enabled": processor is not None,
-              "ready": processor is not None and jpype.isJVMStarted(), **release_info()}
+def readiness(processors) -> dict:
+    result = {"enabled": bool(processors), "ready": bool(processors) and jpype.isJVMStarted(), **release_info()}
+    # The existing top-level reference fields describe the most recent loaded release.
+    processor = processors[max(processors)] if processors else None
     catalog = getattr(processor, 'geography_catalog', None)
     if catalog is not None:
         result['geographyReference'] = catalog.reference_info
@@ -24,17 +25,20 @@ def readiness(processor) -> dict:
 
 @router.get("/ready")
 def ready(request: Request):
-    processor = getattr(request.app.state, "hha_processor", None)
-    if not readiness(processor)["ready"]:
+    processors = getattr(request.app.state, "hha_processors", {})
+    if not readiness(processors)["ready"]:
         raise HTTPException(503, "HHA pricing is disabled or unavailable.")
-    return {"status": "ready", **readiness(processor)}
+    return {"status": "ready", **readiness(processors)}
 
 
 @router.post("/process", response_model=HhaResponse)
 def process(payload: HhaRequest, request: Request):
-    processor = getattr(request.app.state, "hha_processor", None)
-    if not readiness(processor)["ready"]:
+    processors = getattr(request.app.state, "hha_processors", {})
+    if not readiness(processors)["ready"]:
         raise HTTPException(503, "HHA pricing is disabled or unavailable.")
+    processor = processors.get(payload.release.payment_year)
+    if processor is None:
+        raise HTTPException(503, "The approved HH release is not loaded.")
     try:
         return processor.process(payload)
     except Exception:

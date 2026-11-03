@@ -35,7 +35,7 @@ def apply(request, provider, geography, hrg, cms, raw_total, lupa_detail, revenu
     payment = cms["paymentData"]
     visit_penalties = None
     if lupa_detail is None:
-        rate = Decimal("2038.22" if provider["qualityReportingProgramIndicator"] == "0" else "1998.41")
+        rate = request.release.period_rate(provider["qualityReportingProgramIndicator"])
         before = adjusted(rounded(Decimal(hrg["weight"]) * rate), wage)
         if request.partialPeriod:
             span = (max(v.serviceDate for v in request.visits) - min(v.serviceDate for v in request.visits)).days + 1

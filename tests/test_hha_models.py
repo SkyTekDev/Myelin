@@ -2,12 +2,14 @@
 
 import unittest
 from copy import deepcopy
+from dataclasses import replace
 from datetime import date, datetime
 from decimal import Decimal
 
 from pydantic import ValidationError
 
 from bridge.hha_models import HhaRequest, HhaResponse, HhaVisit
+from bridge.hha_release import CY_2026, release_for_through
 
 
 def request_data():
@@ -38,6 +40,30 @@ def success_response():
 
 
 class HhaContractChecks(unittest.TestCase):
+    def test_payment_release_follows_through_and_fails_closed(self):
+        december = date(2026, 12, 31)
+        january = date(2027, 1, 1)
+        synthetic = replace(CY_2026, payment_year=2027, earliest_statement_from=date(2026, 12, 3),
+                            calculation_version="Test2027")
+        releases = {2026: CY_2026, 2027: synthetic}
+        self.assertIs(release_for_through(december, releases), CY_2026)
+        self.assertIs(release_for_through(january, releases), synthetic)
+        self.assertTrue(synthetic.covers_statement(date(2026, 12, 3), january))
+        self.assertIsNone(release_for_through(january))
+
+        payload = request_data()
+        offset = date(2026, 12, 2) - date(2026, 6, 1)
+        for key in ("admissionDate", "noticeReceiptDate", "fromDate", "throughDate"):
+            payload[key] = (date.fromisoformat(payload[key]) + offset).isoformat()
+        for visit in payload["visits"]:
+            visit["serviceDate"] = (date.fromisoformat(visit["serviceDate"]) + offset).isoformat()
+        priced_request = HhaRequest.model_validate(payload)
+        self.assertIs(priced_request.release, CY_2026)
+        self.assertNotIn("release", priced_request.model_dump())
+        payload.update(fromDate="2026-12-03", throughDate="2027-01-01")
+        with self.assertRaisesRegex(ValidationError, "No approved HH pricing release"):
+            HhaRequest.model_validate(payload)
+
     def test_lupa_context_requires_explicit_strict_facts(self):
         for context in [{}, {"sourceAdmissionIndicator": "1"}, {"isFirstOrOnlyPeriod": True},
                         {"sourceAdmissionIndicator": "X", "isFirstOrOnlyPeriod": True},
