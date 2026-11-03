@@ -159,6 +159,10 @@ class A9272Checks(unittest.TestCase):
         self.assertEqual([year.rateEvidence["paymentYear"] for year in paid.benefitYearPayments], [2025, 2026])
         self.assertEqual([year.remainingPartBDeductibleAfterClaim for year in paid.benefitYearPayments], [0, 0])
         self.assertEqual(result.totalPayment, control.totalPayment + Decimal("840.77"))
+        adjusted = self.price(dict(data, billType="0327"))
+        self.assertEqual(adjusted.status, "Success", adjusted)
+        self.assertEqual(adjusted.cms, result.cms)
+        self.assertEqual(adjusted.a9272, paid)
 
     def test_crossover_requires_rates_only_for_years_with_devices(self):
         data = crossover_devices()

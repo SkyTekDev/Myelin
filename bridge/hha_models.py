@@ -476,8 +476,6 @@ class HhaRequest(BaseModel):
     @model_validator(mode="after")
     def period_and_visits(self):
         release = self.release
-        if self.is_crossover and self.billType != "329":
-            raise ValueError("Cross-year HH pricing requires an original 0329 statement.")
         if bool(self.a9272Lines) != (self.a9272 is not None or self.a9272BenefitSnapshots is not None):
             raise ValueError("A9272 lines require matching explicit beneficiary context; context without devices is invalid.")
         if self.a9272Lines:
