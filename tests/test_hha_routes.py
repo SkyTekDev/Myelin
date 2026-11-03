@@ -176,7 +176,7 @@ class HhaRouteChecks(unittest.TestCase):
 
     def test_unsupported_and_spoofed_requests_never_reach_processor(self):
         for changes in [
-            {"billType": "327"}, {"billType": "328"}, {"billType": "32A"},
+            {"billType": "326"}, {"billType": "328"}, {"billType": "32A"},
             {"fromDate": "2027-06-01", "throughDate": "2027-06-30"},
             {"qualityReportingProgramIndicator": "0"},
             {"providerData": {"vbpAdjustment": "1"}},

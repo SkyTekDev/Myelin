@@ -388,7 +388,7 @@ class HhaA9272Payment(HhaA9272Context):
 
 
 class HhaRequest(BaseModel):
-    """CY 2026 original 329 full periods with an already assigned HIPPS code.
+    """CY 2026 original 329 and replacement 327 periods with supplied HIPPS.
 
     Geography values attest to submitted CMS billing values. The API validates
     their format and available references; it does not geocode an address or
@@ -399,7 +399,7 @@ class HhaRequest(BaseModel):
 
     claimId: StrictStr = Field(min_length=1, max_length=128)
     providerCcn: StrictStr = Field(pattern=r"^[A-Z0-9]{6,13}$")
-    billType: Literal["329"]
+    billType: Literal["329", "327"]
     hippsCode: StrictStr = Field(pattern=r"^[A-Z0-9]{5}$")
     admissionDate: date
     fromDate: date
@@ -425,10 +425,10 @@ class HhaRequest(BaseModel):
 
     @field_validator("billType", mode="before")
     @classmethod
-    def original_bill(cls, value: Any) -> str:
-        if not isinstance(value, str) or value not in ("329", "0329"):
-            raise ValueError("Only original 329/0329 HH payment claims are supported.")
-        return "329"
+    def supported_bill(cls, value: Any) -> str:
+        if not isinstance(value, str) or value not in ("329", "0329", "327", "0327"):
+            raise ValueError("Only HH original 0329 and adjustment 0327 claims are supported.")
+        return value.removeprefix("0")
 
     @model_validator(mode="after")
     def period_and_visits(self):

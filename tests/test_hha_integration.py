@@ -72,6 +72,16 @@ class HhaCmsIntegrationChecks(unittest.TestCase):
                 self.assertEqual(output.providerEvidence["valueBasedPurchasingSourceField"], "special_provider_update_factor")
                 self.assertEqual(json.loads(output.model_dump_json())["totalPayment"], expected)
 
+    def test_0327_passes_the_actual_bill_type_to_cms(self):
+        original = self.processor.process(HhaRequest.model_validate(request_data()))
+        adjustment = HhaRequest.model_validate(dict(request_data(), billType="0327"))
+        with patch.object(self.processor, "calculate", wraps=self.processor.calculate) as calculate:
+            corrected = self.processor.process(adjustment)
+        self.assertEqual(calculate.call_args.args[0]["claimData"]["typeOfBill"], "327")
+        self.assertEqual(corrected.status, "Success")
+        self.assertEqual(corrected.totalPayment, original.totalPayment)
+        self.assertEqual(corrected.cms, original.cms)
+
     def test_dates_visits_and_zero_discipline_entries_are_explicit(self):
         model = HhaRequest.model_validate(request_data())
         from bridge.hha_provider import provider_for_period

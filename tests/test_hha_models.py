@@ -76,7 +76,7 @@ class HhaContractChecks(unittest.TestCase):
 
     def test_unsupported_claims_and_untrusted_fields_are_rejected(self):
         for field, value in [
-            ("billType", "327"), ("billType", "328"), ("billType", "32A"),
+            ("billType", "326"), ("billType", "328"), ("billType", "32A"),
             ("billType", "339"), ("billType", "349"), ("billType", 329),
             ("claimId", " "), ("claimId", " padded"), ("claimId", 42),
             ("providerCcn", "01799"), ("providerCcn", "a17999"),

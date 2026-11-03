@@ -1,8 +1,8 @@
 # Supplied-HIPPS Home Health first pass
 
-The optional HH bridge prices ordinary, LUPA, partial-period, shortened discharge/death, late-NOA and outlier CY 2026 original `329`/`0329` claims
+The optional HH bridge prices ordinary, LUPA, partial-period, shortened discharge/death, late-NOA and outlier CY 2026 originals (`0329`) and adjustments (`0327`)
 using a supplied HIPPS code and the pinned CMS HHA 2.6.0 executable. It uses
-the existing Myelin JVM and HHA Java bindings with a dedicated validated mapper.
+the existing Myelin JVM and HHA Java bindings with a dedicated validated mapper. For 0327, MedicareServiceAPI owns the replacement links, receipts, and signed allowance difference.
 It does not use the generic `HhaClient.create_input_claim()` defaults.
 
 [CY 2026 A9272 separate devices](README-hha-a9272.md) adds versioned DB fees, explicit deductible/coinsurance assumptions, independent device detail and a reusable annual load process alongside the existing PPS estimate.
