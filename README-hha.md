@@ -95,9 +95,16 @@ For a transfer to another HHA or discharge/readmission to the same HHA, submit
 The other supported event is `DischargeReadmissionSameHha`. The caller attests
 to the qualifying event, including completion of the original plan of care
 before same-HHA readmission. Subsequent care must start after the submitted
-Through date and within the original 30-day window. Common-ownership transfers
-are rejected because CMS exempts them from this adjustment. A short statement
-alone, death, or an inpatient interruption does not establish a qualifying event.
+Through date and within the original 30-day window. For an originating
+`0329` with `isCommonOwnershipTransfer: true`, submit `commonOwnershipMove`
+with `moveDate`, `destinationCountyFips`, `beneficiaryElectedTransfer: true`
+and `newAssessmentAndCertifiedPlanOfCare: true`. The service county supplies
+the origin. The move must precede the transfer within the original period,
+and the originating visits must be on or before the move. The bridge compares
+both areas using the move-year Myelin DB county release and the pinned Census
+division-to-MSA mapping. The originating service wage still determines payment.
+The response includes the submitted move and the reference hashes for both areas.
+[Common-ownership rule](https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-G/part-484/subpart-E/section-484.235)
 
 The adapter derives covered days inclusively from the first through the last
 billable visit, even when statement dates extend beyond those visits. It sends

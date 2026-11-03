@@ -237,6 +237,27 @@ class HhaLateNoaPayment(HhaLateNoaContext):
         return result
 
 
+class HhaCommonOwnershipMove(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    moveDate: date
+    destinationCountyFips: Annotated[StrictStr, Field(pattern=r"^[0-9]{5}$")]
+    beneficiaryElectedTransfer: StrictBool
+    newAssessmentAndCertifiedPlanOfCare: StrictBool
+
+    _move_date = field_validator("moveDate", mode="before")(_calendar_date)
+
+
+class HhaCommonOwnershipAreaEvidence(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    areaYear: StrictInt
+    originAreaCode: StrictStr
+    destinationAreaCode: StrictStr
+    geographyCatalogSha256: StrictStr
+    metroDivisionCatalogSha256: StrictStr
+
+
 class HhaPartialPeriodContext(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -244,17 +265,23 @@ class HhaPartialPeriodContext(BaseModel):
     patientStatus: Literal["06"]
     nextCareStartDate: date
     isCommonOwnershipTransfer: StrictBool
+    commonOwnershipMove: HhaCommonOwnershipMove | None = Field(default=None, exclude_if=lambda value: value is None)
 
     _next_date = field_validator("nextCareStartDate", mode="before")(_calendar_date)
 
     @model_validator(mode="after")
     def supported_event(self):
-        if self.isCommonOwnershipTransfer:
-            raise ValueError("Common-ownership transfers are outside partial-period support.")
+        move = self.commonOwnershipMove
+        if self.isCommonOwnershipTransfer != (move is not None):
+            raise ValueError("Common-ownership transfers require their own explicit move facts.")
+        if move is not None and (self.eventType != "TransferToAnotherHha"
+                                 or not move.beneficiaryElectedTransfer or not move.newAssessmentAndCertifiedPlanOfCare):
+            raise ValueError("A common-ownership move requires a beneficiary-elected transfer and a new assessment and certified plan of care.")
         return self
 
 
 class HhaPartialPeriodPayment(HhaPartialPeriodContext):
+    commonOwnershipAreaEvidence: HhaCommonOwnershipAreaEvidence | None = Field(default=None, exclude_if=lambda value: value is None)
     firstBillableDate: date
     lastBillableDate: date
     coveredDays: StrictInt = Field(ge=1, le=29)
@@ -263,6 +290,12 @@ class HhaPartialPeriodPayment(HhaPartialPeriodContext):
     adjustmentApplied: StrictBool
 
     _billable_dates = field_validator("firstBillableDate", "lastBillableDate", mode="before")(_calendar_date)
+
+    @model_validator(mode="after")
+    def common_ownership_area(self):
+        if self.isCommonOwnershipTransfer != (self.commonOwnershipAreaEvidence is not None):
+            raise ValueError("A common-ownership move requires verified area evidence.")
+        return self
 
 
 class HhaShortenedPeriodContext(BaseModel):
@@ -506,6 +539,11 @@ class HhaRequest(BaseModel):
         elif (self.partialPeriod is None or self.shortenedPeriod is not None or not 1 <= statement_days <= 29
               or not self.throughDate < self.partialPeriod.nextCareStartDate <= self.fromDate + timedelta(days=29)):
             raise ValueError("A partial period requires explicit context, 1-29 statement days and subsequent care within the original period.")
+        move = self.partialPeriod.commonOwnershipMove if self.partialPeriod else None
+        if move is not None and (self.billType != "329"
+                                 or not self.fromDate <= move.moveDate < self.partialPeriod.nextCareStartDate
+                                 or any(visit.serviceDate > move.moveDate for visit in self.visits)):
+            raise ValueError("Common-ownership moves require an originating 0329, a move before transfer within the original period, and all visits on or before the move.")
         if self.outlier is not None and (self.outlier.calendarYear != release.payment_year
                                          or self.outlier.asOfDate < self.throughDate):
             raise ValueError("Outlier history must use the statement Through payment year and be dated on or after Through.")

@@ -13,6 +13,7 @@ from zipfile import ZipFile
 import jpype
 from pydantic_core import to_json
 
+from bridge.hha_common_ownership import area_evidence as transfer_area_evidence
 from bridge.hha_geography import resolve_geography, validate_geography_references
 from bridge.hha_models import HhaRequest, HhaResponse
 from bridge.hha_geography_catalog import load_catalog
@@ -79,6 +80,7 @@ class HhaProcessor:
                 if money(row[field]) <= 0:
                     raise RuntimeError("Invalid HHA per-visit rate reference.")
         self.geography_catalog = load_catalog(engine, release.payment_year)
+        self.move_geography_catalogs = {release.payment_year: self.geography_catalog}
         validate_geography_references(self.wage_rows, self.geography_catalog)
         # Only use the existing Java bindings. Do not invoke the generic claim
         # mapper or its rolling-year, geography, notice, and unit defaults.
@@ -174,6 +176,14 @@ class HhaProcessor:
         shortened_detail = None
         try:
             with self.lock:
+                move = request.partialPeriod.commonOwnershipMove if request.partialPeriod else None
+                move_area = None
+                if move is not None:
+                    year = move.moveDate.year
+                    if year not in self.move_geography_catalogs:
+                        self.move_geography_catalogs[year] = load_catalog(self.engine, year)
+                    move_area = transfer_area_evidence(self.move_geography_catalogs[year],
+                                                       request.serviceCountyFips, move.destinationCountyFips)
                 hrg = self.hrg_rows.get(request.hippsCode)
                 if hrg is None:
                     raise HhaInputError("HHA_HIPPS_NOT_FOUND", f"The supplied HIPPS code is not in the verified CY {self.release.payment_year} HHA reference.")
@@ -206,6 +216,8 @@ class HhaProcessor:
                                           lastBillableDate=last, coveredDays=(last - first).days + 1,
                                           periodDays=30, paymentRatio=rounded(Decimal((last - first).days + 1) / 30),
                                           adjustmentApplied=not is_lupa)
+                    if move_area is not None:
+                        partial_detail["commonOwnershipAreaEvidence"] = move_area
                 if request.shortenedPeriod:
                     shortened_detail = dict(**request.shortenedPeriod.model_dump(),
                         firstBillableDate=min(visit.serviceDate for visit in request.visits),
@@ -235,6 +247,8 @@ class HhaProcessor:
                 limitations.extend(geography["limitations"])
             if request.lateNoa and request.lateNoa.approval:
                 limitations.append("Late-filing waiver uses submitted MAC approval for this admission; the decision reference is retained but is not independently authenticated with the MAC. KX alone does not establish approval.")
+            if move_area is not None:
+                limitations.append("Beneficiary move and qualifying transfer facts are submitted. Reviewed geography verifies the areas.")
             if request.shortenedPeriod:
                 limitations.append("Discharge/death, event date and no subsequent care within the original 30-day period are submitted facts, not CWF or history verification; later home health care may require claim adjustment. The shortened statement does not prorate its period payment.")
             total, a9272_detail = calculate_a9272(request, total, self.a9272_rates, self.prior_a9272_rates)

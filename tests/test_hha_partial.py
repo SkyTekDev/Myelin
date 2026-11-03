@@ -116,6 +116,38 @@ class HhaPartialPeriodChecks(unittest.TestCase):
             with self.subTest(next_date=next_date), self.assertRaises(ValidationError):
                 HhaRequest.model_validate(data)
 
+    def test_common_ownership_move_preserves_standalone_partial_payment(self):
+        data = partial_request()
+        control = self.price(data)
+        data["partialPeriod"].update(isCommonOwnershipTransfer=True, commonOwnershipMove=dict(
+            moveDate="2026-06-15", destinationCountyFips="01073",
+            beneficiaryElectedTransfer=True, newAssessmentAndCertifiedPlanOfCare=True))
+        result = self.price(data)
+        self.assertEqual(result.status, "Success", result)
+        self.assertEqual(result.cms, control.cms)
+        self.assertEqual(result.totalPayment, control.totalPayment)
+        area = result.partialPeriod.commonOwnershipAreaEvidence
+        self.assertEqual((area.areaYear, area.originAreaCode, area.destinationAreaCode), (2026, "99901", "13820"))
+        for origin, cbsa, destination in (("01023", "01", "01025"), ("06037", "31084", "06059"),
+                                          ("01129", "50001", "01005")):
+            invalid = copy.deepcopy(data)
+            invalid.update(serviceCountyFips=origin, cbsaCode=cbsa)
+            invalid["partialPeriod"]["commonOwnershipMove"]["destinationCountyFips"] = destination
+            with self.subTest(origin=origin, destination=destination):
+                failed = self.price(invalid)
+                self.assertEqual(failed.reasonCode, "HHA_TRANSFER_AREA_NOT_DISTINCT")
+                self.assertIsNone(failed.totalPayment)
+
+        for change in (lambda request: request.update(billType="0327"),
+                       lambda request: request["partialPeriod"]["commonOwnershipMove"].update(moveDate="2026-06-16"),
+                       lambda request: request["partialPeriod"]["commonOwnershipMove"].update(moveDate="2026-06-14"),
+                       lambda request: request["partialPeriod"]["commonOwnershipMove"].update(beneficiaryElectedTransfer=False),
+                       lambda request: request["partialPeriod"]["commonOwnershipMove"].update(newAssessmentAndCertifiedPlanOfCare=False)):
+            invalid = copy.deepcopy(data)
+            change(invalid)
+            with self.subTest(invalid=invalid), self.assertRaises(ValidationError):
+                HhaRequest.model_validate(invalid)
+
     def test_missing_lupa_context_below_threshold_remains_unpriced(self):
         data = partial_request("partial_lupa_initial")
         data.pop("lupa")
