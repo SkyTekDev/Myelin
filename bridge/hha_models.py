@@ -448,10 +448,9 @@ class HhaRequest(BaseModel):
     @model_validator(mode="after")
     def period_and_visits(self):
         release = self.release
-        if self.is_crossover and (self.billType != "329" or self.periodType != "Full30Day"
-                or any(context is not None for context in (self.lupa, self.partialPeriod, self.shortenedPeriod,
-                                                           self.lateNoa, self.outlier, self.a9272, self.a9272Lines))):
-            raise ValueError("Cross-year HH pricing supports only an ordinary full 30-day original 0329 statement.")
+        if self.is_crossover and (self.billType != "329"
+                or any(context is not None for context in (self.lateNoa, self.outlier, self.a9272, self.a9272Lines))):
+            raise ValueError("Cross-year HH pricing requires an original 0329 with timely NOA and no outlier or A9272 context.")
         if bool(self.a9272Lines) != (self.a9272 is not None):
             raise ValueError("A9272 lines require matching explicit beneficiary context; context without devices is invalid.")
         if self.a9272Lines:

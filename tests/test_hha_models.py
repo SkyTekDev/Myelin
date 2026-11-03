@@ -64,7 +64,7 @@ class HhaContractChecks(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "No approved HH pricing release"):
             HhaRequest.model_validate(payload)
 
-    def test_crossover_only_accepts_full_ordinary_originals(self):
+    def test_crossover_accepts_supported_original_periods(self):
         payload = request_data()
         offset = date(2025, 12, 3) - date(2026, 6, 1)
         for key in ("admissionDate", "noticeReceiptDate", "fromDate", "throughDate"):
@@ -74,13 +74,27 @@ class HhaContractChecks(unittest.TestCase):
         crossover = HhaRequest.model_validate(payload)
         self.assertTrue(crossover.is_crossover)
         self.assertIs(crossover.release, CY_2026)
+        lupa = {"sourceAdmissionIndicator": "1", "isFirstOrOnlyPeriod": True}
+        self.assertTrue(HhaRequest.model_validate(dict(payload, lupa=lupa)).lupa.isFirstOrOnlyPeriod)
+        shortened = deepcopy(payload)
+        shortened.update(fromDate="2025-12-04", periodType="Partial30Day", partialPeriod={
+            "eventType": "TransferToAnotherHha", "patientStatus": "06",
+            "nextCareStartDate": "2026-01-02", "isCommonOwnershipTransfer": False,
+        })
+        shortened["visits"][0]["serviceDate"] = "2025-12-04"
+        self.assertTrue(HhaRequest.model_validate(shortened).is_crossover)
+        shortened.update(periodType="Shortened30Day", partialPeriod=None, shortenedPeriod={
+            "eventType": "Death", "patientStatus": "20", "eventDate": "2026-01-01",
+            "noSubsequentCareWithin30Days": True,
+        })
+        self.assertTrue(HhaRequest.model_validate(shortened).is_crossover)
         for change in (
             {"billType": "0327"},
-            {"lupa": {"sourceAdmissionIndicator": "1", "isFirstOrOnlyPeriod": True}},
+            {"noticeReceiptDate": "2025-12-09", "lateNoa": {"exceptionStatus": "NoException"}},
         ):
-            with self.subTest(change=change), self.assertRaisesRegex(ValidationError, "only an ordinary"):
+            with self.subTest(change=change), self.assertRaisesRegex(ValidationError, "requires an original 0329"):
                 HhaRequest.model_validate(dict(payload, **change))
-        with self.assertRaisesRegex(ValidationError, "complete statement"):
+        with self.assertRaisesRegex(ValidationError, "Full periods require 30"):
             HhaRequest.model_validate(dict(payload, fromDate="2025-12-04"))
 
     def test_lupa_context_requires_explicit_strict_facts(self):

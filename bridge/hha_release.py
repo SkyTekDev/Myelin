@@ -44,7 +44,7 @@ class HhaRelease:
     def covers_statement(self, from_date: date, through_date: date) -> bool:
         days = (through_date - from_date).days
         return (through_date.year == self.payment_year and from_date >= self.earliest_statement_from
-                and 0 <= days < 30 and (from_date.year == self.payment_year or days == 29))
+                and 0 <= days < 30)
 
     def period_rate(self, qrp: str) -> Decimal:
         return self.full_period_rate if qrp == "0" else self.reduced_period_rate
