@@ -96,7 +96,7 @@ class HhaContractChecks(unittest.TestCase):
             HhaRequest.model_validate(dict(late, outlier=dict(outlier, calendarYear=2025, asOfDate="2025-12-31")))
         with self.assertRaisesRegex(ValidationError, "Late NOA requires explicit"):
             HhaRequest.model_validate(dict(late, lateNoa=None))
-        with self.assertRaisesRegex(ValidationError, "supports original 0329"):
+        with self.assertRaisesRegex(ValidationError, "requires an original 0329"):
             HhaRequest.model_validate(dict(payload, billType="0327"))
         with self.assertRaisesRegex(ValidationError, "Full periods require 30"):
             HhaRequest.model_validate(dict(payload, fromDate="2025-12-04"))

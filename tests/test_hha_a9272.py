@@ -1,5 +1,6 @@
 """A9272 fees remain separate from actual CMS PPS calculations."""
 from copy import deepcopy
+from datetime import date
 from decimal import Decimal
 import json
 from pathlib import Path
@@ -7,6 +8,11 @@ import unittest
 from unittest.mock import patch
 
 from pydantic import ValidationError
+from sqlalchemy.orm import Session
+
+from bridge.hha_separate_payment_rates import APPROVED_RELEASES, read_package
+from bridge.hha_separate_payment_reference import install_release
+from myelin.pricers.ipsf import IPSF
 from bridge.hha_models import HhaRequest, HhaResponse
 from tests.test_hha_models import request_data
 from tests import test_hha_integration as integration
@@ -21,11 +27,40 @@ def devices(data=None, remaining='0.00', units=1):
     return data
 
 
+def crossover_devices():
+    data = devices(remaining="283.00")
+    offset = date(2025, 12, 3) - date.fromisoformat(data["fromDate"])
+    for name in ("admissionDate", "noticeReceiptDate", "fromDate", "throughDate"):
+        data[name] = (date.fromisoformat(data[name]) + offset).isoformat()
+    for visit in data["visits"]:
+        visit["serviceDate"] = (date.fromisoformat(visit["serviceDate"]) + offset).isoformat()
+    january = data.pop("a9272")
+    january["asOfDate"] = data["throughDate"]
+    december = dict(january, benefitYear=2025, asOfDate="2025-12-31", remainingPartBDeductible="257.00")
+    data["a9272BenefitSnapshots"] = [january, december]
+    current = data["a9272Lines"][0]
+    current["serviceDate"] = data["throughDate"]
+    data["a9272Lines"] += [dict(current, claimLineNumber=101, serviceDate="2025-12-31"),
+                            dict(current, claimLineNumber=102)]
+    return data
+
+
 class A9272Checks(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         integration.HhaCmsIntegrationChecks.setUpClass()
         cls.processor = integration.HhaCmsIntegrationChecks.processor
+        db = integration.HhaCmsIntegrationChecks.db
+        with Session(db) as session:
+            session.add(IPSF(provider_ccn="017999", provider_type="36", effective_date=20250101,
+                             federal_pps_blend="0", special_provider_update_factor=1, termination_date=None))
+            session.commit()
+        revision, checksum = APPROVED_RELEASES[2025]
+        package = Path(__file__).resolve().parents[1] / "bridge/data/hha-separate-payment-rates-2025-v1.json"
+        with db.begin() as connection:
+            install_release(connection.connection.driver_connection, read_package(package, checksum),
+                            checksum, revision, "isolated-test-fixture")
+        cls.processor.prior_a9272_rates = cls.processor._optional_device_rates(2025)
 
     @classmethod
     def tearDownClass(cls):
@@ -107,6 +142,43 @@ class A9272Checks(unittest.TestCase):
             self.assertEqual(failed.reasonCode,'HHA_A9272_RATE_REFERENCE_INVALID')
             self.assertIsNone(failed.totalPayment); self.assertIsNone(failed.a9272)
             self.assertEqual(self.price(request_data()).totalPayment,Decimal('1602.87'))
+
+    def test_crossover_devices_use_service_year_and_independent_deductibles(self):
+        data = crossover_devices()
+        control = self.price({key: value for key, value in data.items()
+                              if key not in {"a9272BenefitSnapshots", "a9272Lines"}})
+        result = self.price(data)
+        self.assertEqual(result.status, "Success", result)
+        self.assertEqual(result.cms, control.cms)
+        self.assertEqual(result.a9272.ppsPayment, control.totalPayment)
+        paid = result.a9272
+        self.assertEqual([line.unitRate for line in paid.linePayments],
+                         [Decimal("276.57"), Decimal("282.10"), Decimal("282.10")])
+        self.assertEqual([line.appliedDeductible for line in paid.linePayments],
+                         [Decimal("257"), Decimal("282.10"), Decimal("0.90")])
+        self.assertEqual([year.rateEvidence["paymentYear"] for year in paid.benefitYearPayments], [2025, 2026])
+        self.assertEqual([year.remainingPartBDeductibleAfterClaim for year in paid.benefitYearPayments], [0, 0])
+        self.assertEqual(result.totalPayment, control.totalPayment + Decimal("840.77"))
+
+    def test_crossover_requires_rates_only_for_years_with_devices(self):
+        data = crossover_devices()
+        with patch.object(self.processor, "prior_a9272_rates", None):
+            self.assertEqual(self.price(data).reasonCode, "HHA_A9272_RATE_REFERENCE_INVALID")
+            data["a9272BenefitSnapshots"].pop()
+            data["a9272Lines"].pop(1)
+            self.assertEqual(self.price(data).a9272.totalDeviceAllowance, Decimal("564.20"))
+
+    def test_crossover_rejects_missing_duplicate_and_early_device_year_snapshots(self):
+        for edit in (
+            lambda data: data["a9272BenefitSnapshots"].pop(),
+            lambda data: data["a9272BenefitSnapshots"][1].update(data["a9272BenefitSnapshots"][0]),
+            lambda data: data["a9272BenefitSnapshots"][1].update(asOfDate="2025-12-30"),
+            lambda data: data["a9272Lines"].pop(1),
+        ):
+            data = crossover_devices()
+            edit(data)
+            with self.subTest(data=data), self.assertRaises(ValidationError):
+                HhaRequest.model_validate(data)
 
     def test_invalid_device_contract_is_rejected_before_pricing(self):
         changes=[lambda x:x.pop('a9272'), lambda x:x.pop('a9272Lines'),

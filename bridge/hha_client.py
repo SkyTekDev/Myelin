@@ -66,10 +66,9 @@ class HhaProcessor:
             raise RuntimeError("Start Myelin JVM before HHA processor.")
         self.engine = engine
         self.lock = Lock()
-        try:
-            self.a9272_rates = load_rates(engine, release.payment_year)
-        except HhaInputError:
-            self.a9272_rates = None
+        self.a9272_rates = self._optional_device_rates(release.payment_year)
+        prior_year = release.earliest_statement_from.year
+        self.prior_a9272_rates = self._optional_device_rates(prior_year) if prior_year < release.payment_year else None
         self.hrg_rows = self._reference_rows(jar, self.release.hipps_reference, "code")
         self.wage_rows = self._reference_rows(jar, self.release.wage_reference, "cbsa")
         self.revenue_rows = self._reference_rows(jar, self.release.visit_reference, "code")
@@ -111,6 +110,12 @@ class HhaProcessor:
         if not result:
             raise RuntimeError("Missing HHA bundled reference data.")
         return result
+
+    def _optional_device_rates(self, year: int):
+        try:
+            return load_rates(self.engine, year)
+        except HhaInputError:
+            return None
 
     def calculate(self, payload: dict) -> dict:
         # Decimal -> exact JSON string -> Java BigDecimal, matching SNF's bridge.
@@ -232,7 +237,7 @@ class HhaProcessor:
                 limitations.append("Late-filing waiver uses submitted MAC approval for this admission; the decision reference is retained but is not independently authenticated with the MAC. KX alone does not establish approval.")
             if request.shortenedPeriod:
                 limitations.append("Discharge/death, event date and no subsequent care within the original 30-day period are submitted facts, not CWF or history verification; later home health care may require claim adjustment. The shortened statement does not prorate its period payment.")
-            total, a9272_detail = calculate_a9272(request, total, self.a9272_rates)
+            total, a9272_detail = calculate_a9272(request, total, self.a9272_rates, self.prior_a9272_rates)
             if a9272_detail is not None:
                 limitations.append("Combined allowance includes the national device fee before beneficiary cost sharing. Device deductible/coinsurance and Medicare payment before sequestration use the submitted snapshot; no benefit ledger is adjudicated or reserved.")
             return HhaResponse(claimId=request.claimId, status="Success",

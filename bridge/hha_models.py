@@ -367,9 +367,9 @@ class HhaA9272LinePayment(HhaA9272Line):
     medicarePaymentBeforeSequestration: Money
 
 
-class HhaA9272Payment(HhaA9272Context):
+class HhaA9272Totals(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     ppsPayment: Money
-    rateEvidence: dict[str, Any]
     linePayments: list[HhaA9272LinePayment] = Field(min_length=1, max_length=1000)
     totalDeviceAllowance: Money
     totalAppliedDeductible: Money
@@ -377,7 +377,6 @@ class HhaA9272Payment(HhaA9272Context):
     totalBeneficiaryLiability: Money
     totalDeviceMedicarePaymentBeforeSequestration: Money
     totalMedicarePaymentBeforeSequestration: Money
-    remainingPartBDeductibleAfterClaim: Money
     allowanceBasis: Literal["NationalDeviceFeeBeforeCostSharing"]
 
     @model_validator(mode="after")
@@ -388,9 +387,37 @@ class HhaA9272Payment(HhaA9272Context):
                 or self.totalCoinsurance != sums["coinsuranceAmount"] or self.totalBeneficiaryLiability != sums["beneficiaryLiabilityAmount"]
                 or self.totalDeviceMedicarePaymentBeforeSequestration != sums["medicarePaymentBeforeSequestration"]
                 or self.totalDeviceAllowance != self.totalBeneficiaryLiability+self.totalDeviceMedicarePaymentBeforeSequestration
-                or self.totalMedicarePaymentBeforeSequestration != self.ppsPayment+self.totalDeviceMedicarePaymentBeforeSequestration
-                or self.remainingPartBDeductibleAfterClaim != self.remainingPartBDeductible-self.totalAppliedDeductible):
+                or self.totalMedicarePaymentBeforeSequestration != self.ppsPayment+self.totalDeviceMedicarePaymentBeforeSequestration):
             raise ValueError("Device allowances, beneficiary liability and Medicare payment must reconcile.")
+        return self
+
+
+class HhaA9272BenefitYearPayment(HhaA9272Context):
+    rateEvidence: dict[str, Any]
+    remainingPartBDeductibleAfterClaim: Money
+
+
+class HhaA9272Payment(HhaA9272BenefitYearPayment, HhaA9272Totals):
+    @model_validator(mode="after")
+    def reconcile_deductible(self):
+        if self.remainingPartBDeductibleAfterClaim != self.remainingPartBDeductible-self.totalAppliedDeductible:
+            raise ValueError("The device deductible balance must reconcile.")
+        return self
+
+
+class HhaA9272CrossoverPayment(HhaA9272Totals):
+    benefitYearPayments: list[HhaA9272BenefitYearPayment] = Field(min_length=1, max_length=2)
+
+    @model_validator(mode="after")
+    def reconcile_benefit_years(self):
+        applied = defaultdict(Decimal)
+        for line in self.linePayments:
+            applied[line.serviceDate.year] += line.appliedDeductible
+        if [year.benefitYear for year in self.benefitYearPayments] != sorted(applied):
+            raise ValueError("Each device benefit year requires one ordered payment entry.")
+        for year in self.benefitYearPayments:
+            if year.remainingPartBDeductibleAfterClaim != year.remainingPartBDeductible - applied[year.benefitYear]:
+                raise ValueError("Each device year must reconcile its own deductible balance.")
         return self
 
 
@@ -423,6 +450,7 @@ class HhaRequest(BaseModel):
     outlier: HhaOutlierContext | None = None
     shortenedPeriod: HhaShortenedPeriodContext | None = None
     a9272: HhaA9272Context | None = None
+    a9272BenefitSnapshots: list[HhaA9272Context] | None = Field(default=None, min_length=1, max_length=2)
     a9272Lines: list[HhaA9272Line] | None = Field(default=None, min_length=1, max_length=1000)
 
     _claim_identity = field_validator("claimId")(_identifier)
@@ -448,16 +476,27 @@ class HhaRequest(BaseModel):
     @model_validator(mode="after")
     def period_and_visits(self):
         release = self.release
-        if self.is_crossover and (self.billType != "329" or self.a9272 is not None or self.a9272Lines is not None):
-            raise ValueError("Cross-year HH pricing supports original 0329 PPS payments without A9272 devices.")
-        if bool(self.a9272Lines) != (self.a9272 is not None):
+        if self.is_crossover and self.billType != "329":
+            raise ValueError("Cross-year HH pricing requires an original 0329 statement.")
+        if bool(self.a9272Lines) != (self.a9272 is not None or self.a9272BenefitSnapshots is not None):
             raise ValueError("A9272 lines require matching explicit beneficiary context; context without devices is invalid.")
         if self.a9272Lines:
             if (len({row.claimLineNumber for row in self.a9272Lines}) != len(self.a9272Lines)
-                    or any(not self.fromDate <= row.serviceDate <= self.throughDate for row in self.a9272Lines)
-                    or self.a9272.benefitYear != self.fromDate.year or self.a9272.benefitYear != release.payment_year
-                    or self.a9272.asOfDate < self.throughDate):
-                raise ValueError("Device lines require unique bindings, dates within the statement and a benefit snapshot as of Through or later.")
+                    or any(not self.fromDate <= row.serviceDate <= self.throughDate for row in self.a9272Lines)):
+                raise ValueError("Device lines require unique bindings and dates within the statement.")
+            if self.is_crossover:
+                last_by_year = {}
+                for line in self.a9272Lines:
+                    year = line.serviceDate.year
+                    last_by_year[year] = max(line.serviceDate, last_by_year.get(year, line.serviceDate))
+                snapshots = {snapshot.benefitYear: snapshot for snapshot in self.a9272BenefitSnapshots or []}
+                if (self.a9272 is not None or len(snapshots) != len(self.a9272BenefitSnapshots or [])
+                        or set(snapshots) != set(last_by_year)
+                        or any(snapshots[year].asOfDate < last for year, last in last_by_year.items())):
+                    raise ValueError("Crossover A9272 requires one deductible snapshot on or after the last device date in each device year.")
+            elif (self.a9272 is None or self.a9272BenefitSnapshots is not None
+                    or self.a9272.benefitYear != release.payment_year or self.a9272.asOfDate < self.throughDate):
+                raise ValueError("Single-year A9272 requires a benefit snapshot as of Through or later.")
         statement_days = (self.throughDate - self.fromDate).days + 1
         if self.periodType == "Full30Day":
             if statement_days != 30 or self.partialPeriod is not None or self.shortenedPeriod is not None:
@@ -526,7 +565,7 @@ class HhaResponse(BaseModel):
     lateNoa: HhaLateNoaPayment | None = None
     outlier: HhaOutlierPayment | None = None
     shortenedPeriod: HhaShortenedPeriodPayment | None = None
-    a9272: HhaA9272Payment | None = None
+    a9272: HhaA9272Payment | HhaA9272CrossoverPayment | None = None
     limitations: list[str] = Field(default_factory=lambda: [
         "Payment estimate only; no eligibility or coverage determination."
     ])
