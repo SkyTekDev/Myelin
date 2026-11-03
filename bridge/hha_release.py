@@ -42,8 +42,9 @@ class HhaRelease:
         return f"rev-{self.payment_year}.csv"
 
     def covers_statement(self, from_date: date, through_date: date) -> bool:
+        days = (through_date - from_date).days
         return (through_date.year == self.payment_year and from_date >= self.earliest_statement_from
-                and 0 <= (through_date - from_date).days < 30)
+                and 0 <= days < 30 and (from_date.year == self.payment_year or days == 29))
 
     def period_rate(self, qrp: str) -> Decimal:
         return self.full_period_rate if qrp == "0" else self.reduced_period_rate
@@ -51,7 +52,7 @@ class HhaRelease:
 
 CY_2026 = HhaRelease(
     payment_year=2026,
-    earliest_statement_from=date(2026, 1, 1),
+    earliest_statement_from=date(2025, 12, 3),
     pricer_release="2.6.0",
     calculation_version="2026.0",
     jar_filename="hha-pricer-application-2.6.0.jar",

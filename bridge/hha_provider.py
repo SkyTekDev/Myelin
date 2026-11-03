@@ -50,8 +50,42 @@ def _vbp_factor(value) -> Decimal:
     return factor
 
 
+def _active_termination(row, end: date) -> date | None:
+    if (row.provider_type or "").strip() != "36":
+        raise HhaInputError(
+            "HHA_PROVIDER_TYPE_MISMATCH", "The effective IPSF provider record is not a home health agency."
+        )
+    # NULL and these sentinels are source representations of no termination.
+    if row.termination_date in (None, 0, 19000101, 99991231):
+        return None
+    termination = _reference_date(row.termination_date, "termination date")
+    if termination <= end:
+        raise HhaInputError(
+            "HHA_PROVIDER_TERMINATED", "The HH provider is terminated on or before the period's through date."
+        )
+    return termination
+
+
+def _crossover_coverage(rows, effective: date, start: date, end: date) -> dict:
+    if effective != date(end.year, 1, 1) or len(rows) < 2:
+        raise HhaInputError("HHA_PROVIDER_CROSSOVER_UNVERIFIED",
+            "Cross-year HH pricing requires a January 1 IPSF payment update and a prior record covering the statement start.")
+    prior = rows[1]
+    prior_date = _reference_date(prior.effective_date, "prior effective date")
+    if prior_date > start:
+        raise HhaInputError("HHA_PROVIDER_CHANGED_WITHIN_PERIOD",
+            "An additional IPSF effective date falls within the cross-year statement.")
+    if len(rows) > 2 and rows[2].effective_date == prior.effective_date:
+        raise HhaInputError("HHA_PROVIDER_REFERENCE_AMBIGUOUS",
+            "More than one IPSF provider record exists on the prior effective date.")
+    termination = _active_termination(prior, end)
+    return dict(schemaVersion="HHACrossoverProviderEvidence/1", providerCcn=prior.provider_ccn,
+                providerRowId=prior.id, providerType="36", effectiveDate=prior_date.isoformat(),
+                terminationDate=termination.isoformat() if termination else None)
+
+
 def provider_for_period(engine, ccn: str, start: date, end: date) -> dict:
-    """Resolve a single actual IPSF HH record for the full supported period.
+    """Resolve IPSF payment facts and verify coverage for the full supported period.
 
     QRP comes from IPSF Federal PPS Blend Indicator (field 18); the HHVBP
     multiplier comes from Special Provider Update Factor (field 30), as specified
@@ -86,23 +120,15 @@ def provider_for_period(engine, ccn: str, start: date, end: date) -> dict:
             raise HhaInputError(
                 "HHA_PROVIDER_REFERENCE_AMBIGUOUS", "More than one IPSF provider record exists on the selected effective date."
             )
-        if effective > start:
+        crossover_coverage = None
+        if start.year != end.year:
+            crossover_coverage = _crossover_coverage(rows, effective, start, end)
+        elif effective > start:
             raise HhaInputError(
                 "HHA_PROVIDER_CHANGED_WITHIN_PERIOD", "The provider reference changes within the full HH period; this case is outside first-pass support."
             )
-        if (row.provider_type or "").strip() != "36":
-            raise HhaInputError(
-                "HHA_PROVIDER_TYPE_MISMATCH", "The effective IPSF provider record is not a home health agency."
-            )
-        # NULL and these sentinels are source representations of no termination.
         raw_termination = row.termination_date
-        termination = None
-        if raw_termination not in (None, 0, 19000101, 99991231):
-            termination = _reference_date(raw_termination, "termination date")
-            if termination <= end:
-                raise HhaInputError(
-                    "HHA_PROVIDER_TERMINATED", "The HH provider is terminated on or before the period's through date."
-                )
+        termination = _active_termination(row, end)
 
         qrp = (row.federal_pps_blend or "").strip()
         if qrp not in {"0", "2"}:
@@ -145,6 +171,8 @@ def provider_for_period(engine, ccn: str, start: date, end: date) -> dict:
                 "sourceRowFingerprint": fingerprint,
             },
         }
+        if crossover_coverage is not None:
+            result["providerEvidence"]["crossoverProviderEvidence"] = crossover_coverage
         if effective.year != end.year:
             if end.year != 2026:
                 raise HhaInputError("HHA_PROVIDER_REFERENCE_STALE",

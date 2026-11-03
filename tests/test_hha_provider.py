@@ -73,6 +73,45 @@ class HhaProviderTests(unittest.TestCase):
         self.add(effective_date=20260615)
         self.reject("HHA_PROVIDER_CHANGED_WITHIN_PERIOD")
 
+    def test_crossover_uses_january_payment_facts_and_prior_coverage(self):
+        start, end = date(2025, 12, 3), date(2026, 1, 1)
+        prior = self.add(effective_date=20250101, special_provider_update_factor=1.04)
+        current = self.add(federal_pps_blend="2", special_provider_update_factor=0.98)
+        result = provider_for_period(self.engine, CCN, start, end)
+        self.assertEqual(result["qualityReportingProgramIndicator"], "2")
+        self.assertEqual(result["providerData"]["vbpAdjustment"], Decimal("0.98"))
+        proof = result["providerEvidence"]
+        self.assertEqual(proof["providerRowId"], current)
+        self.assertEqual(proof["crossoverProviderEvidence"], {
+            "schemaVersion": "HHACrossoverProviderEvidence/1", "providerCcn": CCN,
+            "providerRowId": prior, "providerType": "36", "effectiveDate": "2025-01-01",
+            "terminationDate": None,
+        })
+
+    def test_crossover_rejects_missing_changed_or_terminated_coverage(self):
+        start, end = date(2025, 12, 3), date(2026, 1, 1)
+        for prior, current, reason in (
+            (None, {}, "HHA_PROVIDER_CROSSOVER_UNVERIFIED"),
+            ({"effective_date": 20250101}, None, "HHA_PROVIDER_CROSSOVER_UNVERIFIED"),
+            ({"effective_date": 20251204}, {}, "HHA_PROVIDER_CHANGED_WITHIN_PERIOD"),
+            ({"effective_date": 20250101, "termination_date": 20251231}, {}, "HHA_PROVIDER_TERMINATED"),
+            ({"effective_date": 20250101}, {"termination_date": 20260101}, "HHA_PROVIDER_TERMINATED"),
+            ({"effective_date": 20250101, "provider_type": "38"}, {}, "HHA_PROVIDER_TYPE_MISMATCH"),
+        ):
+            with self.subTest(prior=prior, current=current):
+                self.clear()
+                if prior is not None:
+                    self.add(**prior)
+                if current is not None:
+                    self.add(**current)
+                self.reject(reason, start, end)
+
+    def test_crossover_rejects_duplicate_prior_record(self):
+        self.add(effective_date=20250101)
+        self.add(effective_date=20250101)
+        self.add()
+        self.reject("HHA_PROVIDER_REFERENCE_AMBIGUOUS", date(2025, 12, 3), date(2026, 1, 1))
+
     def test_duplicate_latest_is_ambiguous_even_if_values_match(self):
         self.add()
         self.add()

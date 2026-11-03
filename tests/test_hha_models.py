@@ -64,6 +64,25 @@ class HhaContractChecks(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "No approved HH pricing release"):
             HhaRequest.model_validate(payload)
 
+    def test_crossover_only_accepts_full_ordinary_originals(self):
+        payload = request_data()
+        offset = date(2025, 12, 3) - date(2026, 6, 1)
+        for key in ("admissionDate", "noticeReceiptDate", "fromDate", "throughDate"):
+            payload[key] = (date.fromisoformat(payload[key]) + offset).isoformat()
+        for visit in payload["visits"]:
+            visit["serviceDate"] = (date.fromisoformat(visit["serviceDate"]) + offset).isoformat()
+        crossover = HhaRequest.model_validate(payload)
+        self.assertTrue(crossover.is_crossover)
+        self.assertIs(crossover.release, CY_2026)
+        for change in (
+            {"billType": "0327"},
+            {"lupa": {"sourceAdmissionIndicator": "1", "isFirstOrOnlyPeriod": True}},
+        ):
+            with self.subTest(change=change), self.assertRaisesRegex(ValidationError, "only an ordinary"):
+                HhaRequest.model_validate(dict(payload, **change))
+        with self.assertRaisesRegex(ValidationError, "complete statement"):
+            HhaRequest.model_validate(dict(payload, fromDate="2025-12-04"))
+
     def test_lupa_context_requires_explicit_strict_facts(self):
         for context in [{}, {"sourceAdmissionIndicator": "1"}, {"isFirstOrOnlyPeriod": True},
                         {"sourceAdmissionIndicator": "X", "isFirstOrOnlyPeriod": True},

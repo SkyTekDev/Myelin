@@ -173,6 +173,9 @@ class HhaProcessor:
                 if hrg is None:
                     raise HhaInputError("HHA_HIPPS_NOT_FOUND", f"The supplied HIPPS code is not in the verified CY {self.release.payment_year} HHA reference.")
                 is_lupa = len(request.visits) < int(hrg["threshold"])
+                if is_lupa and request.is_crossover:
+                    raise HhaInputError("HHA_CROSSOVER_PAYMENT_UNSUPPORTED",
+                        "Cross-year HH pricing currently supports ordinary full-period payments.")
                 if is_lupa and request.lupa is None:
                     raise HhaInputError("HHA_LUPA_CONTEXT_REQUIRED", "LUPA pricing requires explicit source-admission and first-or-only-period facts.")
                 if (is_lupa and request.lupa.isFirstOrOnlyPeriod
@@ -184,6 +187,9 @@ class HhaProcessor:
                 payload = self.build_payload(request, provider, geography)
                 cms = self.calculate(payload)
                 code = cms.get("returnCodeData", {}).get("code") if isinstance(cms, dict) else None
+                if code in {"01", "02", "11"} and request.is_crossover:
+                    raise HhaInputError("HHA_CROSSOVER_PAYMENT_UNSUPPORTED",
+                        "Cross-year HH pricing currently supports ordinary full-period payments.")
                 if code in {"01", "02", "11"} and request.outlier is None:
                     raise HhaInputError("HHA_OUTLIER_CONTEXT_REQUIRED", f"Outlier pricing requires explicit provider CY{self.release.payment_year} payment and outlier totals excluding this claim.")
                 if code not in ({"06", "14"} if is_lupa else {"00","01","02","09","11"} if request.outlier else {"09"} if request.partialPeriod else {"00"}):
