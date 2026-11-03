@@ -114,10 +114,50 @@ class HhaOutlierPayment(HhaOutlierContext):
         return self
 
 
+class HhaNoaApproval(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    basis: Literal["SubmittedMacApproval"]
+    scope: Literal["EntireAdmission"]
+    decisionReference: StrictStr = Field(min_length=1, max_length=128)
+    decisionDate: date
+    providerCcn: StrictStr = Field(pattern=r"^[A-Z0-9]{6,13}$")
+    admissionDate: date
+    noticeReceiptDate: date
+    _dates = field_validator("decisionDate", "admissionDate", "noticeReceiptDate", mode="before")(_calendar_date)
+
+    @field_validator("decisionReference")
+    @classmethod
+    def reference(cls, value):
+        import unicodedata
+        if any(unicodedata.category(char) == "Cc" for char in value):
+            raise ValueError("Decision references cannot contain control characters.")
+        return _identifier(value)
+
+    @model_validator(mode="after")
+    def dates(self):
+        if self.decisionDate < self.noticeReceiptDate or (self.noticeReceiptDate-self.admissionDate).days <= 5:
+            raise ValueError("An approval must identify a late accepted NOA and a decision on or after receipt.")
+        return self
+
+
 class HhaLateNoaContext(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    exceptionStatus: Literal["NoException"]
+    exceptionStatus: Literal["NoException", "ApprovedException"]
+    approval: HhaNoaApproval | None = None
+
+    @model_validator(mode="after")
+    def explicit_approval(self):
+        if (self.exceptionStatus == "ApprovedException") != (self.approval is not None):
+            raise ValueError("ApprovedException requires a submitted MAC approval; NoException must omit approval.")
+        return self
+
+    @model_serializer(mode="wrap")
+    def omit_absent_approval(self, handler):
+        result = handler(self)
+        if self.approval is None:
+            result.pop("approval", None)
+        return result
 
 
 class HhaLateNoaVisitPenalty(BaseModel):
@@ -152,7 +192,7 @@ class HhaLateNoaPayment(HhaLateNoaContext):
     netPayment: Money
     cmsPayment: Money
     cmsPenaltyAmount: Money
-    adjustmentMethod: Literal["CmsPeriodPenalty", "SubsequentPeriodPenalty", "LupaVisitExclusion"]
+    adjustmentMethod: Literal["CmsPeriodPenalty", "SubsequentPeriodPenalty", "LupaVisitExclusion", "ApprovedExceptionWaiver"]
     providerLiability: StrictBool
     beneficiaryLiabilityAmount: Annotated[Decimal, Field(ge=0, le=0)]
     nonPayment: StrictBool
@@ -163,12 +203,16 @@ class HhaLateNoaPayment(HhaLateNoaContext):
     @model_validator(mode="after")
     def reconcile(self):
         if (self.grossPayment-self.penaltyAmount != self.netPayment
-                or self.nonPayment != (self.netPayment == 0) or not self.providerLiability
+                or self.nonPayment != (self.netPayment == 0) or self.providerLiability != (self.exceptionStatus == "NoException")
                 or (self.noticeReceiptDate-self.admissionDate).days <= 5
                 or self.periodFromDate < self.admissionDate or self.periodThroughDate < self.periodFromDate
-                or self.noncoveredDays != max(0, min(30, (self.noticeReceiptDate-self.periodFromDate).days))):
+                or self.noncoveredDays != (0 if self.approval else max(0, min(30, (self.noticeReceiptDate-self.periodFromDate).days)))):
             raise ValueError("NOA penalty and nonpayment must reconcile to gross and net payment.")
-        if ((self.adjustmentMethod == "LupaVisitExclusion") != (self.visitPenalties is not None)
+        if self.approval:
+            if (self.adjustmentMethod != "ApprovedExceptionWaiver" or self.penaltyAmount != 0 or self.cmsPenaltyAmount != 0
+                    or self.approval.admissionDate != self.admissionDate or self.approval.noticeReceiptDate != self.noticeReceiptDate):
+                raise ValueError("Approved waiver requires matching dates, zero penalty and explicit waiver evidence.")
+        elif ((self.adjustmentMethod == "LupaVisitExclusion") != (self.visitPenalties is not None)
                 or (self.adjustmentMethod != "LupaVisitExclusion"
                     and (self.adjustmentMethod == "SubsequentPeriodPenalty") != (0 < self.noncoveredDays <= 5))):
             raise ValueError("NOA adjustment method must match its visit or period evidence.")
@@ -184,6 +228,8 @@ class HhaLateNoaPayment(HhaLateNoaContext):
         result = handler(self)
         if self.visitPenalties is None:
             result.pop("visitPenalties", None)
+        if self.approval is None:
+            result.pop("approval", None)
         return result
 
 
@@ -416,7 +462,12 @@ class HhaRequest(BaseModel):
         if notice_days < 0:
             raise ValueError("An accepted NOA date on or after admission is required.")
         if (notice_days > 5) != (self.lateNoa is not None):
-            raise ValueError("Late NOA requires explicit NoException facts; timely NOA must omit late context.")
+            raise ValueError("Late NOA requires explicit exception facts; timely NOA must omit late context.")
+        if self.lateNoa and self.lateNoa.approval:
+            approval = self.lateNoa.approval
+            if (approval.providerCcn != self.providerCcn or approval.admissionDate != self.admissionDate
+                    or approval.noticeReceiptDate != self.noticeReceiptDate):
+                raise ValueError("The MAC approval must bind this provider, admission and accepted NOA.")
         identities = [visit.visitId for visit in self.visits]
         if len(set(identities)) != len(identities):
             raise ValueError("Visit identities must be unique within the claim.")

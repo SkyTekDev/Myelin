@@ -50,7 +50,7 @@ def expected(request, provider, geography, hrg, revenue_rows, is_lupa=False):
     bypassed = candidate > 0 and (context.priorPaymentTotal == 0 or context.priorOutlierTotal == 0)
     cms_o = candidate if bypassed or not limited else Decimal('0.00')
     policy_o = Decimal('0.00') if limited else candidate
-    delay = max(0, min(30, (request.noticeReceiptDate-request.fromDate).days)) if request.lateNoa else 0
+    delay = max(0, min(30, (request.noticeReceiptDate-request.fromDate).days)) if request.lateNoa and not request.lateNoa.approval else 0
     cms_days = delay if delay > 5 else 0
     cms_h_penalty = rounded(h*cms_days/30)
     cms_o_penalty = rounded(cms_o*cms_days/30)
@@ -96,10 +96,10 @@ def process_period(request, provider, geography, hrg, cms, revenue_rows):
         raise RuntimeError('CMS outlier geography does not reconcile.')
     late = None
     if request.lateNoa:
-        late = dict(exceptionStatus='NoException', admissionDate=request.admissionDate,noticeReceiptDate=request.noticeReceiptDate,
+        late = dict(**request.lateNoa.model_dump(), admissionDate=request.admissionDate,noticeReceiptDate=request.noticeReceiptDate,
             periodFromDate=request.fromDate,periodThroughDate=request.throughDate,noncoveredDays=calculated['days'],grossPayment=calculated['gross'],
             penaltyAmount=calculated['gross']-calculated['total'],netPayment=calculated['total'],cmsPayment=calculated['cmsTotal'],cmsPenaltyAmount=calculated['cmsPenalty'],
-            adjustmentMethod='SubsequentPeriodPenalty' if 0 < calculated['days'] <= 5 else 'CmsPeriodPenalty', providerLiability=True,beneficiaryLiabilityAmount=Decimal('0.00'),nonPayment=calculated['total']==0)
+            adjustmentMethod='ApprovedExceptionWaiver' if request.lateNoa.approval else 'SubsequentPeriodPenalty' if 0 < calculated['days'] <= 5 else 'CmsPeriodPenalty', providerLiability=not bool(request.lateNoa.approval),beneficiaryLiabilityAmount=Decimal('0.00'),nonPayment=calculated['total']==0)
     return calculated['total'],calculated['detail'],late
 
 

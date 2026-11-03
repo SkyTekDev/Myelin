@@ -51,7 +51,7 @@ The provider must exist with usable dated reference data in the running image.
   statement dates, both within CY 2026. Full periods span 30 inclusive days;
   supported partial periods and shortened discharge/death statements span 1-29 inclusive days.
 - `noticeReceiptDate`: accepted NOA date. Receipts later than admission plus five
-  days require the explicit `lateNoa` no-exception context described below.
+  days require the explicit `lateNoa` exception context described below.
 - `periodType`: `Full30Day`, confirming the period has no partial-period event,
   `Partial30Day` with the explicit `partialPeriod` facts below, or `Shortened30Day`
   with explicit `shortenedPeriod` discharge/death facts.
@@ -539,9 +539,10 @@ same-day priority, mixed visits and a four-visit HIPPS with threshold five.
 ## CY 2026 late Notice of Admission
 
 Late accepted NOA dates (more than five calendar days after the actual admission)
-require explicit `lateNoa: {"exceptionStatus":"NoException"}`. Timely notices
-must omit this context. Missing or malformed facts and unsupported requested or
-granted exceptions are rejected. The source notice date remains unchanged in the
+require explicit `lateNoa: {"exceptionStatus":"NoException"}` or a documented
+`ApprovedException` as described in [approved NOA exceptions](README-hha-noa-exceptions.md).
+Timely notices omit this context. Missing/malformed facts, requested/pending decisions
+and partial waivers are rejected; KX alone is never an approval. The source notice date remains unchanged in the
 CMS payload and raw CMS response. Complete visits remain the basis of the original
 supplied-HIPPS threshold; exclusions never reclassify the period.
 

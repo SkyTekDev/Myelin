@@ -150,7 +150,7 @@ class HhaProcessor:
                                     if request.partialPeriod else 30),
                 "initialPaymentQualityReportingProgramIndicator": provider["qualityReportingProgramIndicator"],
                 "partialEpisodePaymentIndicator": "Y" if request.partialPeriod else "N",
-                "lateFilingPenaltyWaiverIndicator": "N",
+                "lateFilingPenaltyWaiverIndicator": "Y" if request.lateNoa and request.lateNoa.approval else "N",
                 "lupaSourceAdmissionIndicator": request.lupa.sourceAdmissionIndicator if request.lupa else "1",
                 "adjustmentIndicator": "2" if request.lupa and not request.lupa.isFirstOrOnlyPeriod else "0",
                 # Without a submitted snapshot, neutral totals expose any
@@ -229,6 +229,8 @@ class HhaProcessor:
             ]
             if not geography.get("countyMappingVerified"):
                 limitations.extend(geography["limitations"])
+            if request.lateNoa and request.lateNoa.approval:
+                limitations.append("Late-filing waiver uses submitted MAC approval for this admission; the decision reference is retained but is not independently authenticated with the MAC. KX alone does not establish approval.")
             if request.shortenedPeriod:
                 limitations.append("Discharge/death, event date and no subsequent care within the original 30-day period are submitted facts, not CWF or history verification; later home health care may require claim adjustment. The shortened statement does not prorate its period payment.")
             total, a9272_detail = calculate_a9272(request, total, self.a9272_rates)
@@ -334,7 +336,7 @@ class HhaProcessor:
             days = (max(visit.serviceDate for visit in request.visits) - min(visit.serviceDate for visit in request.visits)).days + 1
             before_vbp = rounded(before_vbp * rounded(Decimal(days) / 30))
         raw_penalty = Decimal(0)
-        if request.lateNoa:
+        if request.lateNoa and not request.lateNoa.approval:
             raw_days = max(0, min(30, (request.noticeReceiptDate - request.fromDate).days))
             if raw_days > 5:
                 raw_penalty = rounded(before_vbp * raw_days / 30)

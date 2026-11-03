@@ -19,7 +19,7 @@ def adjusted(value, wage):
 
 
 def period_days(request):
-    days = max(0, min(30, (request.noticeReceiptDate - request.fromDate).days))
+    days = 0 if request.lateNoa.approval else max(0, min(30, (request.noticeReceiptDate - request.fromDate).days))
     return days
 
 
@@ -46,7 +46,7 @@ def apply(request, provider, geography, hrg, cms, raw_total, lupa_detail, revenu
         net = rounded((before-rounded(before * days / 30)) * vbp) if method == "SubsequentPeriodPenalty" else raw_total
     else:
         gross = raw_total
-        days = max(0, min(30, (request.noticeReceiptDate - request.fromDate).days))
+        days = 0 if request.lateNoa.approval else max(0, min(30, (request.noticeReceiptDate - request.fromDate).days))
         method = "LupaVisitExclusion"
         selected = None
         if request.lupa.isFirstOrOnlyPeriod and request.lupa.sourceAdmissionIndicator != "B":
@@ -61,8 +61,8 @@ def apply(request, provider, geography, hrg, cms, raw_total, lupa_detail, revenu
             revenue = component["revenueCode"]
             original = [v for v in request.visits if next(row["revenueCode"] for row in lupa_detail["visitPayments"] if row["visitId"] == v.visitId) == revenue]
             ordered = sorted(original, key=lambda v: (v.serviceDate, ordinal(v.visitId)))
-            payable = [v for v in ordered if v.serviceDate >= request.noticeReceiptDate]
-            excluded = [v for v in ordered if v.serviceDate < request.noticeReceiptDate]
+            payable = [v for v in ordered if request.lateNoa.approval or v.serviceDate >= request.noticeReceiptDate]
+            excluded = [v for v in ordered if not request.lateNoa.approval and v.serviceDate < request.noticeReceiptDate]
             reference = revenue_rows[revenue]
             field = ("rural" if rural else "nonrural") + ("UnsubmittedDollarRate" if qrp == "2" else "DollarRate")
             rate = Decimal(reference[field])
@@ -100,12 +100,12 @@ def apply(request, provider, geography, hrg, cms, raw_total, lupa_detail, revenu
         visit_penalties = [by_id[v.visitId] for v in ordered]
         if sum(v["grossPayment"] for v in visit_penalties) != gross or sum(v["netPayment"] for v in visit_penalties) != net:
             raise RuntimeError("NOA LUPA gross, exclusions and net allocations do not reconcile.")
-    detail = dict(exceptionStatus=request.lateNoa.exceptionStatus,
+    detail = dict(**request.lateNoa.model_dump(),
         admissionDate=request.admissionDate, noticeReceiptDate=request.noticeReceiptDate,
         periodFromDate=request.fromDate, periodThroughDate=request.throughDate,
         noncoveredDays=days, grossPayment=gross, penaltyAmount=gross-net, netPayment=net,
         cmsPayment=Decimal(payment["totalPayment"]), cmsPenaltyAmount=Decimal(payment["lateSubmissionPenaltyAmount"]),
-        adjustmentMethod=method, providerLiability=True, beneficiaryLiabilityAmount=Decimal("0.00"), nonPayment=net == 0)
+        adjustmentMethod="ApprovedExceptionWaiver" if request.lateNoa.approval else method, providerLiability=not bool(request.lateNoa.approval), beneficiaryLiabilityAmount=Decimal("0.00"), nonPayment=net == 0)
     if visit_penalties is not None:
         detail["visitPenalties"] = visit_penalties
     if gross < net:
