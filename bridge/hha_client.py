@@ -184,9 +184,6 @@ class HhaProcessor:
                 payload = self.build_payload(request, provider, geography)
                 cms = self.calculate(payload)
                 code = cms.get("returnCodeData", {}).get("code") if isinstance(cms, dict) else None
-                if code in {"01", "02", "11"} and request.is_crossover:
-                    raise HhaInputError("HHA_CROSSOVER_PAYMENT_UNSUPPORTED",
-                        "Cross-year HH pricing does not yet support an outlier outcome.")
                 if code in {"01", "02", "11"} and request.outlier is None:
                     raise HhaInputError("HHA_OUTLIER_CONTEXT_REQUIRED", f"Outlier pricing requires explicit provider CY{self.release.payment_year} payment and outlier totals excluding this claim.")
                 if code not in ({"06", "14"} if is_lupa else {"00","01","02","09","11"} if request.outlier else {"09"} if request.partialPeriod else {"00"}):

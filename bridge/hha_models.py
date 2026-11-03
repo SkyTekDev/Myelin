@@ -448,9 +448,8 @@ class HhaRequest(BaseModel):
     @model_validator(mode="after")
     def period_and_visits(self):
         release = self.release
-        if self.is_crossover and (self.billType != "329"
-                or any(context is not None for context in (self.lateNoa, self.outlier, self.a9272, self.a9272Lines))):
-            raise ValueError("Cross-year HH pricing requires an original 0329 with timely NOA and no outlier or A9272 context.")
+        if self.is_crossover and (self.billType != "329" or self.a9272 is not None or self.a9272Lines is not None):
+            raise ValueError("Cross-year HH pricing supports original 0329 PPS payments without A9272 devices.")
         if bool(self.a9272Lines) != (self.a9272 is not None):
             raise ValueError("A9272 lines require matching explicit beneficiary context; context without devices is invalid.")
         if self.a9272Lines:
@@ -472,7 +471,7 @@ class HhaRequest(BaseModel):
             raise ValueError("A partial period requires explicit context, 1-29 statement days and subsequent care within the original period.")
         if self.outlier is not None and (self.outlier.calendarYear != release.payment_year
                                          or self.outlier.asOfDate < self.throughDate):
-            raise ValueError("Outlier history must be as of the statement Through date or later.")
+            raise ValueError("Outlier history must use the statement Through payment year and be dated on or after Through.")
         if self.admissionDate > self.fromDate:
             raise ValueError("Admission/start of care cannot follow the statement From date.")
         if self.lupa is not None and self.lupa.isFirstOrOnlyPeriod and self.admissionDate != self.fromDate:

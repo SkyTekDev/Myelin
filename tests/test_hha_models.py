@@ -88,12 +88,16 @@ class HhaContractChecks(unittest.TestCase):
             "noSubsequentCareWithin30Days": True,
         })
         self.assertTrue(HhaRequest.model_validate(shortened).is_crossover)
-        for change in (
-            {"billType": "0327"},
-            {"noticeReceiptDate": "2025-12-09", "lateNoa": {"exceptionStatus": "NoException"}},
-        ):
-            with self.subTest(change=change), self.assertRaisesRegex(ValidationError, "requires an original 0329"):
-                HhaRequest.model_validate(dict(payload, **change))
+        outlier = {"calendarYear": 2026, "asOfDate": "2026-01-01", "priorPaymentTotal": "100000",
+                   "priorOutlierTotal": "1000", "totalsExcludeCurrentClaim": True, "basis": "SubmittedProviderYtdTotals"}
+        late = dict(payload, noticeReceiptDate="2026-01-01", lateNoa={"exceptionStatus": "NoException"}, outlier=outlier)
+        self.assertEqual(HhaRequest.model_validate(late).outlier.calendarYear, 2026)
+        with self.assertRaisesRegex(ValidationError, "Through payment year"):
+            HhaRequest.model_validate(dict(late, outlier=dict(outlier, calendarYear=2025, asOfDate="2025-12-31")))
+        with self.assertRaisesRegex(ValidationError, "Late NOA requires explicit"):
+            HhaRequest.model_validate(dict(late, lateNoa=None))
+        with self.assertRaisesRegex(ValidationError, "supports original 0329"):
+            HhaRequest.model_validate(dict(payload, billType="0327"))
         with self.assertRaisesRegex(ValidationError, "Full periods require 30"):
             HhaRequest.model_validate(dict(payload, fromDate="2025-12-04"))
 

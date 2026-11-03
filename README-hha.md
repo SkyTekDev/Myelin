@@ -8,9 +8,11 @@ It does not use the generic `HhaClient.create_input_claim()` defaults.
 [CY 2026 A9272 separate devices](README-hha-a9272.md) adds versioned DB fees, explicit deductible/coinsurance assumptions, independent device detail and a reusable annual load process alongside the existing PPS estimate.
 
 The statement Through date selects CMS calculation version `2025.1` or `2026.0`.
-Original `0329` statements with timely NOA can start in December 2025 and end in
-January 2026 for ordinary periods, LUPA, partial periods, and shortened discharge
-or death. The January 1 IPSF row supplies payment facts and the prior row must
+Original `0329` statements can start in December 2025 and end in January 2026 for
+ordinary periods, LUPA, partial periods, shortened discharge or death, late NOA,
+and outliers. Late NOA uses the actual accepted date and exception facts. Outlier
+totals use the 2026 payment year, as of the statement Through date or later in 2026.
+The January 1 IPSF row supplies payment facts and the prior row must
 establish continuous provider coverage. CY 2025 uses an eligible IPSF row
 effective in 2025. Load the reviewed `hha-geography-2025-v1.json` and
 `hha-separate-payment-rates-2025-v1.json` packages into the Myelin SQLite DB
