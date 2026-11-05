@@ -1,0 +1,52 @@
+{
+  "claimId": "SYNTHETIC-HH-2026-EXAMPLE",
+  "providerCcn": "017009",
+  "billType": "0329",
+  "hippsCode": "1FC11",
+  "admissionDate": "2026-06-01",
+  "fromDate": "2026-06-01",
+  "throughDate": "2026-06-30",
+  "noticeReceiptDate": "2026-06-01",
+  "periodType": "Full30Day",
+  "serviceCountyFips": "01023",
+  "cbsaCode": "01",
+  "geographyBasis": "SubmittedCmsValueCodes",
+  "visits": [
+    {
+      "visitId": "1",
+      "serviceDate": "2026-06-01",
+      "discipline": "SN",
+      "outlierUnits": 4
+    },
+    {
+      "visitId": "5",
+      "serviceDate": "2026-06-05",
+      "discipline": "SN",
+      "outlierUnits": 4
+    },
+    {
+      "visitId": "10",
+      "serviceDate": "2026-06-10",
+      "discipline": "SN",
+      "outlierUnits": 4
+    },
+    {
+      "visitId": "15",
+      "serviceDate": "2026-06-15",
+      "discipline": "SN",
+      "outlierUnits": 4
+    },
+    {
+      "visitId": "20",
+      "serviceDate": "2026-06-20",
+      "discipline": "SN",
+      "outlierUnits": 4
+    },
+    {
+      "visitId": "28",
+      "serviceDate": "2026-06-28",
+      "discipline": "SN",
+      "outlierUnits": 4
+    }
+  ]
+}

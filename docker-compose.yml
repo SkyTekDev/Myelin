@@ -11,6 +11,9 @@ services:
       MYELIN_JAR_PATH: "/app/jars"
       MYELIN_DB_PATH: "/app/data/myelin.db"
       MYELIN_DOWNLOAD_CMS_ASSETS: "false"
+      HHA_ENABLED: "${HHA_ENABLED:-false}"
+      # Optional override must match the verified HHA 2.6.0 JAR hash.
+      # HHA_JAR_PATH: "/app/jars/pricers/hha-pricer-application-2.6.0.jar"
       # Set this only when the image contains more than one OPPS Pricer JAR.
       # OPPS_JAR_PATH: "/app/jars/pricers/opps-pricer-application-2.16.0.jar"
     restart: unless-stopped

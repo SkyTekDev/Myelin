@@ -237,9 +237,12 @@ class Myelin:
     def _setup_jvm(self) -> None:
         """Thread-safe JVM initialization"""
         with Myelin._jvm_lock:
+            classpath = [
+                os.path.abspath(os.path.join(self.jar_path, "*")),
+                *(os.path.abspath(path) for path in self.extra_classpaths),
+            ]
             if not jpype.isJVMStarted():
                 try:
-                    classpath = [f"{self.jar_path}/*", *self.extra_classpaths]
                     jpype.startJVM(classpath=classpath)
                     Myelin._jvm_started = True
                     self.logger.info("JVM started successfully")
@@ -249,6 +252,10 @@ class Myelin:
                     self.logger.error(f"Failed to start JVM: {e}")
                     raise RuntimeError(f"JVM startup failed: {e}") from e
             else:
+                # A bridge or embedding application may have started JPype
+                # without Myelin's grouper and editor dependencies.
+                for path in classpath:
+                    jpype.addClassPath(path)
                 self.logger.debug("JVM already started")
 
     def _shutdown_jvm(self) -> None:

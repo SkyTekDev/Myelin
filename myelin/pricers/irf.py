@@ -162,7 +162,7 @@ class IrfClient:
             raise ValueError(f"Invalid jar_path: {jar_path}")
         self.url_loader = UrlLoader()
         # This loads the jar file into our URL class loader
-        self.url_loader.load_urls([f"file://{jar_path}"])
+        self.url_loader.load_paths([jar_path])
         self.db = db
         if logger is not None:
             self.logger = logger

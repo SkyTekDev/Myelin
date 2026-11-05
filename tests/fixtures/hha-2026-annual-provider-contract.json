@@ -1,0 +1,1029 @@
+{
+  "description": "Fabricated test sources and providers only; never used by the bundled production catalog.",
+  "cases": [
+    {
+      "name": "exact_factor",
+      "catalogJson": "{\"entries\":{\"017999\":{\"providerCcn\":\"017999\",\"providerEffectiveDate\":\"2025-01-01\",\"providerHistoryCutoffDate\":\"2026-11-01\",\"providerHistorySource\":{\"cutoffDate\":\"2026-11-01\",\"rowLocator\":\"CCN=017999;effectiveDate=20250101\",\"sourceSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"sourceUrl\":\"https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv\"},\"providerNextEffectiveDate\":null,\"providerRowContentSha256\":\"b70edf277c44cb4918449654f2ccbf416c4450b7bce6b4da4a15c9aaa1e91482\",\"providerType\":\"36\",\"qualityReportingProgramIndicator\":\"0\",\"qualityReportingSource\":{\"publishedDate\":\"2026-03-16\",\"rowLocator\":\"page=1;CCN=017999;classification=Compliant\",\"sourceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sourceUrl\":\"https://www.cms.gov/files/document/test-only-qrp-2026.pdf\"},\"rawTerminationDate\":null,\"valueBasedPurchasingSource\":{\"annualCorroboration\":\"CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP\",\"factorAuthority\":\"CMS_IPSF_FIELD_30\",\"publishedAdjustedPaymentPercentage\":\"2.345\",\"publishedDate\":\"2026-01-14\",\"publishedPercentageDecimalPlaces\":3,\"rowLocator\":\"CCN=017999;paymentYear=2026\",\"sourceSha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sourceUrl\":\"https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv\"},\"vbpAdjustment\":\"1.02345\"}},\"paymentYear\":2026,\"schemaVersion\":\"HHAAnnualProviderCatalog/1\",\"sources\":{\"providerHistory\":[{\"cutoffDate\":\"2026-11-01\",\"sourceSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"sourceUrl\":\"https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv\"}],\"qualityReporting\":[{\"publishedDate\":\"2026-03-16\",\"sourceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sourceUrl\":\"https://www.cms.gov/files/document/test-only-qrp-2026.pdf\"}],\"valueBasedPurchasing\":[{\"annualCorroboration\":\"CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP\",\"factorAuthority\":\"CMS_IPSF_FIELD_30\",\"publishedDate\":\"2026-01-14\",\"sourceSha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sourceUrl\":\"https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv\"}]}}",
+      "catalogSha256": "ca2093596f29b51b8839bce7dcd7ecbd5626109a93a2ce55cbb99f745665b091",
+      "catalogEntrySha256": "34a8c84abfb1bf584b69b1f53a1119edae0b5142d39dd530ce8d046f286fc4ff",
+      "providerRowContentSha256": "b70edf277c44cb4918449654f2ccbf416c4450b7bce6b4da4a15c9aaa1e91482",
+      "providerData": {
+        "providerCcn": "017999",
+        "effectiveDate": "2025-01-01",
+        "vbpAdjustment": "1.02345"
+      },
+      "providerEvidence": {
+        "source": "IPSF",
+        "providerCcn": "017999",
+        "providerRowId": 41,
+        "providerType": "36",
+        "effectiveDate": "2025-01-01",
+        "terminationDate": null,
+        "rawTerminationDate": null,
+        "lookupThroughDate": "2026-06-30",
+        "federalPpsBlend": "0",
+        "specialProviderUpdateFactor": "1.02345",
+        "initialPaymentQualityReportingProgramIndicator": "0",
+        "qualityReportingSourceField": "federal_pps_blend",
+        "valueBasedPurchasingSourceField": "special_provider_update_factor",
+        "sourceRowFingerprint": "fc475efc962428e1206f34ab9cab84bbd53844479b514195c7fa1a08d3524414",
+        "annualPaymentEvidence": {
+          "schemaVersion": "HHAAnnualPaymentEvidence/1",
+          "paymentYear": 2026,
+          "providerCcn": "017999",
+          "providerRowId": 41,
+          "sourceRowFingerprint": "fc475efc962428e1206f34ab9cab84bbd53844479b514195c7fa1a08d3524414",
+          "catalogSha256": "ca2093596f29b51b8839bce7dcd7ecbd5626109a93a2ce55cbb99f745665b091",
+          "catalogEntrySha256": "34a8c84abfb1bf584b69b1f53a1119edae0b5142d39dd530ce8d046f286fc4ff",
+          "providerRowContentSha256": "b70edf277c44cb4918449654f2ccbf416c4450b7bce6b4da4a15c9aaa1e91482",
+          "qualityReportingProgramIndicator": "0",
+          "vbpAdjustment": "1.02345",
+          "qualityReportingSource": {
+            "sourceUrl": "https://www.cms.gov/files/document/test-only-qrp-2026.pdf",
+            "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "publishedDate": "2026-03-16",
+            "rowLocator": "page=1;CCN=017999;classification=Compliant"
+          },
+          "valueBasedPurchasingSource": {
+            "sourceUrl": "https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv",
+            "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "publishedDate": "2026-01-14",
+            "factorAuthority": "CMS_IPSF_FIELD_30",
+            "annualCorroboration": "CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP",
+            "rowLocator": "CCN=017999;paymentYear=2026",
+            "publishedAdjustedPaymentPercentage": "2.345",
+            "publishedPercentageDecimalPlaces": 3
+          },
+          "providerHistorySource": {
+            "sourceUrl": "https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv",
+            "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "cutoffDate": "2026-11-01",
+            "rowLocator": "CCN=017999;effectiveDate=20250101"
+          },
+          "providerHistoryCutoffDate": "2026-11-01",
+          "providerNextEffectiveDate": null
+        }
+      },
+      "annualPaymentEvidence": {
+        "schemaVersion": "HHAAnnualPaymentEvidence/1",
+        "paymentYear": 2026,
+        "providerCcn": "017999",
+        "providerRowId": 41,
+        "sourceRowFingerprint": "fc475efc962428e1206f34ab9cab84bbd53844479b514195c7fa1a08d3524414",
+        "catalogSha256": "ca2093596f29b51b8839bce7dcd7ecbd5626109a93a2ce55cbb99f745665b091",
+        "catalogEntrySha256": "34a8c84abfb1bf584b69b1f53a1119edae0b5142d39dd530ce8d046f286fc4ff",
+        "providerRowContentSha256": "b70edf277c44cb4918449654f2ccbf416c4450b7bce6b4da4a15c9aaa1e91482",
+        "qualityReportingProgramIndicator": "0",
+        "vbpAdjustment": "1.02345",
+        "qualityReportingSource": {
+          "sourceUrl": "https://www.cms.gov/files/document/test-only-qrp-2026.pdf",
+          "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "publishedDate": "2026-03-16",
+          "rowLocator": "page=1;CCN=017999;classification=Compliant"
+        },
+        "valueBasedPurchasingSource": {
+          "sourceUrl": "https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv",
+          "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "publishedDate": "2026-01-14",
+          "factorAuthority": "CMS_IPSF_FIELD_30",
+          "annualCorroboration": "CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP",
+          "rowLocator": "CCN=017999;paymentYear=2026",
+          "publishedAdjustedPaymentPercentage": "2.345",
+          "publishedPercentageDecimalPlaces": 3
+        },
+        "providerHistorySource": {
+          "sourceUrl": "https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv",
+          "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "cutoffDate": "2026-11-01",
+          "rowLocator": "CCN=017999;effectiveDate=20250101"
+        },
+        "providerHistoryCutoffDate": "2026-11-01",
+        "providerNextEffectiveDate": null
+      }
+    },
+    {
+      "name": "rounded_publication_preserves_exact_factor",
+      "catalogJson": "{\"entries\":{\"017999\":{\"providerCcn\":\"017999\",\"providerEffectiveDate\":\"2025-01-01\",\"providerHistoryCutoffDate\":\"2026-11-01\",\"providerHistorySource\":{\"cutoffDate\":\"2026-11-01\",\"rowLocator\":\"CCN=017999;effectiveDate=20250101\",\"sourceSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"sourceUrl\":\"https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv\"},\"providerNextEffectiveDate\":null,\"providerRowContentSha256\":\"44602ff693bb711cfb86f8849f36c440baf3f8d3a8fe4aa44338912571b93d2d\",\"providerType\":\"36\",\"qualityReportingProgramIndicator\":\"0\",\"qualityReportingSource\":{\"publishedDate\":\"2026-03-16\",\"rowLocator\":\"page=1;CCN=017999;classification=Compliant\",\"sourceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sourceUrl\":\"https://www.cms.gov/files/document/test-only-qrp-2026.pdf\"},\"rawTerminationDate\":null,\"valueBasedPurchasingSource\":{\"annualCorroboration\":\"CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP\",\"factorAuthority\":\"CMS_IPSF_FIELD_30\",\"publishedAdjustedPaymentPercentage\":\"0.49\",\"publishedDate\":\"2026-01-14\",\"publishedPercentageDecimalPlaces\":2,\"rowLocator\":\"CCN=017999;paymentYear=2026\",\"sourceSha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sourceUrl\":\"https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv\"},\"vbpAdjustment\":\"1.00487\"}},\"paymentYear\":2026,\"schemaVersion\":\"HHAAnnualProviderCatalog/1\",\"sources\":{\"providerHistory\":[{\"cutoffDate\":\"2026-11-01\",\"sourceSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"sourceUrl\":\"https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv\"}],\"qualityReporting\":[{\"publishedDate\":\"2026-03-16\",\"sourceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sourceUrl\":\"https://www.cms.gov/files/document/test-only-qrp-2026.pdf\"}],\"valueBasedPurchasing\":[{\"annualCorroboration\":\"CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP\",\"factorAuthority\":\"CMS_IPSF_FIELD_30\",\"publishedDate\":\"2026-01-14\",\"sourceSha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sourceUrl\":\"https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv\"}]}}",
+      "catalogSha256": "c17b87dc5a8eb02f1bc9dd7bbf44e8d10733f7132b722ae9fa52611ae7ae14b0",
+      "catalogEntrySha256": "d25b5cc65e6bcc81181e26bdd639c8c82b0098bf4a0145cddcb67b683d8fb785",
+      "providerRowContentSha256": "44602ff693bb711cfb86f8849f36c440baf3f8d3a8fe4aa44338912571b93d2d",
+      "providerData": {
+        "providerCcn": "017999",
+        "effectiveDate": "2025-01-01",
+        "vbpAdjustment": "1.00487"
+      },
+      "providerEvidence": {
+        "source": "IPSF",
+        "providerCcn": "017999",
+        "providerRowId": 41,
+        "providerType": "36",
+        "effectiveDate": "2025-01-01",
+        "terminationDate": null,
+        "rawTerminationDate": null,
+        "lookupThroughDate": "2026-06-30",
+        "federalPpsBlend": "0",
+        "specialProviderUpdateFactor": "1.00487",
+        "initialPaymentQualityReportingProgramIndicator": "0",
+        "qualityReportingSourceField": "federal_pps_blend",
+        "valueBasedPurchasingSourceField": "special_provider_update_factor",
+        "sourceRowFingerprint": "3c66dabf702547f3ca0a5acafe70fb3e64d649d7c5d2c2cdfe538c5d20f36190",
+        "annualPaymentEvidence": {
+          "schemaVersion": "HHAAnnualPaymentEvidence/1",
+          "paymentYear": 2026,
+          "providerCcn": "017999",
+          "providerRowId": 41,
+          "sourceRowFingerprint": "3c66dabf702547f3ca0a5acafe70fb3e64d649d7c5d2c2cdfe538c5d20f36190",
+          "catalogSha256": "c17b87dc5a8eb02f1bc9dd7bbf44e8d10733f7132b722ae9fa52611ae7ae14b0",
+          "catalogEntrySha256": "d25b5cc65e6bcc81181e26bdd639c8c82b0098bf4a0145cddcb67b683d8fb785",
+          "providerRowContentSha256": "44602ff693bb711cfb86f8849f36c440baf3f8d3a8fe4aa44338912571b93d2d",
+          "qualityReportingProgramIndicator": "0",
+          "vbpAdjustment": "1.00487",
+          "qualityReportingSource": {
+            "sourceUrl": "https://www.cms.gov/files/document/test-only-qrp-2026.pdf",
+            "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "publishedDate": "2026-03-16",
+            "rowLocator": "page=1;CCN=017999;classification=Compliant"
+          },
+          "valueBasedPurchasingSource": {
+            "sourceUrl": "https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv",
+            "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "publishedDate": "2026-01-14",
+            "factorAuthority": "CMS_IPSF_FIELD_30",
+            "annualCorroboration": "CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP",
+            "rowLocator": "CCN=017999;paymentYear=2026",
+            "publishedAdjustedPaymentPercentage": "0.49",
+            "publishedPercentageDecimalPlaces": 2
+          },
+          "providerHistorySource": {
+            "sourceUrl": "https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv",
+            "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "cutoffDate": "2026-11-01",
+            "rowLocator": "CCN=017999;effectiveDate=20250101"
+          },
+          "providerHistoryCutoffDate": "2026-11-01",
+          "providerNextEffectiveDate": null
+        }
+      },
+      "annualPaymentEvidence": {
+        "schemaVersion": "HHAAnnualPaymentEvidence/1",
+        "paymentYear": 2026,
+        "providerCcn": "017999",
+        "providerRowId": 41,
+        "sourceRowFingerprint": "3c66dabf702547f3ca0a5acafe70fb3e64d649d7c5d2c2cdfe538c5d20f36190",
+        "catalogSha256": "c17b87dc5a8eb02f1bc9dd7bbf44e8d10733f7132b722ae9fa52611ae7ae14b0",
+        "catalogEntrySha256": "d25b5cc65e6bcc81181e26bdd639c8c82b0098bf4a0145cddcb67b683d8fb785",
+        "providerRowContentSha256": "44602ff693bb711cfb86f8849f36c440baf3f8d3a8fe4aa44338912571b93d2d",
+        "qualityReportingProgramIndicator": "0",
+        "vbpAdjustment": "1.00487",
+        "qualityReportingSource": {
+          "sourceUrl": "https://www.cms.gov/files/document/test-only-qrp-2026.pdf",
+          "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "publishedDate": "2026-03-16",
+          "rowLocator": "page=1;CCN=017999;classification=Compliant"
+        },
+        "valueBasedPurchasingSource": {
+          "sourceUrl": "https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv",
+          "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "publishedDate": "2026-01-14",
+          "factorAuthority": "CMS_IPSF_FIELD_30",
+          "annualCorroboration": "CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP",
+          "rowLocator": "CCN=017999;paymentYear=2026",
+          "publishedAdjustedPaymentPercentage": "0.49",
+          "publishedPercentageDecimalPlaces": 2
+        },
+        "providerHistorySource": {
+          "sourceUrl": "https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv",
+          "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "cutoffDate": "2026-11-01",
+          "rowLocator": "CCN=017999;effectiveDate=20250101"
+        },
+        "providerHistoryCutoffDate": "2026-11-01",
+        "providerNextEffectiveDate": null
+      }
+    },
+    {
+      "name": "negative_adjustment",
+      "catalogJson": "{\"entries\":{\"017999\":{\"providerCcn\":\"017999\",\"providerEffectiveDate\":\"2025-01-01\",\"providerHistoryCutoffDate\":\"2026-11-01\",\"providerHistorySource\":{\"cutoffDate\":\"2026-11-01\",\"rowLocator\":\"CCN=017999;effectiveDate=20250101\",\"sourceSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"sourceUrl\":\"https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv\"},\"providerNextEffectiveDate\":null,\"providerRowContentSha256\":\"d79932ff09738089e9340e5d59bee75025fbd658953194b5d22f790dadf27330\",\"providerType\":\"36\",\"qualityReportingProgramIndicator\":\"0\",\"qualityReportingSource\":{\"publishedDate\":\"2026-03-16\",\"rowLocator\":\"page=1;CCN=017999;classification=Compliant\",\"sourceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sourceUrl\":\"https://www.cms.gov/files/document/test-only-qrp-2026.pdf\"},\"rawTerminationDate\":null,\"valueBasedPurchasingSource\":{\"annualCorroboration\":\"CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP\",\"factorAuthority\":\"CMS_IPSF_FIELD_30\",\"publishedAdjustedPaymentPercentage\":\"-1.40\",\"publishedDate\":\"2026-01-14\",\"publishedPercentageDecimalPlaces\":2,\"rowLocator\":\"CCN=017999;paymentYear=2026\",\"sourceSha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sourceUrl\":\"https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv\"},\"vbpAdjustment\":\"0.98604\"}},\"paymentYear\":2026,\"schemaVersion\":\"HHAAnnualProviderCatalog/1\",\"sources\":{\"providerHistory\":[{\"cutoffDate\":\"2026-11-01\",\"sourceSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"sourceUrl\":\"https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv\"}],\"qualityReporting\":[{\"publishedDate\":\"2026-03-16\",\"sourceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sourceUrl\":\"https://www.cms.gov/files/document/test-only-qrp-2026.pdf\"}],\"valueBasedPurchasing\":[{\"annualCorroboration\":\"CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP\",\"factorAuthority\":\"CMS_IPSF_FIELD_30\",\"publishedDate\":\"2026-01-14\",\"sourceSha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sourceUrl\":\"https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv\"}]}}",
+      "catalogSha256": "fcff65049ebd594f0cc6b0248beb4ef84ba060438436fab797eedcf84ca4e6e3",
+      "catalogEntrySha256": "46185dbfc21c36747cde1f9fbbd1b24423cccccea0da8162e292f95903d56664",
+      "providerRowContentSha256": "d79932ff09738089e9340e5d59bee75025fbd658953194b5d22f790dadf27330",
+      "providerData": {
+        "providerCcn": "017999",
+        "effectiveDate": "2025-01-01",
+        "vbpAdjustment": "0.98604"
+      },
+      "providerEvidence": {
+        "source": "IPSF",
+        "providerCcn": "017999",
+        "providerRowId": 41,
+        "providerType": "36",
+        "effectiveDate": "2025-01-01",
+        "terminationDate": null,
+        "rawTerminationDate": null,
+        "lookupThroughDate": "2026-06-30",
+        "federalPpsBlend": "0",
+        "specialProviderUpdateFactor": "0.98604",
+        "initialPaymentQualityReportingProgramIndicator": "0",
+        "qualityReportingSourceField": "federal_pps_blend",
+        "valueBasedPurchasingSourceField": "special_provider_update_factor",
+        "sourceRowFingerprint": "157f6d09ecf1d5aabe57e46e35431b3c9aa151132e9d822f64d17f40442b3ed5",
+        "annualPaymentEvidence": {
+          "schemaVersion": "HHAAnnualPaymentEvidence/1",
+          "paymentYear": 2026,
+          "providerCcn": "017999",
+          "providerRowId": 41,
+          "sourceRowFingerprint": "157f6d09ecf1d5aabe57e46e35431b3c9aa151132e9d822f64d17f40442b3ed5",
+          "catalogSha256": "fcff65049ebd594f0cc6b0248beb4ef84ba060438436fab797eedcf84ca4e6e3",
+          "catalogEntrySha256": "46185dbfc21c36747cde1f9fbbd1b24423cccccea0da8162e292f95903d56664",
+          "providerRowContentSha256": "d79932ff09738089e9340e5d59bee75025fbd658953194b5d22f790dadf27330",
+          "qualityReportingProgramIndicator": "0",
+          "vbpAdjustment": "0.98604",
+          "qualityReportingSource": {
+            "sourceUrl": "https://www.cms.gov/files/document/test-only-qrp-2026.pdf",
+            "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "publishedDate": "2026-03-16",
+            "rowLocator": "page=1;CCN=017999;classification=Compliant"
+          },
+          "valueBasedPurchasingSource": {
+            "sourceUrl": "https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv",
+            "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "publishedDate": "2026-01-14",
+            "factorAuthority": "CMS_IPSF_FIELD_30",
+            "annualCorroboration": "CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP",
+            "rowLocator": "CCN=017999;paymentYear=2026",
+            "publishedAdjustedPaymentPercentage": "-1.40",
+            "publishedPercentageDecimalPlaces": 2
+          },
+          "providerHistorySource": {
+            "sourceUrl": "https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv",
+            "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "cutoffDate": "2026-11-01",
+            "rowLocator": "CCN=017999;effectiveDate=20250101"
+          },
+          "providerHistoryCutoffDate": "2026-11-01",
+          "providerNextEffectiveDate": null
+        }
+      },
+      "annualPaymentEvidence": {
+        "schemaVersion": "HHAAnnualPaymentEvidence/1",
+        "paymentYear": 2026,
+        "providerCcn": "017999",
+        "providerRowId": 41,
+        "sourceRowFingerprint": "157f6d09ecf1d5aabe57e46e35431b3c9aa151132e9d822f64d17f40442b3ed5",
+        "catalogSha256": "fcff65049ebd594f0cc6b0248beb4ef84ba060438436fab797eedcf84ca4e6e3",
+        "catalogEntrySha256": "46185dbfc21c36747cde1f9fbbd1b24423cccccea0da8162e292f95903d56664",
+        "providerRowContentSha256": "d79932ff09738089e9340e5d59bee75025fbd658953194b5d22f790dadf27330",
+        "qualityReportingProgramIndicator": "0",
+        "vbpAdjustment": "0.98604",
+        "qualityReportingSource": {
+          "sourceUrl": "https://www.cms.gov/files/document/test-only-qrp-2026.pdf",
+          "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "publishedDate": "2026-03-16",
+          "rowLocator": "page=1;CCN=017999;classification=Compliant"
+        },
+        "valueBasedPurchasingSource": {
+          "sourceUrl": "https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv",
+          "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "publishedDate": "2026-01-14",
+          "factorAuthority": "CMS_IPSF_FIELD_30",
+          "annualCorroboration": "CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP",
+          "rowLocator": "CCN=017999;paymentYear=2026",
+          "publishedAdjustedPaymentPercentage": "-1.40",
+          "publishedPercentageDecimalPlaces": 2
+        },
+        "providerHistorySource": {
+          "sourceUrl": "https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv",
+          "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "cutoffDate": "2026-11-01",
+          "rowLocator": "CCN=017999;effectiveDate=20250101"
+        },
+        "providerHistoryCutoffDate": "2026-11-01",
+        "providerNextEffectiveDate": null
+      }
+    },
+    {
+      "name": "no_adjustment",
+      "catalogJson": "{\"entries\":{\"017999\":{\"providerCcn\":\"017999\",\"providerEffectiveDate\":\"2025-01-01\",\"providerHistoryCutoffDate\":\"2026-11-01\",\"providerHistorySource\":{\"cutoffDate\":\"2026-11-01\",\"rowLocator\":\"CCN=017999;effectiveDate=20250101\",\"sourceSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"sourceUrl\":\"https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv\"},\"providerNextEffectiveDate\":null,\"providerRowContentSha256\":\"745c05f993a43ecf001abb7a69f856ed53e8c90fd25df87a2df8cb7c3a259be2\",\"providerType\":\"36\",\"qualityReportingProgramIndicator\":\"0\",\"qualityReportingSource\":{\"publishedDate\":\"2026-03-16\",\"rowLocator\":\"page=1;CCN=017999;classification=Compliant\",\"sourceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sourceUrl\":\"https://www.cms.gov/files/document/test-only-qrp-2026.pdf\"},\"rawTerminationDate\":null,\"valueBasedPurchasingSource\":{\"annualCorroboration\":\"CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP\",\"factorAuthority\":\"CMS_IPSF_FIELD_30\",\"publishedAdjustedPaymentPercentage\":\"0.00\",\"publishedDate\":\"2026-01-14\",\"publishedPercentageDecimalPlaces\":2,\"rowLocator\":\"CCN=017999;paymentYear=2026\",\"sourceSha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sourceUrl\":\"https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv\"},\"vbpAdjustment\":\"1\"}},\"paymentYear\":2026,\"schemaVersion\":\"HHAAnnualProviderCatalog/1\",\"sources\":{\"providerHistory\":[{\"cutoffDate\":\"2026-11-01\",\"sourceSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"sourceUrl\":\"https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv\"}],\"qualityReporting\":[{\"publishedDate\":\"2026-03-16\",\"sourceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sourceUrl\":\"https://www.cms.gov/files/document/test-only-qrp-2026.pdf\"}],\"valueBasedPurchasing\":[{\"annualCorroboration\":\"CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP\",\"factorAuthority\":\"CMS_IPSF_FIELD_30\",\"publishedDate\":\"2026-01-14\",\"sourceSha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sourceUrl\":\"https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv\"}]}}",
+      "catalogSha256": "cae7793d4122774bea2521805e9005a8d0f8b3a0d9e6055ebcc114a84e863be5",
+      "catalogEntrySha256": "c2e35ae00fbf5781bdefd6789b1e26186d117653d224e2b815ebed90bbb2f101",
+      "providerRowContentSha256": "745c05f993a43ecf001abb7a69f856ed53e8c90fd25df87a2df8cb7c3a259be2",
+      "providerData": {
+        "providerCcn": "017999",
+        "effectiveDate": "2025-01-01",
+        "vbpAdjustment": "1"
+      },
+      "providerEvidence": {
+        "source": "IPSF",
+        "providerCcn": "017999",
+        "providerRowId": 41,
+        "providerType": "36",
+        "effectiveDate": "2025-01-01",
+        "terminationDate": null,
+        "rawTerminationDate": null,
+        "lookupThroughDate": "2026-06-30",
+        "federalPpsBlend": "0",
+        "specialProviderUpdateFactor": "1",
+        "initialPaymentQualityReportingProgramIndicator": "0",
+        "qualityReportingSourceField": "federal_pps_blend",
+        "valueBasedPurchasingSourceField": "special_provider_update_factor",
+        "sourceRowFingerprint": "ac63702ab326a5aa6402d73d0327d1f0fe8a7066287d6dbdc954d0ec78009c1c",
+        "annualPaymentEvidence": {
+          "schemaVersion": "HHAAnnualPaymentEvidence/1",
+          "paymentYear": 2026,
+          "providerCcn": "017999",
+          "providerRowId": 41,
+          "sourceRowFingerprint": "ac63702ab326a5aa6402d73d0327d1f0fe8a7066287d6dbdc954d0ec78009c1c",
+          "catalogSha256": "cae7793d4122774bea2521805e9005a8d0f8b3a0d9e6055ebcc114a84e863be5",
+          "catalogEntrySha256": "c2e35ae00fbf5781bdefd6789b1e26186d117653d224e2b815ebed90bbb2f101",
+          "providerRowContentSha256": "745c05f993a43ecf001abb7a69f856ed53e8c90fd25df87a2df8cb7c3a259be2",
+          "qualityReportingProgramIndicator": "0",
+          "vbpAdjustment": "1",
+          "qualityReportingSource": {
+            "sourceUrl": "https://www.cms.gov/files/document/test-only-qrp-2026.pdf",
+            "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "publishedDate": "2026-03-16",
+            "rowLocator": "page=1;CCN=017999;classification=Compliant"
+          },
+          "valueBasedPurchasingSource": {
+            "sourceUrl": "https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv",
+            "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "publishedDate": "2026-01-14",
+            "factorAuthority": "CMS_IPSF_FIELD_30",
+            "annualCorroboration": "CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP",
+            "rowLocator": "CCN=017999;paymentYear=2026",
+            "publishedAdjustedPaymentPercentage": "0.00",
+            "publishedPercentageDecimalPlaces": 2
+          },
+          "providerHistorySource": {
+            "sourceUrl": "https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv",
+            "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "cutoffDate": "2026-11-01",
+            "rowLocator": "CCN=017999;effectiveDate=20250101"
+          },
+          "providerHistoryCutoffDate": "2026-11-01",
+          "providerNextEffectiveDate": null
+        }
+      },
+      "annualPaymentEvidence": {
+        "schemaVersion": "HHAAnnualPaymentEvidence/1",
+        "paymentYear": 2026,
+        "providerCcn": "017999",
+        "providerRowId": 41,
+        "sourceRowFingerprint": "ac63702ab326a5aa6402d73d0327d1f0fe8a7066287d6dbdc954d0ec78009c1c",
+        "catalogSha256": "cae7793d4122774bea2521805e9005a8d0f8b3a0d9e6055ebcc114a84e863be5",
+        "catalogEntrySha256": "c2e35ae00fbf5781bdefd6789b1e26186d117653d224e2b815ebed90bbb2f101",
+        "providerRowContentSha256": "745c05f993a43ecf001abb7a69f856ed53e8c90fd25df87a2df8cb7c3a259be2",
+        "qualityReportingProgramIndicator": "0",
+        "vbpAdjustment": "1",
+        "qualityReportingSource": {
+          "sourceUrl": "https://www.cms.gov/files/document/test-only-qrp-2026.pdf",
+          "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "publishedDate": "2026-03-16",
+          "rowLocator": "page=1;CCN=017999;classification=Compliant"
+        },
+        "valueBasedPurchasingSource": {
+          "sourceUrl": "https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv",
+          "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "publishedDate": "2026-01-14",
+          "factorAuthority": "CMS_IPSF_FIELD_30",
+          "annualCorroboration": "CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP",
+          "rowLocator": "CCN=017999;paymentYear=2026",
+          "publishedAdjustedPaymentPercentage": "0.00",
+          "publishedPercentageDecimalPlaces": 2
+        },
+        "providerHistorySource": {
+          "sourceUrl": "https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv",
+          "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "cutoffDate": "2026-11-01",
+          "rowLocator": "CCN=017999;effectiveDate=20250101"
+        },
+        "providerHistoryCutoffDate": "2026-11-01",
+        "providerNextEffectiveDate": null
+      }
+    },
+    {
+      "name": "next_change_after_statement",
+      "catalogJson": "{\"entries\":{\"017999\":{\"providerCcn\":\"017999\",\"providerEffectiveDate\":\"2025-01-01\",\"providerHistoryCutoffDate\":\"2026-11-01\",\"providerHistorySource\":{\"cutoffDate\":\"2026-11-01\",\"rowLocator\":\"CCN=017999;effectiveDate=20250101\",\"sourceSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"sourceUrl\":\"https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv\"},\"providerNextEffectiveDate\":\"2026-07-01\",\"providerRowContentSha256\":\"745c05f993a43ecf001abb7a69f856ed53e8c90fd25df87a2df8cb7c3a259be2\",\"providerType\":\"36\",\"qualityReportingProgramIndicator\":\"0\",\"qualityReportingSource\":{\"publishedDate\":\"2026-03-16\",\"rowLocator\":\"page=1;CCN=017999;classification=Compliant\",\"sourceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sourceUrl\":\"https://www.cms.gov/files/document/test-only-qrp-2026.pdf\"},\"rawTerminationDate\":null,\"valueBasedPurchasingSource\":{\"annualCorroboration\":\"CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP\",\"factorAuthority\":\"CMS_IPSF_FIELD_30\",\"publishedAdjustedPaymentPercentage\":\"0.00\",\"publishedDate\":\"2026-01-14\",\"publishedPercentageDecimalPlaces\":2,\"rowLocator\":\"CCN=017999;paymentYear=2026\",\"sourceSha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sourceUrl\":\"https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv\"},\"vbpAdjustment\":\"1\"}},\"paymentYear\":2026,\"schemaVersion\":\"HHAAnnualProviderCatalog/1\",\"sources\":{\"providerHistory\":[{\"cutoffDate\":\"2026-11-01\",\"sourceSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"sourceUrl\":\"https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv\"}],\"qualityReporting\":[{\"publishedDate\":\"2026-03-16\",\"sourceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sourceUrl\":\"https://www.cms.gov/files/document/test-only-qrp-2026.pdf\"}],\"valueBasedPurchasing\":[{\"annualCorroboration\":\"CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP\",\"factorAuthority\":\"CMS_IPSF_FIELD_30\",\"publishedDate\":\"2026-01-14\",\"sourceSha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sourceUrl\":\"https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv\"}]}}",
+      "catalogSha256": "e204c9cfe6bce85a74a322a2693876195573048c551a720358224d368510d695",
+      "catalogEntrySha256": "c1e7487331333f4eb216d74b51822007033c2df38f6538e2625f52a002368a33",
+      "providerRowContentSha256": "745c05f993a43ecf001abb7a69f856ed53e8c90fd25df87a2df8cb7c3a259be2",
+      "providerData": {
+        "providerCcn": "017999",
+        "effectiveDate": "2025-01-01",
+        "vbpAdjustment": "1"
+      },
+      "providerEvidence": {
+        "source": "IPSF",
+        "providerCcn": "017999",
+        "providerRowId": 41,
+        "providerType": "36",
+        "effectiveDate": "2025-01-01",
+        "terminationDate": null,
+        "rawTerminationDate": null,
+        "lookupThroughDate": "2026-06-30",
+        "federalPpsBlend": "0",
+        "specialProviderUpdateFactor": "1",
+        "initialPaymentQualityReportingProgramIndicator": "0",
+        "qualityReportingSourceField": "federal_pps_blend",
+        "valueBasedPurchasingSourceField": "special_provider_update_factor",
+        "sourceRowFingerprint": "ac63702ab326a5aa6402d73d0327d1f0fe8a7066287d6dbdc954d0ec78009c1c",
+        "annualPaymentEvidence": {
+          "schemaVersion": "HHAAnnualPaymentEvidence/1",
+          "paymentYear": 2026,
+          "providerCcn": "017999",
+          "providerRowId": 41,
+          "sourceRowFingerprint": "ac63702ab326a5aa6402d73d0327d1f0fe8a7066287d6dbdc954d0ec78009c1c",
+          "catalogSha256": "e204c9cfe6bce85a74a322a2693876195573048c551a720358224d368510d695",
+          "catalogEntrySha256": "c1e7487331333f4eb216d74b51822007033c2df38f6538e2625f52a002368a33",
+          "providerRowContentSha256": "745c05f993a43ecf001abb7a69f856ed53e8c90fd25df87a2df8cb7c3a259be2",
+          "qualityReportingProgramIndicator": "0",
+          "vbpAdjustment": "1",
+          "qualityReportingSource": {
+            "sourceUrl": "https://www.cms.gov/files/document/test-only-qrp-2026.pdf",
+            "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "publishedDate": "2026-03-16",
+            "rowLocator": "page=1;CCN=017999;classification=Compliant"
+          },
+          "valueBasedPurchasingSource": {
+            "sourceUrl": "https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv",
+            "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "publishedDate": "2026-01-14",
+            "factorAuthority": "CMS_IPSF_FIELD_30",
+            "annualCorroboration": "CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP",
+            "rowLocator": "CCN=017999;paymentYear=2026",
+            "publishedAdjustedPaymentPercentage": "0.00",
+            "publishedPercentageDecimalPlaces": 2
+          },
+          "providerHistorySource": {
+            "sourceUrl": "https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv",
+            "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "cutoffDate": "2026-11-01",
+            "rowLocator": "CCN=017999;effectiveDate=20250101"
+          },
+          "providerHistoryCutoffDate": "2026-11-01",
+          "providerNextEffectiveDate": "2026-07-01"
+        }
+      },
+      "annualPaymentEvidence": {
+        "schemaVersion": "HHAAnnualPaymentEvidence/1",
+        "paymentYear": 2026,
+        "providerCcn": "017999",
+        "providerRowId": 41,
+        "sourceRowFingerprint": "ac63702ab326a5aa6402d73d0327d1f0fe8a7066287d6dbdc954d0ec78009c1c",
+        "catalogSha256": "e204c9cfe6bce85a74a322a2693876195573048c551a720358224d368510d695",
+        "catalogEntrySha256": "c1e7487331333f4eb216d74b51822007033c2df38f6538e2625f52a002368a33",
+        "providerRowContentSha256": "745c05f993a43ecf001abb7a69f856ed53e8c90fd25df87a2df8cb7c3a259be2",
+        "qualityReportingProgramIndicator": "0",
+        "vbpAdjustment": "1",
+        "qualityReportingSource": {
+          "sourceUrl": "https://www.cms.gov/files/document/test-only-qrp-2026.pdf",
+          "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "publishedDate": "2026-03-16",
+          "rowLocator": "page=1;CCN=017999;classification=Compliant"
+        },
+        "valueBasedPurchasingSource": {
+          "sourceUrl": "https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv",
+          "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "publishedDate": "2026-01-14",
+          "factorAuthority": "CMS_IPSF_FIELD_30",
+          "annualCorroboration": "CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP",
+          "rowLocator": "CCN=017999;paymentYear=2026",
+          "publishedAdjustedPaymentPercentage": "0.00",
+          "publishedPercentageDecimalPlaces": 2
+        },
+        "providerHistorySource": {
+          "sourceUrl": "https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv",
+          "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "cutoffDate": "2026-11-01",
+          "rowLocator": "CCN=017999;effectiveDate=20250101"
+        },
+        "providerHistoryCutoffDate": "2026-11-01",
+        "providerNextEffectiveDate": "2026-07-01"
+      }
+    },
+    {
+      "name": "history_cutoff_equals_statement_through",
+      "catalogJson": "{\"entries\":{\"017999\":{\"providerCcn\":\"017999\",\"providerEffectiveDate\":\"2025-01-01\",\"providerHistoryCutoffDate\":\"2026-06-30\",\"providerHistorySource\":{\"cutoffDate\":\"2026-06-30\",\"rowLocator\":\"CCN=017999;effectiveDate=20250101\",\"sourceSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"sourceUrl\":\"https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-06-30&oscarNumber=017999&format=csv\"},\"providerNextEffectiveDate\":null,\"providerRowContentSha256\":\"745c05f993a43ecf001abb7a69f856ed53e8c90fd25df87a2df8cb7c3a259be2\",\"providerType\":\"36\",\"qualityReportingProgramIndicator\":\"0\",\"qualityReportingSource\":{\"publishedDate\":\"2026-03-16\",\"rowLocator\":\"page=1;CCN=017999;classification=Compliant\",\"sourceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sourceUrl\":\"https://www.cms.gov/files/document/test-only-qrp-2026.pdf\"},\"rawTerminationDate\":null,\"valueBasedPurchasingSource\":{\"annualCorroboration\":\"CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP\",\"factorAuthority\":\"CMS_IPSF_FIELD_30\",\"publishedAdjustedPaymentPercentage\":\"0.00\",\"publishedDate\":\"2026-01-14\",\"publishedPercentageDecimalPlaces\":2,\"rowLocator\":\"CCN=017999;paymentYear=2026\",\"sourceSha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sourceUrl\":\"https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv\"},\"vbpAdjustment\":\"1\"}},\"paymentYear\":2026,\"schemaVersion\":\"HHAAnnualProviderCatalog/1\",\"sources\":{\"providerHistory\":[{\"cutoffDate\":\"2026-06-30\",\"sourceSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"sourceUrl\":\"https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-06-30&oscarNumber=017999&format=csv\"}],\"qualityReporting\":[{\"publishedDate\":\"2026-03-16\",\"sourceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sourceUrl\":\"https://www.cms.gov/files/document/test-only-qrp-2026.pdf\"}],\"valueBasedPurchasing\":[{\"annualCorroboration\":\"CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP\",\"factorAuthority\":\"CMS_IPSF_FIELD_30\",\"publishedDate\":\"2026-01-14\",\"sourceSha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sourceUrl\":\"https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv\"}]}}",
+      "catalogSha256": "d0fca64e6f746a6e3fb4f8582a5cb83e62789070a2847d22e5dfaf65682ca9a8",
+      "catalogEntrySha256": "db928bd1bc5ab16a21bff0e10e65e4db061d0c278ff8b5e47faae0fe3cfae098",
+      "providerRowContentSha256": "745c05f993a43ecf001abb7a69f856ed53e8c90fd25df87a2df8cb7c3a259be2",
+      "providerData": {
+        "providerCcn": "017999",
+        "effectiveDate": "2025-01-01",
+        "vbpAdjustment": "1"
+      },
+      "providerEvidence": {
+        "source": "IPSF",
+        "providerCcn": "017999",
+        "providerRowId": 41,
+        "providerType": "36",
+        "effectiveDate": "2025-01-01",
+        "terminationDate": null,
+        "rawTerminationDate": null,
+        "lookupThroughDate": "2026-06-30",
+        "federalPpsBlend": "0",
+        "specialProviderUpdateFactor": "1",
+        "initialPaymentQualityReportingProgramIndicator": "0",
+        "qualityReportingSourceField": "federal_pps_blend",
+        "valueBasedPurchasingSourceField": "special_provider_update_factor",
+        "sourceRowFingerprint": "ac63702ab326a5aa6402d73d0327d1f0fe8a7066287d6dbdc954d0ec78009c1c",
+        "annualPaymentEvidence": {
+          "schemaVersion": "HHAAnnualPaymentEvidence/1",
+          "paymentYear": 2026,
+          "providerCcn": "017999",
+          "providerRowId": 41,
+          "sourceRowFingerprint": "ac63702ab326a5aa6402d73d0327d1f0fe8a7066287d6dbdc954d0ec78009c1c",
+          "catalogSha256": "d0fca64e6f746a6e3fb4f8582a5cb83e62789070a2847d22e5dfaf65682ca9a8",
+          "catalogEntrySha256": "db928bd1bc5ab16a21bff0e10e65e4db061d0c278ff8b5e47faae0fe3cfae098",
+          "providerRowContentSha256": "745c05f993a43ecf001abb7a69f856ed53e8c90fd25df87a2df8cb7c3a259be2",
+          "qualityReportingProgramIndicator": "0",
+          "vbpAdjustment": "1",
+          "qualityReportingSource": {
+            "sourceUrl": "https://www.cms.gov/files/document/test-only-qrp-2026.pdf",
+            "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "publishedDate": "2026-03-16",
+            "rowLocator": "page=1;CCN=017999;classification=Compliant"
+          },
+          "valueBasedPurchasingSource": {
+            "sourceUrl": "https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv",
+            "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "publishedDate": "2026-01-14",
+            "factorAuthority": "CMS_IPSF_FIELD_30",
+            "annualCorroboration": "CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP",
+            "rowLocator": "CCN=017999;paymentYear=2026",
+            "publishedAdjustedPaymentPercentage": "0.00",
+            "publishedPercentageDecimalPlaces": 2
+          },
+          "providerHistorySource": {
+            "sourceUrl": "https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-06-30&oscarNumber=017999&format=csv",
+            "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "cutoffDate": "2026-06-30",
+            "rowLocator": "CCN=017999;effectiveDate=20250101"
+          },
+          "providerHistoryCutoffDate": "2026-06-30",
+          "providerNextEffectiveDate": null
+        }
+      },
+      "annualPaymentEvidence": {
+        "schemaVersion": "HHAAnnualPaymentEvidence/1",
+        "paymentYear": 2026,
+        "providerCcn": "017999",
+        "providerRowId": 41,
+        "sourceRowFingerprint": "ac63702ab326a5aa6402d73d0327d1f0fe8a7066287d6dbdc954d0ec78009c1c",
+        "catalogSha256": "d0fca64e6f746a6e3fb4f8582a5cb83e62789070a2847d22e5dfaf65682ca9a8",
+        "catalogEntrySha256": "db928bd1bc5ab16a21bff0e10e65e4db061d0c278ff8b5e47faae0fe3cfae098",
+        "providerRowContentSha256": "745c05f993a43ecf001abb7a69f856ed53e8c90fd25df87a2df8cb7c3a259be2",
+        "qualityReportingProgramIndicator": "0",
+        "vbpAdjustment": "1",
+        "qualityReportingSource": {
+          "sourceUrl": "https://www.cms.gov/files/document/test-only-qrp-2026.pdf",
+          "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "publishedDate": "2026-03-16",
+          "rowLocator": "page=1;CCN=017999;classification=Compliant"
+        },
+        "valueBasedPurchasingSource": {
+          "sourceUrl": "https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv",
+          "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "publishedDate": "2026-01-14",
+          "factorAuthority": "CMS_IPSF_FIELD_30",
+          "annualCorroboration": "CMS_HHVBP_PAYMENT_YEAR_ROUNDED_APP",
+          "rowLocator": "CCN=017999;paymentYear=2026",
+          "publishedAdjustedPaymentPercentage": "0.00",
+          "publishedPercentageDecimalPlaces": 2
+        },
+        "providerHistorySource": {
+          "sourceUrl": "https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-06-30&oscarNumber=017999&format=csv",
+          "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "cutoffDate": "2026-06-30",
+          "rowLocator": "CCN=017999;effectiveDate=20250101"
+        },
+        "providerHistoryCutoffDate": "2026-06-30",
+        "providerNextEffectiveDate": null
+      }
+    }
+  ],
+  "noAprCases": [
+    {
+      "name": "explicit_no_apr_qrp0",
+      "catalogJson": "{\"entries\":{\"017999\":{\"providerCcn\":\"017999\",\"providerEffectiveDate\":\"2025-01-01\",\"providerHistoryCutoffDate\":\"2026-11-01\",\"providerHistorySource\":{\"cutoffDate\":\"2026-11-01\",\"rowLocator\":\"CCN=017999;effectiveDate=20250101\",\"sourceSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"sourceUrl\":\"https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv\"},\"providerNextEffectiveDate\":null,\"providerRowContentSha256\":\"745c05f993a43ecf001abb7a69f856ed53e8c90fd25df87a2df8cb7c3a259be2\",\"providerType\":\"36\",\"qualityReportingProgramIndicator\":\"0\",\"qualityReportingSource\":{\"publishedDate\":\"2026-03-16\",\"rowLocator\":\"page=1;CCN=017999;classification=Compliant\",\"sourceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sourceUrl\":\"https://www.cms.gov/files/document/test-only-qrp-2026.pdf\"},\"rawTerminationDate\":null,\"valueBasedPurchasingSource\":{\"adjustedPaymentPercentageFootnote\":\"HHA ineligible to receive an APR due to Medicare certification date and/or no or insufficient data on at least five measures to calculate a Total Performance Score (TPS).\",\"annualCorroboration\":\"CMS_HHVBP_CY2026_INELIGIBLE_FOR_APR\",\"annualPerformanceReportFootnote\":\"HHA ineligible to receive an APR due to Medicare certification date and/or no or insufficient data on at least five measures to calculate a Total Performance Score (TPS).\",\"factorAuthority\":\"CMS_IPSF_FIELD_30\",\"observedPaymentYears\":[2026],\"performanceYear\":2024,\"policySources\":[{\"basis\":\"PerformanceToPaymentYear\",\"rowLocator\":\"PDF page 10; performanceYear=2024; paymentYear=2026\",\"sourceSha256\":\"02992937d26c78c4b22b7b8fd53d88c466d524da9acc84ac78a01d89583931bc\",\"sourceUrl\":\"https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-model-guide\"},{\"basis\":\"NoAprNoAdjustment\",\"rowLocator\":\"Q4006; PDF pages 38-39\",\"sourceSha256\":\"79862328d9a5e54a4d6eb71d475e78847ef49f0dbce128da732a3957da1f19ef\",\"sourceUrl\":\"https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-faqs\"}],\"publishedAdjustedPaymentPercentage\":\"NA\",\"publishedDate\":\"2026-01-14\",\"publishedPaymentYear\":\"NA\",\"rowLocator\":\"CCN=017999;paymentYear=2026\",\"sourceSha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sourceUrl\":\"https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv\"},\"vbpAdjustment\":\"1\"}},\"paymentYear\":2026,\"schemaVersion\":\"HHAAnnualProviderCatalog/1\",\"sources\":{\"providerHistory\":[{\"cutoffDate\":\"2026-11-01\",\"sourceSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"sourceUrl\":\"https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv\"}],\"qualityReporting\":[{\"publishedDate\":\"2026-03-16\",\"sourceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sourceUrl\":\"https://www.cms.gov/files/document/test-only-qrp-2026.pdf\"}],\"valueBasedPurchasing\":[{\"annualCorroboration\":\"CMS_HHVBP_CY2026_INELIGIBLE_FOR_APR\",\"factorAuthority\":\"CMS_IPSF_FIELD_30\",\"observedPaymentYears\":[2026],\"performanceYear\":2024,\"policySources\":[{\"basis\":\"PerformanceToPaymentYear\",\"rowLocator\":\"PDF page 10; performanceYear=2024; paymentYear=2026\",\"sourceSha256\":\"02992937d26c78c4b22b7b8fd53d88c466d524da9acc84ac78a01d89583931bc\",\"sourceUrl\":\"https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-model-guide\"},{\"basis\":\"NoAprNoAdjustment\",\"rowLocator\":\"Q4006; PDF pages 38-39\",\"sourceSha256\":\"79862328d9a5e54a4d6eb71d475e78847ef49f0dbce128da732a3957da1f19ef\",\"sourceUrl\":\"https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-faqs\"}],\"publishedDate\":\"2026-01-14\",\"sourceSha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sourceUrl\":\"https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv\"}]}}",
+      "catalogSha256": "565862b9405f3f5440debdadecc079e337c8425e81b5b73452b8d48b6ded1506",
+      "catalogEntrySha256": "05dd5ed37535b5ff471933550c624fa774b849c672b3b6633bd27d547771370b",
+      "providerRowContentSha256": "745c05f993a43ecf001abb7a69f856ed53e8c90fd25df87a2df8cb7c3a259be2",
+      "providerData": {
+        "providerCcn": "017999",
+        "effectiveDate": "2025-01-01",
+        "vbpAdjustment": "1"
+      },
+      "providerEvidence": {
+        "source": "IPSF",
+        "providerCcn": "017999",
+        "providerRowId": 41,
+        "providerType": "36",
+        "effectiveDate": "2025-01-01",
+        "terminationDate": null,
+        "rawTerminationDate": null,
+        "lookupThroughDate": "2026-06-30",
+        "federalPpsBlend": "0",
+        "specialProviderUpdateFactor": "1",
+        "initialPaymentQualityReportingProgramIndicator": "0",
+        "qualityReportingSourceField": "federal_pps_blend",
+        "valueBasedPurchasingSourceField": "special_provider_update_factor",
+        "sourceRowFingerprint": "ac63702ab326a5aa6402d73d0327d1f0fe8a7066287d6dbdc954d0ec78009c1c",
+        "annualPaymentEvidence": {
+          "schemaVersion": "HHAAnnualPaymentEvidence/1",
+          "paymentYear": 2026,
+          "providerCcn": "017999",
+          "providerRowId": 41,
+          "sourceRowFingerprint": "ac63702ab326a5aa6402d73d0327d1f0fe8a7066287d6dbdc954d0ec78009c1c",
+          "catalogSha256": "565862b9405f3f5440debdadecc079e337c8425e81b5b73452b8d48b6ded1506",
+          "catalogEntrySha256": "05dd5ed37535b5ff471933550c624fa774b849c672b3b6633bd27d547771370b",
+          "providerRowContentSha256": "745c05f993a43ecf001abb7a69f856ed53e8c90fd25df87a2df8cb7c3a259be2",
+          "qualityReportingProgramIndicator": "0",
+          "vbpAdjustment": "1",
+          "qualityReportingSource": {
+            "sourceUrl": "https://www.cms.gov/files/document/test-only-qrp-2026.pdf",
+            "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "publishedDate": "2026-03-16",
+            "rowLocator": "page=1;CCN=017999;classification=Compliant"
+          },
+          "valueBasedPurchasingSource": {
+            "sourceUrl": "https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv",
+            "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "publishedDate": "2026-01-14",
+            "factorAuthority": "CMS_IPSF_FIELD_30",
+            "annualCorroboration": "CMS_HHVBP_CY2026_INELIGIBLE_FOR_APR",
+            "performanceYear": 2024,
+            "observedPaymentYears": [
+              2026
+            ],
+            "policySources": [
+              {
+                "basis": "PerformanceToPaymentYear",
+                "sourceUrl": "https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-model-guide",
+                "sourceSha256": "02992937d26c78c4b22b7b8fd53d88c466d524da9acc84ac78a01d89583931bc",
+                "rowLocator": "PDF page 10; performanceYear=2024; paymentYear=2026"
+              },
+              {
+                "basis": "NoAprNoAdjustment",
+                "sourceUrl": "https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-faqs",
+                "sourceSha256": "79862328d9a5e54a4d6eb71d475e78847ef49f0dbce128da732a3957da1f19ef",
+                "rowLocator": "Q4006; PDF pages 38-39"
+              }
+            ],
+            "rowLocator": "CCN=017999;paymentYear=2026",
+            "publishedAdjustedPaymentPercentage": "NA",
+            "publishedPaymentYear": "NA",
+            "annualPerformanceReportFootnote": "HHA ineligible to receive an APR due to Medicare certification date and/or no or insufficient data on at least five measures to calculate a Total Performance Score (TPS).",
+            "adjustedPaymentPercentageFootnote": "HHA ineligible to receive an APR due to Medicare certification date and/or no or insufficient data on at least five measures to calculate a Total Performance Score (TPS)."
+          },
+          "providerHistorySource": {
+            "sourceUrl": "https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv",
+            "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "cutoffDate": "2026-11-01",
+            "rowLocator": "CCN=017999;effectiveDate=20250101"
+          },
+          "providerHistoryCutoffDate": "2026-11-01",
+          "providerNextEffectiveDate": null
+        }
+      },
+      "annualPaymentEvidence": {
+        "schemaVersion": "HHAAnnualPaymentEvidence/1",
+        "paymentYear": 2026,
+        "providerCcn": "017999",
+        "providerRowId": 41,
+        "sourceRowFingerprint": "ac63702ab326a5aa6402d73d0327d1f0fe8a7066287d6dbdc954d0ec78009c1c",
+        "catalogSha256": "565862b9405f3f5440debdadecc079e337c8425e81b5b73452b8d48b6ded1506",
+        "catalogEntrySha256": "05dd5ed37535b5ff471933550c624fa774b849c672b3b6633bd27d547771370b",
+        "providerRowContentSha256": "745c05f993a43ecf001abb7a69f856ed53e8c90fd25df87a2df8cb7c3a259be2",
+        "qualityReportingProgramIndicator": "0",
+        "vbpAdjustment": "1",
+        "qualityReportingSource": {
+          "sourceUrl": "https://www.cms.gov/files/document/test-only-qrp-2026.pdf",
+          "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "publishedDate": "2026-03-16",
+          "rowLocator": "page=1;CCN=017999;classification=Compliant"
+        },
+        "valueBasedPurchasingSource": {
+          "sourceUrl": "https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv",
+          "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "publishedDate": "2026-01-14",
+          "factorAuthority": "CMS_IPSF_FIELD_30",
+          "annualCorroboration": "CMS_HHVBP_CY2026_INELIGIBLE_FOR_APR",
+          "performanceYear": 2024,
+          "observedPaymentYears": [
+            2026
+          ],
+          "policySources": [
+            {
+              "basis": "PerformanceToPaymentYear",
+              "sourceUrl": "https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-model-guide",
+              "sourceSha256": "02992937d26c78c4b22b7b8fd53d88c466d524da9acc84ac78a01d89583931bc",
+              "rowLocator": "PDF page 10; performanceYear=2024; paymentYear=2026"
+            },
+            {
+              "basis": "NoAprNoAdjustment",
+              "sourceUrl": "https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-faqs",
+              "sourceSha256": "79862328d9a5e54a4d6eb71d475e78847ef49f0dbce128da732a3957da1f19ef",
+              "rowLocator": "Q4006; PDF pages 38-39"
+            }
+          ],
+          "rowLocator": "CCN=017999;paymentYear=2026",
+          "publishedAdjustedPaymentPercentage": "NA",
+          "publishedPaymentYear": "NA",
+          "annualPerformanceReportFootnote": "HHA ineligible to receive an APR due to Medicare certification date and/or no or insufficient data on at least five measures to calculate a Total Performance Score (TPS).",
+          "adjustedPaymentPercentageFootnote": "HHA ineligible to receive an APR due to Medicare certification date and/or no or insufficient data on at least five measures to calculate a Total Performance Score (TPS)."
+        },
+        "providerHistorySource": {
+          "sourceUrl": "https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv",
+          "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "cutoffDate": "2026-11-01",
+          "rowLocator": "CCN=017999;effectiveDate=20250101"
+        },
+        "providerHistoryCutoffDate": "2026-11-01",
+        "providerNextEffectiveDate": null
+      }
+    },
+    {
+      "name": "explicit_no_apr_qrp2",
+      "catalogJson": "{\"entries\":{\"017999\":{\"providerCcn\":\"017999\",\"providerEffectiveDate\":\"2025-01-01\",\"providerHistoryCutoffDate\":\"2026-11-01\",\"providerHistorySource\":{\"cutoffDate\":\"2026-11-01\",\"rowLocator\":\"CCN=017999;effectiveDate=20250101\",\"sourceSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"sourceUrl\":\"https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv\"},\"providerNextEffectiveDate\":null,\"providerRowContentSha256\":\"98676387bedfb041bf5ace452a1321d23175787d11a29619d3092922d735644c\",\"providerType\":\"36\",\"qualityReportingProgramIndicator\":\"2\",\"qualityReportingSource\":{\"publishedDate\":\"2026-03-16\",\"rowLocator\":\"page=1;CCN=017999;classification=Noncompliant\",\"sourceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sourceUrl\":\"https://www.cms.gov/files/document/test-only-qrp-2026.pdf\"},\"rawTerminationDate\":null,\"valueBasedPurchasingSource\":{\"adjustedPaymentPercentageFootnote\":\"HHA ineligible to receive an APR due to Medicare certification date and/or no or insufficient data on at least five measures to calculate a Total Performance Score (TPS).\",\"annualCorroboration\":\"CMS_HHVBP_CY2026_INELIGIBLE_FOR_APR\",\"annualPerformanceReportFootnote\":\"HHA ineligible to receive an APR due to Medicare certification date and/or no or insufficient data on at least five measures to calculate a Total Performance Score (TPS).\",\"factorAuthority\":\"CMS_IPSF_FIELD_30\",\"observedPaymentYears\":[2026],\"performanceYear\":2024,\"policySources\":[{\"basis\":\"PerformanceToPaymentYear\",\"rowLocator\":\"PDF page 10; performanceYear=2024; paymentYear=2026\",\"sourceSha256\":\"02992937d26c78c4b22b7b8fd53d88c466d524da9acc84ac78a01d89583931bc\",\"sourceUrl\":\"https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-model-guide\"},{\"basis\":\"NoAprNoAdjustment\",\"rowLocator\":\"Q4006; PDF pages 38-39\",\"sourceSha256\":\"79862328d9a5e54a4d6eb71d475e78847ef49f0dbce128da732a3957da1f19ef\",\"sourceUrl\":\"https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-faqs\"}],\"publishedAdjustedPaymentPercentage\":\"NA\",\"publishedDate\":\"2026-01-14\",\"publishedPaymentYear\":\"NA\",\"rowLocator\":\"CCN=017999;paymentYear=2026\",\"sourceSha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sourceUrl\":\"https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv\"},\"vbpAdjustment\":\"1\"}},\"paymentYear\":2026,\"schemaVersion\":\"HHAAnnualProviderCatalog/1\",\"sources\":{\"providerHistory\":[{\"cutoffDate\":\"2026-11-01\",\"sourceSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"sourceUrl\":\"https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv\"}],\"qualityReporting\":[{\"publishedDate\":\"2026-03-16\",\"sourceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sourceUrl\":\"https://www.cms.gov/files/document/test-only-qrp-2026.pdf\"}],\"valueBasedPurchasing\":[{\"annualCorroboration\":\"CMS_HHVBP_CY2026_INELIGIBLE_FOR_APR\",\"factorAuthority\":\"CMS_IPSF_FIELD_30\",\"observedPaymentYears\":[2026],\"performanceYear\":2024,\"policySources\":[{\"basis\":\"PerformanceToPaymentYear\",\"rowLocator\":\"PDF page 10; performanceYear=2024; paymentYear=2026\",\"sourceSha256\":\"02992937d26c78c4b22b7b8fd53d88c466d524da9acc84ac78a01d89583931bc\",\"sourceUrl\":\"https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-model-guide\"},{\"basis\":\"NoAprNoAdjustment\",\"rowLocator\":\"Q4006; PDF pages 38-39\",\"sourceSha256\":\"79862328d9a5e54a4d6eb71d475e78847ef49f0dbce128da732a3957da1f19ef\",\"sourceUrl\":\"https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-faqs\"}],\"publishedDate\":\"2026-01-14\",\"sourceSha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sourceUrl\":\"https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv\"}]}}",
+      "catalogSha256": "adc96d8de5b2dba2fe334b2c68ec2e7467c6fd1574fad54d54638e4433193384",
+      "catalogEntrySha256": "59a3963566b8c71e58ab93dd93668d993f6491594ca3e24b749be6c4b0b74064",
+      "providerRowContentSha256": "98676387bedfb041bf5ace452a1321d23175787d11a29619d3092922d735644c",
+      "providerData": {
+        "providerCcn": "017999",
+        "effectiveDate": "2025-01-01",
+        "vbpAdjustment": "1"
+      },
+      "providerEvidence": {
+        "source": "IPSF",
+        "providerCcn": "017999",
+        "providerRowId": 41,
+        "providerType": "36",
+        "effectiveDate": "2025-01-01",
+        "terminationDate": null,
+        "rawTerminationDate": null,
+        "lookupThroughDate": "2026-06-30",
+        "federalPpsBlend": "2",
+        "specialProviderUpdateFactor": "1",
+        "initialPaymentQualityReportingProgramIndicator": "2",
+        "qualityReportingSourceField": "federal_pps_blend",
+        "valueBasedPurchasingSourceField": "special_provider_update_factor",
+        "sourceRowFingerprint": "c7137fd17762061c1b0012ccfcb28c76ad5347019fed7632e919091302c85687",
+        "annualPaymentEvidence": {
+          "schemaVersion": "HHAAnnualPaymentEvidence/1",
+          "paymentYear": 2026,
+          "providerCcn": "017999",
+          "providerRowId": 41,
+          "sourceRowFingerprint": "c7137fd17762061c1b0012ccfcb28c76ad5347019fed7632e919091302c85687",
+          "catalogSha256": "adc96d8de5b2dba2fe334b2c68ec2e7467c6fd1574fad54d54638e4433193384",
+          "catalogEntrySha256": "59a3963566b8c71e58ab93dd93668d993f6491594ca3e24b749be6c4b0b74064",
+          "providerRowContentSha256": "98676387bedfb041bf5ace452a1321d23175787d11a29619d3092922d735644c",
+          "qualityReportingProgramIndicator": "2",
+          "vbpAdjustment": "1",
+          "qualityReportingSource": {
+            "sourceUrl": "https://www.cms.gov/files/document/test-only-qrp-2026.pdf",
+            "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "publishedDate": "2026-03-16",
+            "rowLocator": "page=1;CCN=017999;classification=Noncompliant"
+          },
+          "valueBasedPurchasingSource": {
+            "sourceUrl": "https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv",
+            "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "publishedDate": "2026-01-14",
+            "factorAuthority": "CMS_IPSF_FIELD_30",
+            "annualCorroboration": "CMS_HHVBP_CY2026_INELIGIBLE_FOR_APR",
+            "performanceYear": 2024,
+            "observedPaymentYears": [
+              2026
+            ],
+            "policySources": [
+              {
+                "basis": "PerformanceToPaymentYear",
+                "sourceUrl": "https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-model-guide",
+                "sourceSha256": "02992937d26c78c4b22b7b8fd53d88c466d524da9acc84ac78a01d89583931bc",
+                "rowLocator": "PDF page 10; performanceYear=2024; paymentYear=2026"
+              },
+              {
+                "basis": "NoAprNoAdjustment",
+                "sourceUrl": "https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-faqs",
+                "sourceSha256": "79862328d9a5e54a4d6eb71d475e78847ef49f0dbce128da732a3957da1f19ef",
+                "rowLocator": "Q4006; PDF pages 38-39"
+              }
+            ],
+            "rowLocator": "CCN=017999;paymentYear=2026",
+            "publishedAdjustedPaymentPercentage": "NA",
+            "publishedPaymentYear": "NA",
+            "annualPerformanceReportFootnote": "HHA ineligible to receive an APR due to Medicare certification date and/or no or insufficient data on at least five measures to calculate a Total Performance Score (TPS).",
+            "adjustedPaymentPercentageFootnote": "HHA ineligible to receive an APR due to Medicare certification date and/or no or insufficient data on at least five measures to calculate a Total Performance Score (TPS)."
+          },
+          "providerHistorySource": {
+            "sourceUrl": "https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv",
+            "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "cutoffDate": "2026-11-01",
+            "rowLocator": "CCN=017999;effectiveDate=20250101"
+          },
+          "providerHistoryCutoffDate": "2026-11-01",
+          "providerNextEffectiveDate": null
+        }
+      },
+      "annualPaymentEvidence": {
+        "schemaVersion": "HHAAnnualPaymentEvidence/1",
+        "paymentYear": 2026,
+        "providerCcn": "017999",
+        "providerRowId": 41,
+        "sourceRowFingerprint": "c7137fd17762061c1b0012ccfcb28c76ad5347019fed7632e919091302c85687",
+        "catalogSha256": "adc96d8de5b2dba2fe334b2c68ec2e7467c6fd1574fad54d54638e4433193384",
+        "catalogEntrySha256": "59a3963566b8c71e58ab93dd93668d993f6491594ca3e24b749be6c4b0b74064",
+        "providerRowContentSha256": "98676387bedfb041bf5ace452a1321d23175787d11a29619d3092922d735644c",
+        "qualityReportingProgramIndicator": "2",
+        "vbpAdjustment": "1",
+        "qualityReportingSource": {
+          "sourceUrl": "https://www.cms.gov/files/document/test-only-qrp-2026.pdf",
+          "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "publishedDate": "2026-03-16",
+          "rowLocator": "page=1;CCN=017999;classification=Noncompliant"
+        },
+        "valueBasedPurchasingSource": {
+          "sourceUrl": "https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv",
+          "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "publishedDate": "2026-01-14",
+          "factorAuthority": "CMS_IPSF_FIELD_30",
+          "annualCorroboration": "CMS_HHVBP_CY2026_INELIGIBLE_FOR_APR",
+          "performanceYear": 2024,
+          "observedPaymentYears": [
+            2026
+          ],
+          "policySources": [
+            {
+              "basis": "PerformanceToPaymentYear",
+              "sourceUrl": "https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-model-guide",
+              "sourceSha256": "02992937d26c78c4b22b7b8fd53d88c466d524da9acc84ac78a01d89583931bc",
+              "rowLocator": "PDF page 10; performanceYear=2024; paymentYear=2026"
+            },
+            {
+              "basis": "NoAprNoAdjustment",
+              "sourceUrl": "https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-faqs",
+              "sourceSha256": "79862328d9a5e54a4d6eb71d475e78847ef49f0dbce128da732a3957da1f19ef",
+              "rowLocator": "Q4006; PDF pages 38-39"
+            }
+          ],
+          "rowLocator": "CCN=017999;paymentYear=2026",
+          "publishedAdjustedPaymentPercentage": "NA",
+          "publishedPaymentYear": "NA",
+          "annualPerformanceReportFootnote": "HHA ineligible to receive an APR due to Medicare certification date and/or no or insufficient data on at least five measures to calculate a Total Performance Score (TPS).",
+          "adjustedPaymentPercentageFootnote": "HHA ineligible to receive an APR due to Medicare certification date and/or no or insufficient data on at least five measures to calculate a Total Performance Score (TPS)."
+        },
+        "providerHistorySource": {
+          "sourceUrl": "https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv",
+          "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "cutoffDate": "2026-11-01",
+          "rowLocator": "CCN=017999;effectiveDate=20250101"
+        },
+        "providerHistoryCutoffDate": "2026-11-01",
+        "providerNextEffectiveDate": null
+      }
+    }
+  ],
+  "invalidNoAprCases": [
+    {
+      "name": "no_apr_cannot_establish_non_neutral_factor",
+      "catalogJson": "{\"entries\":{\"017999\":{\"providerCcn\":\"017999\",\"providerEffectiveDate\":\"2025-01-01\",\"providerHistoryCutoffDate\":\"2026-11-01\",\"providerHistorySource\":{\"cutoffDate\":\"2026-11-01\",\"rowLocator\":\"CCN=017999;effectiveDate=20250101\",\"sourceSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"sourceUrl\":\"https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv\"},\"providerNextEffectiveDate\":null,\"providerRowContentSha256\":\"beb09826c39acceb81b0fb073dd83074cc8c45b6cb0618b03093d6d3a4096cd3\",\"providerType\":\"36\",\"qualityReportingProgramIndicator\":\"0\",\"qualityReportingSource\":{\"publishedDate\":\"2026-03-16\",\"rowLocator\":\"page=1;CCN=017999;classification=Compliant\",\"sourceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sourceUrl\":\"https://www.cms.gov/files/document/test-only-qrp-2026.pdf\"},\"rawTerminationDate\":null,\"valueBasedPurchasingSource\":{\"adjustedPaymentPercentageFootnote\":\"HHA ineligible to receive an APR due to Medicare certification date and/or no or insufficient data on at least five measures to calculate a Total Performance Score (TPS).\",\"annualCorroboration\":\"CMS_HHVBP_CY2026_INELIGIBLE_FOR_APR\",\"annualPerformanceReportFootnote\":\"HHA ineligible to receive an APR due to Medicare certification date and/or no or insufficient data on at least five measures to calculate a Total Performance Score (TPS).\",\"factorAuthority\":\"CMS_IPSF_FIELD_30\",\"observedPaymentYears\":[2026],\"performanceYear\":2024,\"policySources\":[{\"basis\":\"PerformanceToPaymentYear\",\"rowLocator\":\"PDF page 10; performanceYear=2024; paymentYear=2026\",\"sourceSha256\":\"02992937d26c78c4b22b7b8fd53d88c466d524da9acc84ac78a01d89583931bc\",\"sourceUrl\":\"https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-model-guide\"},{\"basis\":\"NoAprNoAdjustment\",\"rowLocator\":\"Q4006; PDF pages 38-39\",\"sourceSha256\":\"79862328d9a5e54a4d6eb71d475e78847ef49f0dbce128da732a3957da1f19ef\",\"sourceUrl\":\"https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-faqs\"}],\"publishedAdjustedPaymentPercentage\":\"NA\",\"publishedDate\":\"2026-01-14\",\"publishedPaymentYear\":\"NA\",\"rowLocator\":\"CCN=017999;paymentYear=2026\",\"sourceSha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sourceUrl\":\"https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv\"},\"vbpAdjustment\":\"1.00001\"}},\"paymentYear\":2026,\"schemaVersion\":\"HHAAnnualProviderCatalog/1\",\"sources\":{\"providerHistory\":[{\"cutoffDate\":\"2026-11-01\",\"sourceSha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"sourceUrl\":\"https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv\"}],\"qualityReporting\":[{\"publishedDate\":\"2026-03-16\",\"sourceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sourceUrl\":\"https://www.cms.gov/files/document/test-only-qrp-2026.pdf\"}],\"valueBasedPurchasing\":[{\"annualCorroboration\":\"CMS_HHVBP_CY2026_INELIGIBLE_FOR_APR\",\"factorAuthority\":\"CMS_IPSF_FIELD_30\",\"observedPaymentYears\":[2026],\"performanceYear\":2024,\"policySources\":[{\"basis\":\"PerformanceToPaymentYear\",\"rowLocator\":\"PDF page 10; performanceYear=2024; paymentYear=2026\",\"sourceSha256\":\"02992937d26c78c4b22b7b8fd53d88c466d524da9acc84ac78a01d89583931bc\",\"sourceUrl\":\"https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-model-guide\"},{\"basis\":\"NoAprNoAdjustment\",\"rowLocator\":\"Q4006; PDF pages 38-39\",\"sourceSha256\":\"79862328d9a5e54a4d6eb71d475e78847ef49f0dbce128da732a3957da1f19ef\",\"sourceUrl\":\"https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-faqs\"}],\"publishedDate\":\"2026-01-14\",\"sourceSha256\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"sourceUrl\":\"https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv\"}]}}",
+      "catalogSha256": "2ba8d0e1592803b9123a45aa7012f86247743147d86001c707fd43bdb57201d4",
+      "catalogEntrySha256": "2b18289b7775e0200e48b757d6e2877a3419c272ec2c9f377b126b4157ee91e7",
+      "providerRowContentSha256": "beb09826c39acceb81b0fb073dd83074cc8c45b6cb0618b03093d6d3a4096cd3",
+      "providerData": {
+        "providerCcn": "017999",
+        "effectiveDate": "2025-01-01",
+        "vbpAdjustment": "1.00001"
+      },
+      "providerEvidence": {
+        "source": "IPSF",
+        "providerCcn": "017999",
+        "providerRowId": 41,
+        "providerType": "36",
+        "effectiveDate": "2025-01-01",
+        "terminationDate": null,
+        "rawTerminationDate": null,
+        "lookupThroughDate": "2026-06-30",
+        "federalPpsBlend": "0",
+        "specialProviderUpdateFactor": "1.00001",
+        "initialPaymentQualityReportingProgramIndicator": "0",
+        "qualityReportingSourceField": "federal_pps_blend",
+        "valueBasedPurchasingSourceField": "special_provider_update_factor",
+        "sourceRowFingerprint": "9b6085f1046414e3373404a6b6668345b4828ac838af9175d28a765a342fdfae",
+        "annualPaymentEvidence": {
+          "schemaVersion": "HHAAnnualPaymentEvidence/1",
+          "paymentYear": 2026,
+          "providerCcn": "017999",
+          "providerRowId": 41,
+          "sourceRowFingerprint": "9b6085f1046414e3373404a6b6668345b4828ac838af9175d28a765a342fdfae",
+          "catalogSha256": "2ba8d0e1592803b9123a45aa7012f86247743147d86001c707fd43bdb57201d4",
+          "catalogEntrySha256": "2b18289b7775e0200e48b757d6e2877a3419c272ec2c9f377b126b4157ee91e7",
+          "providerRowContentSha256": "beb09826c39acceb81b0fb073dd83074cc8c45b6cb0618b03093d6d3a4096cd3",
+          "qualityReportingProgramIndicator": "0",
+          "vbpAdjustment": "1.00001",
+          "qualityReportingSource": {
+            "sourceUrl": "https://www.cms.gov/files/document/test-only-qrp-2026.pdf",
+            "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "publishedDate": "2026-03-16",
+            "rowLocator": "page=1;CCN=017999;classification=Compliant"
+          },
+          "valueBasedPurchasingSource": {
+            "sourceUrl": "https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv",
+            "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "publishedDate": "2026-01-14",
+            "factorAuthority": "CMS_IPSF_FIELD_30",
+            "annualCorroboration": "CMS_HHVBP_CY2026_INELIGIBLE_FOR_APR",
+            "performanceYear": 2024,
+            "observedPaymentYears": [
+              2026
+            ],
+            "policySources": [
+              {
+                "basis": "PerformanceToPaymentYear",
+                "sourceUrl": "https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-model-guide",
+                "sourceSha256": "02992937d26c78c4b22b7b8fd53d88c466d524da9acc84ac78a01d89583931bc",
+                "rowLocator": "PDF page 10; performanceYear=2024; paymentYear=2026"
+              },
+              {
+                "basis": "NoAprNoAdjustment",
+                "sourceUrl": "https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-faqs",
+                "sourceSha256": "79862328d9a5e54a4d6eb71d475e78847ef49f0dbce128da732a3957da1f19ef",
+                "rowLocator": "Q4006; PDF pages 38-39"
+              }
+            ],
+            "rowLocator": "CCN=017999;paymentYear=2026",
+            "publishedAdjustedPaymentPercentage": "NA",
+            "publishedPaymentYear": "NA",
+            "annualPerformanceReportFootnote": "HHA ineligible to receive an APR due to Medicare certification date and/or no or insufficient data on at least five measures to calculate a Total Performance Score (TPS).",
+            "adjustedPaymentPercentageFootnote": "HHA ineligible to receive an APR due to Medicare certification date and/or no or insufficient data on at least five measures to calculate a Total Performance Score (TPS)."
+          },
+          "providerHistorySource": {
+            "sourceUrl": "https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv",
+            "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "cutoffDate": "2026-11-01",
+            "rowLocator": "CCN=017999;effectiveDate=20250101"
+          },
+          "providerHistoryCutoffDate": "2026-11-01",
+          "providerNextEffectiveDate": null
+        }
+      },
+      "annualPaymentEvidence": {
+        "schemaVersion": "HHAAnnualPaymentEvidence/1",
+        "paymentYear": 2026,
+        "providerCcn": "017999",
+        "providerRowId": 41,
+        "sourceRowFingerprint": "9b6085f1046414e3373404a6b6668345b4828ac838af9175d28a765a342fdfae",
+        "catalogSha256": "2ba8d0e1592803b9123a45aa7012f86247743147d86001c707fd43bdb57201d4",
+        "catalogEntrySha256": "2b18289b7775e0200e48b757d6e2877a3419c272ec2c9f377b126b4157ee91e7",
+        "providerRowContentSha256": "beb09826c39acceb81b0fb073dd83074cc8c45b6cb0618b03093d6d3a4096cd3",
+        "qualityReportingProgramIndicator": "0",
+        "vbpAdjustment": "1.00001",
+        "qualityReportingSource": {
+          "sourceUrl": "https://www.cms.gov/files/document/test-only-qrp-2026.pdf",
+          "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "publishedDate": "2026-03-16",
+          "rowLocator": "page=1;CCN=017999;classification=Compliant"
+        },
+        "valueBasedPurchasingSource": {
+          "sourceUrl": "https://data.cms.gov/provider-data/sites/default/files/resources/test-only-2026.csv",
+          "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "publishedDate": "2026-01-14",
+          "factorAuthority": "CMS_IPSF_FIELD_30",
+          "annualCorroboration": "CMS_HHVBP_CY2026_INELIGIBLE_FOR_APR",
+          "performanceYear": 2024,
+          "observedPaymentYears": [
+            2026
+          ],
+          "policySources": [
+            {
+              "basis": "PerformanceToPaymentYear",
+              "sourceUrl": "https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-model-guide",
+              "sourceSha256": "02992937d26c78c4b22b7b8fd53d88c466d524da9acc84ac78a01d89583931bc",
+              "rowLocator": "PDF page 10; performanceYear=2024; paymentYear=2026"
+            },
+            {
+              "basis": "NoAprNoAdjustment",
+              "sourceUrl": "https://www.cms.gov/priorities/innovation/media/document/hhvbp-exp-faqs",
+              "sourceSha256": "79862328d9a5e54a4d6eb71d475e78847ef49f0dbce128da732a3957da1f19ef",
+              "rowLocator": "Q4006; PDF pages 38-39"
+            }
+          ],
+          "rowLocator": "CCN=017999;paymentYear=2026",
+          "publishedAdjustedPaymentPercentage": "NA",
+          "publishedPaymentYear": "NA",
+          "annualPerformanceReportFootnote": "HHA ineligible to receive an APR due to Medicare certification date and/or no or insufficient data on at least five measures to calculate a Total Performance Score (TPS).",
+          "adjustedPaymentPercentageFootnote": "HHA ineligible to receive an APR due to Medicare certification date and/or no or insufficient data on at least five measures to calculate a Total Performance Score (TPS)."
+        },
+        "providerHistorySource": {
+          "sourceUrl": "https://pds.mps.cms.gov/fiss/v2/inpatient/export?fromDate=1980-01-01&toDate=2026-11-01&oscarNumber=017999&format=csv",
+          "sourceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "cutoffDate": "2026-11-01",
+          "rowLocator": "CCN=017999;effectiveDate=20250101"
+        },
+        "providerHistoryCutoffDate": "2026-11-01",
+        "providerNextEffectiveDate": null
+      }
+    }
+  ]
+}

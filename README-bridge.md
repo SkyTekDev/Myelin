@@ -16,11 +16,17 @@ C:\Users\Brad\Myelin\
 └── start_api.ps1
 ```
 
-The API initializes only:
+The bridge initializes:
 
 - CMS I/OCE
 - CMS OPPS Pricer
 - CMS OPSF provider database
+- CMS IPPS and IPSF provider lookup
+
+SNF is enabled with `SNF_ENABLED=true`. The supplied-HIPPS HH first pass is
+enabled with `HHA_ENABLED=true` and remains disabled by default. See
+[README-hha.md](README-hha.md) for its CY 2026 original 0329 scope, required
+inputs, reference policy, sample request, and reconciliation commands.
 
 It does not invoke `Myelin.__enter__()`, so the unrelated CMS pricers are
 not initialized.

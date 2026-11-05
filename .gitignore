@@ -140,6 +140,15 @@ example_data/claims_output.txt
 # Data
 data/
 
+# Reviewed HH reference catalog; raw provider databases and source packages stay ignored.
+!bridge/data/
+bridge/data/*
+!bridge/data/hha-provider-annual-2026-v1.json
+!bridge/data/hha-geography-2025-v1.json
+!bridge/data/hha-geography-2026-v1.json
+!bridge/data/hha-separate-payment-rates-2025-v1.json
+!bridge/data/hha-separate-payment-rates-2026-v1.json
+
 # Generated Stubs
 /myelin/jpype-stubs/
 /myelin/java/
