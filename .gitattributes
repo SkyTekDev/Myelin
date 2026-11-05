@@ -1,2 +1,5 @@
 # Preserve the bytes of checksum-pinned HH reference data across platforms.
 bridge/references/hha-*.csv text eol=lf
+
+# Preserve LF for the Linux Docker entrypoint in checkouts and archives.
+container/entrypoint.sh text eol=lf
