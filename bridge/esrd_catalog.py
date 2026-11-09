@@ -11,9 +11,10 @@ from urllib.parse import urlsplit
 
 from bridge.immutable_reference import import_versioned_catalog
 from bridge import esrd_supersessions as supersessions
+from bridge import esrd_body_size as body_size
 
 SCHEMA = Path(__file__).parent / 'references/esrd-rates-schema-v1.sql'
-TABLES = {'esrd_rate_releases', 'esrd_base_rates', 'esrd_age_factors', 'esrd_wage_indexes', 'esrd_release_supersessions'}
+TABLES = {'esrd_rate_releases', 'esrd_base_rates', 'esrd_age_factors', 'esrd_wage_indexes', 'esrd_release_supersessions', body_size.TABLE}
 PARAMETERS = ('baseRate', 'laborShare', 'nonLaborShare', 'wageFloor', 'wageCapMultiplier')
 SOURCES = {'jarName', 'jarSha256', 'wageTableName', 'wageTableSha256', 'policySourceUrl', 'providerSourceUrl'}
 
@@ -45,12 +46,26 @@ def normalized(value):
     return format(Decimal(value).normalize(), 'f')
 
 
+def validate_source(key, value):
+    if not isinstance(value, str) or not value or not value.isascii():
+        raise ValueError('Invalid ESRD source metadata.')
+    if key.endswith('Sha256') and not re.fullmatch('[a-f0-9]{64}', value):
+        raise ValueError('Invalid ESRD source fingerprint.')
+    if key.endswith('Url'):
+        url = urlsplit(value)
+        if (url.scheme != 'https' or not (url.hostname == 'cms.gov' or (url.hostname or '').endswith('.cms.gov'))
+                or url.username or url.password or url.query or url.fragment or url.port not in (None, 443)):
+            raise ValueError('ESRD provenance requires a CMS HTTPS source.')
+    if key.endswith('Name') and not re.fullmatch('[A-Za-z0-9_.-]{1,150}', value):
+        raise ValueError('Invalid ESRD source filename.')
+
+
 def validate_document(raw, expected_sha256):
     if (not re.fullmatch('[a-f0-9]{64}', expected_sha256) or not 0 < len(raw) <= 2*1024*1024
             or hashlib.sha256(raw).hexdigest() != expected_sha256):
         raise ValueError('ESRD catalog checksum mismatch.')
     doc = json.loads(raw, object_pairs_hook=unique)
-    if set(doc) != {'schemaVersion','paymentYear','effectiveFrom','effectiveThrough','referenceVersion','algorithm','sources','parameters','ageFactors','entries'}:
+    if set(doc) - {'bodySize'} != {'schemaVersion','paymentYear','effectiveFrom','effectiveThrough','referenceVersion','algorithm','sources','parameters','ageFactors','entries'}:
         raise ValueError('Unexpected ESRD reference fields.')
     year = doc['paymentYear']
     if (doc['schemaVersion'] != 'ESRDReferenceRates/1' or doc['algorithm'] != 'BASE_WAGE_ADULT_AGE_V1'
@@ -63,17 +78,9 @@ def validate_document(raw, expected_sha256):
     if set(doc['sources']) != SOURCES or set(doc['parameters']) != set(PARAMETERS):
         raise ValueError('Missing ESRD provenance or rate parameters.')
     for key, value in doc['sources'].items():
-        if not isinstance(value, str) or not value or not value.isascii():
-            raise ValueError('Invalid ESRD source metadata.')
-        if key.endswith('Sha256') and not re.fullmatch('[a-f0-9]{64}', value):
-            raise ValueError('Invalid ESRD source fingerprint.')
-        if key.endswith('Url'):
-            url = urlsplit(value)
-            if (url.scheme != 'https' or not (url.hostname == 'cms.gov' or (url.hostname or '').endswith('.cms.gov'))
-                    or url.username or url.password or url.query or url.fragment or url.port not in (None, 443)):
-                raise ValueError('ESRD provenance requires a CMS HTTPS source.')
-        if key.endswith('Name') and not re.fullmatch('[A-Za-z0-9_.-]{1,150}', value):
-            raise ValueError('Invalid ESRD source filename.')
+        validate_source(key, value)
+    if 'bodySize' in doc:
+        body_size.validate(doc['bodySize'], exact, validate_source)
     p = {key: exact(value) for key, value in doc['parameters'].items()}
     if (not 0 < p['baseRate'] <= 10000 or not 0 < p['laborShare'] < 1 or not 0 < p['nonLaborShare'] < 1
             or p['laborShare'] + p['nonLaborShare'] != 1 or not 0 < p['wageFloor'] <= 5
@@ -109,6 +116,9 @@ def policy(document, revision, catalog_sha256):
         **{key: normalized(value) for key, value in document['parameters'].items()},
         ageFactors=[dict(minimumAge=row['minimumAge'], maximumAge=row['maximumAge'], factor=normalized(row['factor'])) for row in document['ageFactors']],
         **document['sources'])
+    if 'bodySize' in document:
+        result['bodySize'] = {key: normalized(value) if key in body_size.NUMBERS else value
+                              for key, value in document['bodySize'].items()}
     return dict(result, catalogSha256=catalog_sha256, policySha256=digest(result))
 
 
@@ -128,6 +138,7 @@ def schema(connection):
 
 
 def check_schema(connection):
+    body_size.check_schema(connection)
     existing = schema(connection)
     if not existing:
         return False
@@ -158,6 +169,9 @@ def read_release(connection, catalog_sha256):
     doc = dict(schemaVersion=release['schema_version'], paymentYear=release['payment_year'], effectiveFrom=release['effective_from'],
         effectiveThrough=release['effective_through'], referenceVersion=release['reference_version'], algorithm=release['algorithm'],
         sources=json.loads(release['sources_json']), parameters=dict(zip(PARAMETERS, bases[0])), ageFactors=bands, entries=entries)
+    parameters = body_size.read(connection, catalog_sha256)
+    if parameters is not None:
+        doc['bodySize'] = parameters
     validate_document(canonical(doc), catalog_sha256)
     if len(entries) != release['rate_count'] or policy(doc, release['revision'], catalog_sha256)['policySha256'] != release['policy_sha256']:
         raise ValueError('ESRD row count or policy fingerprint mismatch.')
@@ -180,6 +194,7 @@ def install_release(connection, document, catalog_sha256, revision, operator, *,
         (catalog_sha256, row['minimumAge'], row['maximumAge'], row['factor']) for row in document['ageFactors']])
     connection.executemany('INSERT INTO esrd_wage_indexes VALUES (?,?,?)', [
         (catalog_sha256, cbsa, row['wageIndex']) for cbsa, row in document['entries'].items()])
+    body_size.install(connection, catalog_sha256, document.get('bodySize'))
     connection.execute('UPDATE esrd_rate_releases SET sealed=1 WHERE catalog_sha256=?', (catalog_sha256,))
     supersessions.install(connection, correction)
     supersessions.validate_graph(supersessions.releases(connection), supersessions.read_records(connection))
