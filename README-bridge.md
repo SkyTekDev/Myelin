@@ -111,6 +111,22 @@ $result = Invoke-RestMethod `
 $result | ConvertTo-Json -Depth 100
 ```
 
+## Contractor edit bypass
+
+Bridge 0.6.0 adds an optional `editBypass` list to each claim line on both endpoints. It passes the CMS editor's contractor edit bypass for those edits on that line only, using the unmodified CMS I/OCE (`addContractorEditBypass`). CMS added the line-level bypass for Medicare contractors in change request 10988, effective April 2019.
+
+```json
+{ "claimLineId": 2, "lineNumber": 2, "revenueCode": "0636", "hcpcs": "J0586",
+  "dateOfService": "2026-07-30", "units": 120, "chargeAmount": 3000.00, "editBypass": ["012"] }
+```
+
+- Each entry is an I/OCE edit number of one to three digits, normalized to three digits (`"12"` becomes `"012"`). A line can list up to four.
+- The deployment decides which edits may be bypassed with `IOCE_EDIT_BYPASS_ALLOWED`, a comma-separated list such as `12`. It is empty by default, which turns the feature off. A request asking to bypass any other edit gets HTTP 422 before the editor runs.
+- `/health/ready` and `/api/v1/version` report the allowlist as `ioceEditBypassAllowed`.
+- Every entry in `ioceLineResults` (and `lineResults` on the I/OCE endpoint) echoes the bypass applied to that line as `editBypass`, an empty list when none was requested.
+
+A bypass removes the editor's hold for that edit. It does not make a line payable: a line CMS cannot pay keeps its status and stays unpaid.
+
 ## Swagger
 
 ```text

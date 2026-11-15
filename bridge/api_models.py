@@ -6,6 +6,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from bridge.edit_bypass import normalize_edit
+
 
 class ApiModel(BaseModel):
     model_config = ConfigDict(
@@ -63,6 +65,10 @@ class ClaimLineRequest(ApiModel):
     chargeAmount: Decimal = Field(ge=0)
     modifiers: list[str] = Field(default_factory=list, max_length=4)
 
+    # Contractor edit bypass for this line, as I/OCE edit numbers. The endpoint
+    # accepts only edits listed in the deployment's IOCE_EDIT_BYPASS_ALLOWED.
+    editBypass: list[str] = Field(default_factory=list, max_length=4)
+
     @field_validator("revenueCode")
     @classmethod
     def validate_revenue_code(cls, value: str) -> str:
@@ -103,6 +109,25 @@ class ClaimLineRequest(ApiModel):
                 )
 
             normalized.append(modifier)
+
+        return normalized
+
+    @field_validator("editBypass")
+    @classmethod
+    def normalize_edit_bypass(cls, values: list[str]) -> list[str]:
+        normalized: list[str] = []
+
+        for value in values:
+            try:
+                edit = normalize_edit(value)
+            except ValueError as error:
+                raise ValueError(
+                    "Each edit bypass must be an I/OCE edit number of "
+                    "one to three digits."
+                ) from error
+
+            if edit not in normalized:
+                normalized.append(edit)
 
         return normalized
 

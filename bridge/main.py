@@ -28,10 +28,11 @@ from myelin.pricers.opsf import OPSF, OPSFProvider
 
 from bridge.api_models import IoceClaimRequest
 from bridge.claim_mapper import to_myelin_claim
+from bridge.edit_bypass import disallowed_bypasses, parse_allowlist
 from bridge.opps_client import WindowsSafeOppsClient
 
 
-BRIDGE_VERSION = "0.5.0"
+BRIDGE_VERSION = "0.6.0"
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 JAR_PATH = Path(
@@ -68,6 +69,25 @@ DOWNLOAD_CMS_ASSETS = env_bool(
     "MYELIN_DOWNLOAD_CMS_ASSETS",
     default=False,
 )
+
+# I/OCE edits a caller may bypass on a claim line, such as "12". Empty or unset
+# turns the contractor edit bypass off; any requested bypass is then rejected.
+EDIT_BYPASS_ALLOWED = parse_allowlist(os.getenv("IOCE_EDIT_BYPASS_ALLOWED"))
+
+
+def enforce_edit_bypass(payload: IoceClaimRequest) -> None:
+    rejected = disallowed_bypasses(payload, EDIT_BYPASS_ALLOWED)
+
+    if rejected:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "Edit bypass is not allowed by this deployment.",
+                "claimId": str(payload.claimId),
+                "allowedEdits": sorted(EDIT_BYPASS_ALLOWED),
+                "lines": rejected,
+            },
+        )
 
 
 def find_opps_jar() -> Path:
@@ -161,6 +181,8 @@ def map_ioce_lines(
             {
                 "claimLineId": input_line.claimLineId,
                 "lineNumber": input_line.lineNumber,
+                # Echoes the bypass the editor applied to this line.
+                "editBypass": list(input_line.editBypass),
                 "output": output,
             }
         )
@@ -378,6 +400,7 @@ def health_ready(request: Request) -> dict[str, Any]:
         "oppsJar": request.app.state.opps_jar.name,
         "opsfRecordCount": request.app.state.opsf_record_count,
         "downloadsCmsAssetsAtStartup": DOWNLOAD_CMS_ASSETS,
+        "ioceEditBypassAllowed": sorted(EDIT_BYPASS_ALLOWED),
         "hha": hha_readiness(getattr(request.app.state, "hha_processors", {})),
     }
 
@@ -391,6 +414,7 @@ def version(request: Request) -> dict[str, Any]:
         "jarPath": str(JAR_PATH),
         "databasePath": str(DB_PATH),
         "downloadsCmsAssetsAtStartup": DOWNLOAD_CMS_ASSETS,
+        "ioceEditBypassAllowed": sorted(EDIT_BYPASS_ALLOWED),
         "hha": hha_readiness(getattr(request.app.state, "hha_processors", {})),
     }
 
@@ -400,6 +424,7 @@ def process_ioce(
     payload: IoceClaimRequest,
     request: Request,
 ) -> dict[str, Any]:
+    enforce_edit_bypass(payload)
     ioce_client: IoceClient = request.app.state.ioce_client
     processing_lock: Lock = request.app.state.processing_lock
 
@@ -484,6 +509,7 @@ def process_opps(
     payload: IoceClaimRequest,
     request: Request,
 ) -> dict[str, Any]:
+    enforce_edit_bypass(payload)
     ioce_client: IoceClient = request.app.state.ioce_client
     opps_client: WindowsSafeOppsClient = (
         request.app.state.opps_client

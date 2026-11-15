@@ -12,6 +12,8 @@ services:
       MYELIN_DB_PATH: "/app/data/myelin.db"
       MYELIN_DOWNLOAD_CMS_ASSETS: "false"
       HHA_ENABLED: "${HHA_ENABLED:-false}"
+      # I/OCE edits callers may bypass per line, such as "12". Empty turns it off.
+      IOCE_EDIT_BYPASS_ALLOWED: "${IOCE_EDIT_BYPASS_ALLOWED:-}"
       # Optional override must match the verified HHA 2.6.0 JAR hash.
       # HHA_JAR_PATH: "/app/jars/pricers/hha-pricer-application-2.6.0.jar"
       # Set this only when the image contains more than one OPPS Pricer JAR.
