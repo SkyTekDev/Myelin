@@ -127,6 +127,28 @@ Bridge 0.6.0 adds an optional `editBypass` list to each claim line on both endpo
 
 A bypass removes the editor's hold for that edit. It does not make a line payable: a line CMS cannot pay keeps its status and stays unpaid.
 
+## Supplied provider context
+
+Bridge 0.7.0 lets `/api/v1/opps/process` take an optional claim-level `providerContext` in place of the OPSF lookup. It is meant for a provider that CMS does not list in the OPSF, or lists without a wage-index location, such as a critical access hospital (type 37) priced for comparison only. The unmodified CMS OPPS Pricer receives these fields as the provider record and looks up the wage index in its own dated tables.
+
+```json
+"providerContext": {
+  "providerCcn": "161322", "providerType": "37", "stateCode": "16", "effectiveDate": "2026-07-01",
+  "cbsaActualGeographicLocation": "19780", "specialPaymentIndicator": "Y",
+  "cbsaWageIndexLocation": "16", "hospitalQualityIndicator": "1"
+}
+```
+
+- `providerCcn` must equal the claim's `providerNumber`, and `stateCode` (the SSA state code) must equal the CCN's first two characters. `effectiveDate` cannot follow the claim's `fromDate`.
+- Area codes are the Pricer's wage-table keys: a five-digit CBSA, or a two-digit state code for a rural area (`"16"`, not `"99916"`).
+- `specialPaymentIndicator` is blank or `"Y"`. Blank prices at `cbsaActualGeographicLocation`. `"Y"` requires `cbsaWageIndexLocation` and applies that reclassification, as the OPSF does for a hospital treated as rural.
+- `hospitalQualityIndicator` is blank or `"1"`. No other provider fields are accepted. The record has no cost-to-charge ratio, so the Pricer calculates no outlier payment. It also has no county, so no out-migration adjustment applies, and no special or supplemental wage index.
+- The deployment decides which provider types may be supplied with `OPPS_PROVIDER_CONTEXT_TYPES`, a comma-separated list such as `37`. It is empty by default, which turns the feature off. A context for any other type gets HTTP 422 before the editor runs. The I/OCE endpoint rejects any `providerContext`.
+- `/health/ready` and `/api/v1/version` report the list as `oppsProviderContextTypes`.
+- The response's `providerContextSource` is `"Supplied"` when the context was used and `"OPSF"` otherwise. `opsfProvider` shows the record the Pricer received in both cases.
+
+A supplied context never comes from CMS. The caller owns its source and must label results priced with it.
+
 ## Swagger
 
 ```text
