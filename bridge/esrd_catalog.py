@@ -12,9 +12,13 @@ from urllib.parse import urlsplit
 from bridge.immutable_reference import import_versioned_catalog
 from bridge import esrd_supersessions as supersessions
 from bridge import esrd_body_size as body_size
+from bridge import esrd_facility_adjustments as facility
 
 SCHEMA = Path(__file__).parent / 'references/esrd-rates-schema-v1.sql'
-TABLES = {'esrd_rate_releases', 'esrd_base_rates', 'esrd_age_factors', 'esrd_wage_indexes', 'esrd_release_supersessions', body_size.TABLE}
+TABLES = {'esrd_rate_releases', 'esrd_base_rates', 'esrd_age_factors', 'esrd_wage_indexes', 'esrd_release_supersessions',
+          body_size.TABLE, facility.TABLE}
+# Sections a release may omit; an older package without them keeps its original fingerprint.
+OPTIONAL = {'bodySize', 'facilityAdjustments'}
 PARAMETERS = ('baseRate', 'laborShare', 'nonLaborShare', 'wageFloor', 'wageCapMultiplier')
 SOURCES = {'jarName', 'jarSha256', 'wageTableName', 'wageTableSha256', 'policySourceUrl', 'providerSourceUrl'}
 
@@ -65,7 +69,7 @@ def validate_document(raw, expected_sha256):
             or hashlib.sha256(raw).hexdigest() != expected_sha256):
         raise ValueError('ESRD catalog checksum mismatch.')
     doc = json.loads(raw, object_pairs_hook=unique)
-    if set(doc) - {'bodySize'} != {'schemaVersion','paymentYear','effectiveFrom','effectiveThrough','referenceVersion','algorithm','sources','parameters','ageFactors','entries'}:
+    if set(doc) - OPTIONAL != {'schemaVersion','paymentYear','effectiveFrom','effectiveThrough','referenceVersion','algorithm','sources','parameters','ageFactors','entries'}:
         raise ValueError('Unexpected ESRD reference fields.')
     year = doc['paymentYear']
     if (doc['schemaVersion'] != 'ESRDReferenceRates/1' or doc['algorithm'] != 'BASE_WAGE_ADULT_AGE_V1'
@@ -81,6 +85,8 @@ def validate_document(raw, expected_sha256):
         validate_source(key, value)
     if 'bodySize' in doc:
         body_size.validate(doc['bodySize'], exact, validate_source)
+    if 'facilityAdjustments' in doc:
+        facility.validate(doc['facilityAdjustments'], exact)
     p = {key: exact(value) for key, value in doc['parameters'].items()}
     if (not 0 < p['baseRate'] <= 10000 or not 0 < p['laborShare'] < 1 or not 0 < p['nonLaborShare'] < 1
             or p['laborShare'] + p['nonLaborShare'] != 1 or not 0 < p['wageFloor'] <= 5
@@ -119,6 +125,8 @@ def policy(document, revision, catalog_sha256):
     if 'bodySize' in document:
         result['bodySize'] = {key: normalized(value) if key in body_size.NUMBERS else value
                               for key, value in document['bodySize'].items()}
+    if 'facilityAdjustments' in document:
+        result['facilityAdjustments'] = facility.normalize(document['facilityAdjustments'], normalized)
     return dict(result, catalogSha256=catalog_sha256, policySha256=digest(result))
 
 
@@ -139,6 +147,7 @@ def schema(connection):
 
 def check_schema(connection):
     body_size.check_schema(connection)
+    facility.check_schema(connection)
     existing = schema(connection)
     if not existing:
         return False
@@ -172,6 +181,9 @@ def read_release(connection, catalog_sha256):
     parameters = body_size.read(connection, catalog_sha256)
     if parameters is not None:
         doc['bodySize'] = parameters
+    factors = facility.read(connection, catalog_sha256)
+    if factors is not None:
+        doc['facilityAdjustments'] = factors
     validate_document(canonical(doc), catalog_sha256)
     if len(entries) != release['rate_count'] or policy(doc, release['revision'], catalog_sha256)['policySha256'] != release['policy_sha256']:
         raise ValueError('ESRD row count or policy fingerprint mismatch.')
@@ -195,6 +207,7 @@ def install_release(connection, document, catalog_sha256, revision, operator, *,
     connection.executemany('INSERT INTO esrd_wage_indexes VALUES (?,?,?)', [
         (catalog_sha256, cbsa, row['wageIndex']) for cbsa, row in document['entries'].items()])
     body_size.install(connection, catalog_sha256, document.get('bodySize'))
+    facility.install(connection, catalog_sha256, document.get('facilityAdjustments'))
     connection.execute('UPDATE esrd_rate_releases SET sealed=1 WHERE catalog_sha256=?', (catalog_sha256,))
     supersessions.install(connection, correction)
     supersessions.validate_graph(supersessions.releases(connection), supersessions.read_records(connection))
