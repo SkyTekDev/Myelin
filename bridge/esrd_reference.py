@@ -1,6 +1,6 @@
 """Dated provider and immutable database-rate references for the ESRD benchmark."""
 from datetime import date, datetime, timezone
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_DOWN, ROUND_HALF_UP
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -189,7 +189,12 @@ class EsrdReferenceProcessor:
                     if indicator.strip() in ('1', '2'):
                         prior = number(row.supplemental_wage_index)
                         require(0 < prior <= 5, 'ESRD_PROVIDER_WAGE_MISSING', 'Missing or invalid supplemental wage index.')
-                        wage = max(wage, (prior * Decimal(rates['wageCapMultiplier'])).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP))
+                        # CMS ApplySupplementalWageIndex2025 truncates the change from the prior-year index to the
+                        # wage index's four decimals and replaces the index only below the permitted decrease.
+                        multiplier = Decimal(rates['wageCapMultiplier'])
+                        change = ((wage - prior) / prior).quantize(Decimal('0.0001'), rounding=ROUND_DOWN)
+                        if change < multiplier - 1:
+                            wage = (prior * multiplier).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP)
                     provider = {name: getattr(row, name) for name in DATATYPES}
                     provider = {name: Decimal(str(value)) if isinstance(value, float) else value for name, value in provider.items()}
                     entries.append(EsrdReferenceEntry(serviceDate=service_date,
