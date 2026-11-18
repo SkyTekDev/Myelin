@@ -12,6 +12,7 @@ from myelin.input.claim import (
     Provider,
     ValueCode,
 )
+from myelin.input.ioce import IoceOverride
 
 from bridge.api_models import DiagnosisRequest, IoceClaimRequest
 
@@ -52,6 +53,12 @@ def to_myelin_claim(request: IoceClaimRequest) -> Claim:
             modifiers=line.modifiers,
             units=float(line.units),
             charges=float(line.chargeAmount),
+            # The CMS editor skips the listed edits on this line only.
+            override=(
+                IoceOverride(edit_bypass_list=list(line.editBypass))
+                if line.editBypass
+                else None
+            ),
         )
         for line in request.claimLines
     ]

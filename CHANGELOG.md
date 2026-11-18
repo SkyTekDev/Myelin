@@ -5,6 +5,25 @@ All notable changes to Myelin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Bridge 0.7.0: supplied OPPS provider context.** `/api/v1/opps/process`
+  accepts an optional claim-level `providerContext` (CCN, provider type, SSA
+  state, effective date, CBSA, an optional reclassification and the quality
+  indicator) that the unmodified CMS OPPS Pricer receives in place of the OPSF
+  record. The deployment allowlist `OPPS_PROVIDER_CONTEXT_TYPES` (empty by
+  default, which turns the feature off) limits which provider types may be
+  supplied; other requests get HTTP 422. The response reports
+  `providerContextSource` as `Supplied` or `OPSF`. See `README-bridge.md`.
+- **Bridge 0.6.0: contractor edit bypass.** Claim lines on `/api/v1/ioce/process`
+  and `/api/v1/opps/process` accept an optional `editBypass` list of I/OCE edit
+  numbers, passed to the unmodified CMS editor for that line only. The
+  deployment allowlist `IOCE_EDIT_BYPASS_ALLOWED` (empty by default, which turns
+  the feature off) limits which edits may be bypassed; other requests get HTTP
+  422. Line results echo the applied bypass. See `README-bridge.md`.
+
 ## [1.0.0] - 2026-07-10
 
 First stable release of Myelin. Provides a unified Python interface to the
