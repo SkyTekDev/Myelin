@@ -46,13 +46,20 @@ param(
 
     # Explicitly enable the accepted SNF integration in the selected container.
     # Omitting this option preserves the current task's SNF configuration.
-    [switch]$EnableSnf
+    [switch]$EnableSnf,
+
+    # Explicitly enable the ESRD benchmark reference endpoints in the selected
+    # container. Omitting this option preserves the current task's ESRD
+    # configuration. With ESRD enabled the bridge will not start unless its
+    # database holds a sealed ESRD reference release, so a newly built image
+    # is checked before it is pushed.
+    [switch]$EnableEsrd
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$ScriptVersion = "4.1-explicit-snf-enable"
+$ScriptVersion = "4.2-explicit-esrd-enable"
 Write-Host "Deployment script version: $ScriptVersion" -ForegroundColor DarkGray
 
 function Write-Step {
@@ -626,9 +633,27 @@ Available containers: $availableNames
 "@
 }
 
-if ($EnableSnf -and $null -ne $containerDefinition.PSObject.Properties["secrets"]) {
-    if (@($containerDefinition.secrets | Where-Object { $_.name -eq "SNF_ENABLED" }).Count -gt 0) {
-        throw "SNF_ENABLED is supplied by an ECS secret. Update that setting before using -EnableSnf."
+# Settings this run turns on, each with the option that asked for it.
+$enabledSettings = [ordered]@{}
+if ($EnableSnf) { $enabledSettings["SNF_ENABLED"] = "-EnableSnf" }
+if ($EnableEsrd) { $enabledSettings["ESRD_ENABLED"] = "-EnableEsrd" }
+
+if ($null -ne $containerDefinition.PSObject.Properties["secrets"]) {
+    foreach ($settingName in $enabledSettings.Keys) {
+        if (@($containerDefinition.secrets | Where-Object { $_.name -eq $settingName }).Count -gt 0) {
+            throw "$settingName is supplied by an ECS secret. Update that setting before using $($enabledSettings[$settingName])."
+        }
+    }
+}
+
+# The ESRD image check reads the database the task will read.
+$taskDatabasePath = ""
+if ($null -ne $containerDefinition.PSObject.Properties["environment"]) {
+    $databaseSetting = @($containerDefinition.environment | Where-Object { $_.name -eq "MYELIN_DB_PATH" }) |
+        Select-Object -First 1
+
+    if ($null -ne $databaseSetting) {
+        $taskDatabasePath = [string]$databaseSetting.value
     }
 }
 
@@ -714,6 +739,13 @@ if ($UseExistingImage) {
 
     Write-Host "Image digest: $($selectedImage.imageDigest)"
     Write-Host "Image pushed: $($selectedImage.imagePushedAt)"
+
+    if ($EnableEsrd) {
+        Write-Warning (
+            "The existing image was not checked for ESRD reference releases. " +
+            "With ESRD enabled the bridge will not start if its database has none."
+        )
+    }
 }
 else {
     Write-Step "Logging Docker into Amazon ECR"
@@ -795,6 +827,42 @@ else {
         -FilePath "docker" `
         -Arguments $buildArguments
 
+    if ($EnableEsrd) {
+        Write-Step "Checking the image's ESRD reference releases"
+
+        # With ESRD enabled the bridge refuses to start unless its database
+        # holds a sealed ESRD reference release. Run that startup check in the
+        # new image now, before anything is pushed or deployed.
+        $checkArguments = @(
+            "run", "--rm",
+            "--platform", $BuildPlatform,
+            "--network", "none",
+            "--entrypoint", "python"
+        )
+
+        if (-not [string]::IsNullOrWhiteSpace($taskDatabasePath)) {
+            $checkArguments += @("--env", "MYELIN_DB_PATH=$taskDatabasePath")
+        }
+
+        $checkArguments += @($imageUri, "-m", "bridge.esrd_check")
+
+        $esrdCheck = Invoke-NativeCapture `
+            -FilePath "docker" `
+            -Arguments $checkArguments `
+            -AllowFailure
+
+        Write-Host $esrdCheck.Text
+
+        if ($esrdCheck.ExitCode -ne 0) {
+            throw @"
+The new image cannot start with ESRD enabled. Nothing was pushed or deployed.
+
+Load the reviewed ESRD reference release into the build context's
+data\myelin.db and deploy again, or deploy without -EnableEsrd.
+"@
+        }
+    }
+
     Write-Step "Pushing the Docker image to Amazon ECR"
 
     Invoke-NativeLive `
@@ -840,14 +908,14 @@ $targetContainer = @($taskDefinition.containerDefinitions) |
 
 $targetContainer.image = $imageUri
 
-if ($EnableSnf) {
+foreach ($settingName in $enabledSettings.Keys) {
     $environment = @()
     if ($null -ne $targetContainer.PSObject.Properties["environment"]) {
-        $environment = @($targetContainer.environment | Where-Object { $_.name -ne "SNF_ENABLED" })
+        $environment = @($targetContainer.environment | Where-Object { $_.name -ne $settingName })
     }
-    $environment += [pscustomobject]@{ name = "SNF_ENABLED"; value = "true" }
+    $environment += [pscustomobject]@{ name = $settingName; value = "true" }
     $targetContainer | Add-Member -MemberType NoteProperty -Name environment -Value $environment -Force
-    Write-Host "SNF_ENABLED=true for container: $ContainerName"
+    Write-Host "$settingName=true for container: $ContainerName"
 }
 
 # Preserve task-definition tags in the newly registered revision.

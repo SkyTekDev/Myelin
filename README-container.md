@@ -87,6 +87,57 @@ $result = Invoke-RestMethod `
 $result | ConvertTo-Json -Depth 100
 ```
 
+## Enable ESRD
+
+ESRD benchmark references are off unless the container has `ESRD_ENABLED=true`.
+With it on, the API startup fails deliberately unless `data/myelin.db` in the
+image holds a sealed ESRD reference release, which stops every endpoint, so
+check the built image first:
+
+```powershell
+docker run --rm --network none --entrypoint python `
+    qon-ioce-opps-api:local -m bridge.esrd_check
+```
+
+It lists the releases the image would serve and the optional sections each one
+carries, or exits non-zero with the reason the bridge would refuse to start.
+When the database holds only the first release, the API prices its benchmark
+without the body-size, facility-level and final-payment steps.
+
+Then run with the setting:
+
+```powershell
+docker run --rm `
+    --name qon-ioce-opps-api `
+    -p 8080:8080 `
+    -e ESRD_ENABLED=true `
+    qon-ioce-opps-api:local
+```
+
+Compose reads the same variable: `$env:ESRD_ENABLED = "true"` before
+`docker compose up`. Verify with `GET /api/v1/esrd/ready`; `/health/ready` says
+nothing about ESRD.
+
+For ECS, add `-EnableEsrd` to `aws\deploy-ioce-opps-ecs.ps1`:
+
+```powershell
+.\aws\deploy-ioce-opps-ecs.ps1 `
+    -ClusterName '<cluster>' `
+    -ServiceName '<service>' `
+    -EnableEsrd `
+    -HealthCheckUrl 'http://<bridge>/api/v1/esrd/ready'
+```
+
+- It runs the check above in the newly built image, against the database path
+  the task sets, before anything is pushed. If the check fails it stops there:
+  nothing is pushed, registered or deployed.
+- It sets `ESRD_ENABLED=true` in the new task-definition revision and keeps
+  every other setting. Omitting the option leaves the task's current ESRD
+  setting as it is, on or off.
+- An image promoted with `-UseExistingImage` is not checked, and the script
+  says so. Check it yourself with the `docker run` command above.
+- It refuses to run when `ESRD_ENABLED` is supplied by an ECS secret.
+
 ## Push to private ECR
 
 ```powershell

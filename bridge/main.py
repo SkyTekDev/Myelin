@@ -13,6 +13,8 @@ from bridge.ipps_routes import router as ipps_router
 from bridge.provider_routes import router as provider_router
 from bridge.snf_routes import router as snf_router
 from bridge.snf_client import SnfProcessor
+from bridge.esrd_reference import EsrdReferenceProcessor
+from bridge.esrd_routes import router as esrd_router
 from bridge.hha_client import HhaProcessor
 from bridge.hha_release import APPROVED_RELEASES as HHA_RELEASES
 from bridge.hha_routes import router as hha_router, readiness as hha_readiness
@@ -369,6 +371,10 @@ async def lifespan(app: FastAPI):
                 for year, release in HHA_RELEASES.items()
             }
 
+        app.state.esrd_references = None
+        if env_bool("ESRD_ENABLED"):
+            app.state.esrd_references = EsrdReferenceProcessor(myelin_engine.db_manager.engine)
+
         yield
 
     finally:
@@ -382,7 +388,7 @@ app = FastAPI(
     title="QON CMS Pricing Bridge",
     description=(
         "CMS I/OCE, OPPS and IPPS integrations, with optional SNF and "
-        "supplied-HIPPS home health payment estimators."
+        "supplied-HIPPS home health payment estimators and ESRD benchmarks."
     ),
     version=BRIDGE_VERSION,
     lifespan=lifespan,
@@ -391,6 +397,7 @@ app.include_router(ipps_router)
 app.include_router(provider_router)
 app.include_router(snf_router)
 app.include_router(hha_router)
+app.include_router(esrd_router)
 
 @app.get("/health/live")
 def health_live() -> dict[str, Any]:
