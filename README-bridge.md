@@ -28,6 +28,10 @@ enabled with `HHA_ENABLED=true` and remains disabled by default. See
 [README-hha.md](README-hha.md) for its CY 2026 original 0329 scope, required
 inputs, reference policy, sample request, and reconciliation commands.
 
+ESRD benchmark references are enabled with `ESRD_ENABLED=true` and remain
+disabled by default; `start_api.ps1` turns them on for the local Windows bridge.
+See [ESRD benchmark references](#esrd-benchmark-references).
+
 It does not invoke `Myelin.__enter__()`, so the unrelated CMS pricers are
 not initialized.
 
@@ -148,6 +152,23 @@ Bridge 0.7.0 lets `/api/v1/opps/process` take an optional claim-level `providerC
 - The response's `providerContextSource` is `"Supplied"` when the context was used and `"OPSF"` otherwise. `opsfProvider` shows the record the Pricer received in both cases.
 
 A supplied context never comes from CMS. The caller owns its source and must label results priced with it.
+
+## ESRD benchmark references
+
+With `ESRD_ENABLED=true` the bridge serves the sealed ESRD reference releases in the Myelin database. It calculates no ESRD payment: the API prices the benchmark from what these endpoints return.
+
+- `GET /api/v1/esrd/ready` lists the loaded releases with their catalog and policy fingerprints and any supersessions. It returns 503 while ESRD is disabled. `/health/ready` says nothing about ESRD.
+- `POST /api/v1/esrd/references` returns the release, the facility's provider-file fields and the wage index for each service date.
+
+Releases are loaded with `scripts/import_esrd_rates.py`. The reviewed packages and the loading runbook are kept with the API, in `Data/ESRD` and `docs/ESRD-reference-data.md` of MedicareServiceAPI.
+
+**The bridge will not start with ESRD enabled unless the database holds a sealed release**, and that stops the I/OCE, OPPS and other endpoints too. Check a database before enabling it:
+
+```powershell
+.\.venv\Scripts\python.exe -m bridge.esrd_check --database .\data\myelin.db
+```
+
+The check opens the database read-only, runs the bridge's own startup checks and lists each release with its period, revision, fingerprint and optional sections (`bodySize`, `facilityAdjustments`, `finalPayment`). It exits non-zero with the reason when the bridge would refuse to start. Without `--database` it reads `MYELIN_DB_PATH`, as the bridge does. For a container image and ECS, see [README-container.md](README-container.md#enable-esrd).
 
 ## Swagger
 

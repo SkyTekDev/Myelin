@@ -12,6 +12,8 @@ services:
       MYELIN_DB_PATH: "/app/data/myelin.db"
       MYELIN_DOWNLOAD_CMS_ASSETS: "false"
       HHA_ENABLED: "${HHA_ENABLED:-false}"
+      # Needs a sealed ESRD reference release in data/myelin.db; the bridge will not start without one.
+      ESRD_ENABLED: "${ESRD_ENABLED:-false}"
       # I/OCE edits callers may bypass per line, such as "12". Empty turns it off.
       IOCE_EDIT_BYPASS_ALLOWED: "${IOCE_EDIT_BYPASS_ALLOWED:-}"
       # Provider types callers may supply an OPPS provider context for, such as "37". Empty turns it off.
