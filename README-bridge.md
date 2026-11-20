@@ -198,6 +198,18 @@ line payment (the full allowed amount: the PPS rate or the charge, whichever is
 lower), coinsurance and add-on. Amounts are exact decimals. Acting on the
 editor's dispositions is the caller's decision, as for OPPS.
 
+Distant-site telehealth billed from October 1, 2026 with the service's own code
+and modifier 93 or 95 (CR 14468) needs the October 2026 I/OCE, 27.3 or later
+(`ioce-standalone-27.3.0.8.jar` from CMS's V273.R0 "Java Standalone Jar"). That
+I/OCE gives those lines payment indicator 2, bypasses edits 088/089, flags
+preventive telehealth with line item action flag 7, and returns codes not on the
+telehealth list with edit 139. The FQHC Pricer leaves payment-indicator-2 lines
+unpaid (care coordination, G2025, Q3014 and telehealth are paid outside the PPS);
+the caller prices them. `GET /api/v1/fqhc/ready` reports the loaded `ioceJar` and
+whether it supports this billing (`telehealthCodeLines`). Replace the I/OCE jar in
+`jars/` (only one `ioce-standalone-*.jar` may sit there; keep old ones in
+`jars/retired`, which is not on the classpath and not copied into images).
+
 It answers `UnableToPrice` (HTTP 200) with a reason code when:
 
 - a date falls outside the reconciled years (`FQHC_DATES_NOT_SUPPORTED`): a 2027

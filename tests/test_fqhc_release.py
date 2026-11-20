@@ -103,7 +103,11 @@ assert _version("27.2.0") == (27, 2) and _version("27.3.1") == (27, 3) and _vers
 # Readiness reflects the switch and the release.
 state = readiness(None)
 assert state["enabled"] is False and state["ready"] is False and state["calculationVersion"] == "2026.1"
+assert state["ioceJar"] is None and state["telehealthCodeLines"] is False
 assert readiness(object())["enabled"] is True
+assert readiness(SimpleNamespace(ioce_jar="ioce-standalone-27.3.0.8.jar"))["telehealthCodeLines"] is True
+assert readiness(SimpleNamespace(ioce_jar="ioce-standalone-27.2.0.5.jar"))["telehealthCodeLines"] is False
+assert readiness(SimpleNamespace(ioce_jar="ioce-standalone-28.0.0.1.jar"))["telehealthCodeLines"] is True
 try:
     ready(SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(fqhc_processor=None))))
     raise AssertionError("Readiness succeeded with FQHC disabled.")

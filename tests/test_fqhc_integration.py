@@ -89,8 +89,16 @@ def run():
     g = price(claim("G", [line(1, "0521", "G0467", "2027-01-15"), line(2, "0521", "99214", "2027-01-15")]))
     assert g.status == "UnableToPrice" and g.reasonCode == "FQHC_DATES_NOT_SUPPORTED" and not g.lines, g
     h = price(claim("H", [line(1, "0521", "99213", "2026-10-15", "200.00", ["95"])]))
-    if h.ioceVersion and h.ioceVersion < "27.3":
+    if processor.ioce_jar < "ioce-standalone-27.3":
         assert h.status == "UnableToPrice" and h.reasonCode == "FQHC_TELEHEALTH_IOCE_UNAVAILABLE", h
+    else:
+        # CR 14468 in I/OCE 27.3: payment indicator 2 (paid outside the PPS), no edit 088, no FQHC payment code needed.
+        assert h.status == "Success" and h.ioceVersion.startswith("27.3") and not h.claimEdits.returnToProvider, h
+        assert (h.lines[0].paymentIndicator, h.lines[0].pricerReturnCode, h.lines[0].payment) == ("2", "08", Decimal("0.00")), h.lines[0]
+        preventive = price(claim("H2", [line(1, "0521", "G0444", "2026-10-15", "60.00", ["95"])]))
+        assert preventive.lines[0].paymentIndicator == "2" and preventive.lines[0].actionFlag == "7", preventive.lines[0]
+        wrong_code = price(claim("H3", [line(1, "0521", "36415", "2026-10-15", "30.00", ["95"])]))
+        assert {"139", "088"} <= {edit.edit for edit in wrong_code.claimEdits.returnToProvider}, wrong_code.claimEdits
 
     # The editor's return-to-provider edits are published for the API to act on.
     i = price(claim("I", [line(1, "0521", "99213", charge="200.00")]))

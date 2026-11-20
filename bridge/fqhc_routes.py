@@ -1,17 +1,23 @@
 import logging
+import re
 
 import jpype
 from fastapi import APIRouter, HTTPException, Request
 
 from bridge.fqhc_models import FqhcClaimRequest, FqhcResponse
-from bridge.fqhc_release import release_info
+from bridge.fqhc_release import TELEHEALTH_IOCE_MINIMUM, release_info
 
 router = APIRouter(prefix="/api/v1/fqhc", tags=["FQHC"])
 logger = logging.getLogger("qon_ioce_opps_api.fqhc")
 
 
 def readiness(processor) -> dict:
-    return {"enabled": processor is not None, "ready": processor is not None and jpype.isJVMStarted(), **release_info()}
+    ioce_jar = getattr(processor, "ioce_jar", None)
+    match = re.match(r"^ioce-standalone-(\d+)\.(\d+)", ioce_jar or "")
+    return {"enabled": processor is not None, "ready": processor is not None and jpype.isJVMStarted(), **release_info(),
+            "ioceJar": ioce_jar,
+            # October 2026 telehealth billing (modifier 93/95) needs I/OCE 27.3 or later (CR 14468).
+            "telehealthCodeLines": bool(match) and (int(match.group(1)), int(match.group(2))) >= TELEHEALTH_IOCE_MINIMUM}
 
 
 @router.get("/ready")

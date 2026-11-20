@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Bridge 0.8.1: October 2026 FQHC telehealth.** With the October 2026 I/OCE
+  (27.3.0.8) in `jars/`, `/api/v1/fqhc/process` accepts distant-site telehealth
+  billed with the service's own code and modifier 93 or 95 (CR 14468); the lines
+  come back with payment indicator 2 for the caller to price outside the PPS.
+  `GET /api/v1/fqhc/ready` reports the loaded `ioceJar` and `telehealthCodeLines`.
+  `.dockerignore` keeps replaced jars in `jars/retired` out of images.
 - **Bridge 0.8.0: FQHC PPS pricing.** `POST /api/v1/fqhc/process` runs the CMS
   I/OCE and the unmodified CMS FQHC Pricer 2.10.0 (calculation version 2026.1)
   on 77X claims with a caller-supplied Medicare carrier and locality, for dates

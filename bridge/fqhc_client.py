@@ -66,6 +66,9 @@ class FqhcProcessor:
         if not jpype.isJVMStarted():
             raise RuntimeError("Start the Myelin JVM before the FQHC processor.")
 
+        # The I/OCE comes from the shared classpath (the top level of the jar directory); report which one.
+        ioce_jars = sorted(Path(jar_root).glob("ioce-standalone-*.jar"))
+        self.ioce_jar = ioce_jars[-1].name if ioce_jars else None
         self.url_loader = UrlLoader()
         self.url_loader.load_urls([jar.as_uri()])
         loader = self.url_loader.class_loader
