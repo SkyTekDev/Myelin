@@ -14,6 +14,8 @@ services:
       HHA_ENABLED: "${HHA_ENABLED:-false}"
       # Needs a sealed ESRD reference release in data/myelin.db; the bridge will not start without one.
       ESRD_ENABLED: "${ESRD_ENABLED:-false}"
+      # CMS I/OCE + FQHC Pricer 2.10.0 for 77X claims (CY 2025-2026); the jar hash is checked at startup.
+      FQHC_ENABLED: "${FQHC_ENABLED:-false}"
       # I/OCE edits callers may bypass per line, such as "12". Empty turns it off.
       IOCE_EDIT_BYPASS_ALLOWED: "${IOCE_EDIT_BYPASS_ALLOWED:-}"
       # Provider types callers may supply an OPPS provider context for, such as "37". Empty turns it off.

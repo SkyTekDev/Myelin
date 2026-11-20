@@ -53,7 +53,13 @@ param(
     # configuration. With ESRD enabled the bridge will not start unless its
     # database holds a sealed ESRD reference release, so a newly built image
     # is checked before it is pushed.
-    [switch]$EnableEsrd
+    [switch]$EnableEsrd,
+
+    # Explicitly enable the FQHC PPS endpoint (CMS I/OCE + FQHC Pricer) in the
+    # selected container. Omitting this option preserves the current task's FQHC
+    # configuration. The bridge refuses to start if the image's FQHC jar does not
+    # match the reconciled release.
+    [switch]$EnableFqhc
 )
 
 Set-StrictMode -Version Latest
@@ -637,6 +643,7 @@ Available containers: $availableNames
 $enabledSettings = [ordered]@{}
 if ($EnableSnf) { $enabledSettings["SNF_ENABLED"] = "-EnableSnf" }
 if ($EnableEsrd) { $enabledSettings["ESRD_ENABLED"] = "-EnableEsrd" }
+if ($EnableFqhc) { $enabledSettings["FQHC_ENABLED"] = "-EnableFqhc" }
 
 if ($null -ne $containerDefinition.PSObject.Properties["secrets"]) {
     foreach ($settingName in $enabledSettings.Keys) {

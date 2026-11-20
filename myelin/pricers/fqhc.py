@@ -282,8 +282,8 @@ class FqhcClient:
                     claim.billing_provider.carrier.strip() != ""
                     and claim.billing_provider.locality.strip() != ""
                 ):
-                    claim_object.setCarrier(claim.billing_provider.carrier)
-                    claim_object.setLocality(claim.billing_provider.locality)
+                    claim_object.setCarrierCode(claim.billing_provider.carrier)
+                    claim_object.setLocalityCode(claim.billing_provider.locality)
                     found_carrier_locality = True
         elif claim.servicing_provider is not None:
             if claim.servicing_provider.address is not None:
@@ -291,8 +291,8 @@ class FqhcClient:
                     claim.servicing_provider.carrier.strip() != ""
                     and claim.servicing_provider.locality.strip() != ""
                 ):
-                    claim_object.setCarrier(claim.servicing_provider.carrier)
-                    claim_object.setLocality(claim.servicing_provider.locality)
+                    claim_object.setCarrierCode(claim.servicing_provider.carrier)
+                    claim_object.setLocalityCode(claim.servicing_provider.locality)
                     found_carrier_locality = True
 
         if not found_carrier_locality:
