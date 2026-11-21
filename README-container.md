@@ -138,6 +138,23 @@ For ECS, add `-EnableEsrd` to `aws\deploy-ioce-opps-ecs.ps1`:
   says so. Check it yourself with the `docker run` command above.
 - It refuses to run when `ESRD_ENABLED` is supplied by an ECS secret.
 
+## Enable FQHC
+
+FQHC PPS pricing is off unless the container has `FQHC_ENABLED=true`. The jar
+it uses is already in the image; startup fails if its hash does not match the
+reconciled release.
+
+```powershell
+docker run --rm `
+    --name qon-ioce-opps-api `
+    -p 8080:8080 `
+    -e FQHC_ENABLED=true `
+    qon-ioce-opps-api:local
+```
+
+Verify with `GET /api/v1/fqhc/ready`. For ECS, add `-EnableFqhc` to
+`aws\deploy-ioce-opps-ecs.ps1`; omitting it leaves the task's current setting.
+
 ## Push to private ECR
 
 ```powershell

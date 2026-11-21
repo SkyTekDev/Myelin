@@ -21,3 +21,6 @@ build
 *.egg-info
 qon_ioce_opps_api.zip
 qon_ioce_opps_container.zip
+
+# Replaced CMS jars kept locally for rollback; not part of the image.
+jars/retired

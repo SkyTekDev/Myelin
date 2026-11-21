@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Bridge 0.8.1: October 2026 FQHC telehealth.** With the October 2026 I/OCE
+  (27.3.0.8) in `jars/`, `/api/v1/fqhc/process` accepts distant-site telehealth
+  billed with the service's own code and modifier 93 or 95 (CR 14468); the lines
+  come back with payment indicator 2 for the caller to price outside the PPS.
+  `GET /api/v1/fqhc/ready` reports the loaded `ioceJar` and `telehealthCodeLines`.
+  `.dockerignore` keeps replaced jars in `jars/retired` out of images.
+- **Bridge 0.8.0: FQHC PPS pricing.** `POST /api/v1/fqhc/process` runs the CMS
+  I/OCE and the unmodified CMS FQHC Pricer 2.10.0 (calculation version 2026.1)
+  on 77X claims with a caller-supplied Medicare carrier and locality, for dates
+  of service in CY 2025-2026. `GET /api/v1/fqhc/ready` reports the pinned release.
+  Off unless `FQHC_ENABLED=true`; the jar hash is checked at startup. Amounts
+  cross into Java as JSON through the jar's own Jackson mapper, so they stay
+  exact decimals. The ECS deploy script gains `-EnableFqhc`. See
+  `README-bridge.md`.
 - **Bridge 0.7.0: supplied OPPS provider context.** `/api/v1/opps/process`
   accepts an optional claim-level `providerContext` (CCN, provider type, SSA
   state, effective date, CBSA, an optional reclassification and the quality
@@ -23,6 +37,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   deployment allowlist `IOCE_EDIT_BYPASS_ALLOWED` (empty by default, which turns
   the feature off) limits which edits may be bypassed; other requests get HTTP
   422. Line results echo the applied bypass. See `README-bridge.md`.
+
+### Fixed
+
+- `FqhcClient` now sets a supplied carrier and locality with the jar's
+  `setCarrierCode`/`setLocalityCode`; it called setters the jar does not have.
 
 ## [1.0.0] - 2026-07-10
 

@@ -32,6 +32,10 @@ ESRD benchmark references are enabled with `ESRD_ENABLED=true` and remain
 disabled by default; `start_api.ps1` turns them on for the local Windows bridge.
 See [ESRD benchmark references](#esrd-benchmark-references).
 
+FQHC PPS pricing (77X claims through the CMS I/OCE and FQHC Pricer) is enabled
+with `FQHC_ENABLED=true` and remains disabled by default. See
+[FQHC PPS pricing](#fqhc-pps-pricing).
+
 It does not invoke `Myelin.__enter__()`, so the unrelated CMS pricers are
 not initialized.
 
@@ -169,6 +173,62 @@ Releases are loaded with `scripts/import_esrd_rates.py`. The reviewed packages a
 ```
 
 The check opens the database read-only, runs the bridge's own startup checks and lists each release with its period, revision, fingerprint and optional sections (`bodySize`, `facilityAdjustments`, `finalPayment`). It exits non-zero with the reason when the bridge would refuse to start. Without `--database` it reads `MYELIN_DB_PATH`, as the bridge does. For a container image and ECS, see [README-container.md](README-container.md#enable-esrd).
+
+## FQHC PPS pricing
+
+With `FQHC_ENABLED=true` the bridge prices Federally Qualified Health Center
+claims (bill type 77X). It runs the CMS I/OCE and then the unmodified CMS FQHC
+Pricer 2.10.0 (calculation version 2026.1), whose jar hash is checked at startup.
+
+- `GET /api/v1/fqhc/ready` reports the pinned release and the supported dates
+  (January 1, 2025 through December 31, 2026). It returns 503 while FQHC is
+  disabled. `/health/ready` and `/api/v1/version` also carry an `fqhc` block.
+- `POST /api/v1/fqhc/process` takes the `/api/v1/ioce/process` claim plus the
+  FQHC site's Medicare `carrierCode` (5 digits) and `localityCode` (2 digits),
+  which select the CMS geographic adjustment factor. The caller resolves the
+  locality from the site's ZIP; the bridge holds no ZIP crosswalk. An optional
+  `medicareAdvantagePlanAmount` applies only to Medicare Advantage supplemental
+  (revenue code 0519) claims.
+
+The bridge sends FQHC claims to the I/OCE with `oppsFlag` 1 (with 2 the I/OCE
+assigns no FQHC flags) and rejects contractor edit bypass and supplied provider
+context. It returns every line's I/OCE flags and edits, the claim's
+return-to-provider, suspension, rejection and denial edits, and the pricer's
+line payment (the full allowed amount: the PPS rate or the charge, whichever is
+lower), coinsurance and add-on. Amounts are exact decimals. Acting on the
+editor's dispositions is the caller's decision, as for OPPS.
+
+Distant-site telehealth billed from October 1, 2026 with the service's own code
+and modifier 93 or 95 (CR 14468) needs the October 2026 I/OCE, 27.3 or later
+(`ioce-standalone-27.3.0.8.jar` from CMS's V273.R0 "Java Standalone Jar"). That
+I/OCE gives those lines payment indicator 2, bypasses edits 088/089, flags
+preventive telehealth with line item action flag 7, and returns codes not on the
+telehealth list with edit 139. The FQHC Pricer leaves payment-indicator-2 lines
+unpaid (care coordination, G2025, Q3014 and telehealth are paid outside the PPS);
+the caller prices them. `GET /api/v1/fqhc/ready` reports the loaded `ioceJar` and
+whether it supports this billing (`telehealthCodeLines`). Replace the I/OCE jar in
+`jars/` (only one `ioce-standalone-*.jar` may sit there; keep old ones in
+`jars/retired`, which is not on the classpath and not copied into images).
+
+It answers `UnableToPrice` (HTTP 200) with a reason code when:
+
+- a date falls outside the reconciled years (`FQHC_DATES_NOT_SUPPORTED`): a 2027
+  claim needs CMS's 2027 FQHC Pricer;
+- a line is distant-site telehealth billed with modifier 93 or 95 outside
+  revenue code 0900 on or after October 1, 2026 and the I/OCE predates 27.3
+  (`FQHC_TELEHEALTH_IOCE_UNAVAILABLE`);
+- the I/OCE or the pricer does not return one result per line, or the pricer
+  does not process the claim.
+
+Run the checks with:
+
+```powershell
+.\.venv\Scripts\python.exe -m tests.test_fqhc_release
+.\.venv\Scripts\python.exe -m tests.test_fqhc_integration
+```
+
+The second runs the real I/OCE and FQHC jar on synthetic claims and checks the
+amounts against CMS's published base rates and the jar's GAF.
 
 ## Swagger
 
