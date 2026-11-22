@@ -155,6 +155,26 @@ docker run --rm `
 Verify with `GET /api/v1/fqhc/ready`. For ECS, add `-EnableFqhc` to
 `aws\deploy-ioce-opps-ecs.ps1`; omitting it leaves the task's current setting.
 
+## Enable hospice
+
+Hospice pricing is off unless the container has `HOSPICE_ENABLED=true`. The
+image must carry `jars/pricers/hospice-pricer-application-2.7.1.jar`; startup
+fails if its hash does not match the reconciled release.
+
+```powershell
+docker run --rm `
+    --name qon-ioce-opps-api `
+    -p 8080:8080 `
+    -e HOSPICE_ENABLED=true `
+    qon-ioce-opps-api:local
+```
+
+Verify with `GET /api/v1/hospice/ready`. Its `qualityIndicatorFiscalYears` lists
+the fiscal years whose quality reporting results the image's provider file can
+hold; claims in other supported years price at full rates. For ECS, add
+`-EnableHospice` to `aws\deploy-ioce-opps-ecs.ps1`; omitting it leaves the task's
+current setting.
+
 ## Push to private ECR
 
 ```powershell

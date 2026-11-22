@@ -17,6 +17,8 @@ from bridge.esrd_reference import EsrdReferenceProcessor
 from bridge.esrd_routes import router as esrd_router
 from bridge.fqhc_client import FqhcProcessor
 from bridge.fqhc_routes import readiness as fqhc_readiness, router as fqhc_router
+from bridge.hospice_client import HospiceProcessor
+from bridge.hospice_routes import readiness as hospice_readiness, router as hospice_router
 from bridge.hha_client import HhaProcessor
 from bridge.hha_release import APPROVED_RELEASES as HHA_RELEASES
 from bridge.hha_routes import router as hha_router, readiness as hha_readiness
@@ -37,7 +39,7 @@ from bridge.opps_client import WindowsSafeOppsClient
 from bridge.provider_context import parse_provider_types, supplied_provider
 
 
-BRIDGE_VERSION = "0.8.1"
+BRIDGE_VERSION = "0.9.0"
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 JAR_PATH = Path(
@@ -382,6 +384,11 @@ async def lifespan(app: FastAPI):
         if env_bool("FQHC_ENABLED"):
             app.state.fqhc_processor = FqhcProcessor(JAR_PATH)
 
+        # Uses the shared processing lock; reads hospice quality indicators from the OPSF table.
+        app.state.hospice_processor = None
+        if env_bool("HOSPICE_ENABLED"):
+            app.state.hospice_processor = HospiceProcessor(JAR_PATH, myelin_engine.db_manager.engine)
+
         yield
 
     finally:
@@ -395,7 +402,7 @@ app = FastAPI(
     title="QON CMS Pricing Bridge",
     description=(
         "CMS I/OCE, OPPS and IPPS integrations, with optional SNF, "
-        "supplied-HIPPS home health and FQHC PPS payment estimators and ESRD benchmarks."
+        "supplied-HIPPS home health, FQHC PPS and hospice payment estimators and ESRD benchmarks."
     ),
     version=BRIDGE_VERSION,
     lifespan=lifespan,
@@ -406,6 +413,7 @@ app.include_router(snf_router)
 app.include_router(hha_router)
 app.include_router(esrd_router)
 app.include_router(fqhc_router)
+app.include_router(hospice_router)
 
 @app.get("/health/live")
 def health_live() -> dict[str, Any]:
@@ -443,6 +451,7 @@ def health_ready(request: Request) -> dict[str, Any]:
         "oppsProviderContextTypes": sorted(PROVIDER_CONTEXT_TYPES),
         "hha": hha_readiness(getattr(request.app.state, "hha_processors", {})),
         "fqhc": fqhc_readiness(getattr(request.app.state, "fqhc_processor", None)),
+        "hospice": hospice_readiness(getattr(request.app.state, "hospice_processor", None)),
     }
 
 
@@ -459,6 +468,7 @@ def version(request: Request) -> dict[str, Any]:
         "oppsProviderContextTypes": sorted(PROVIDER_CONTEXT_TYPES),
         "hha": hha_readiness(getattr(request.app.state, "hha_processors", {})),
         "fqhc": fqhc_readiness(getattr(request.app.state, "fqhc_processor", None)),
+        "hospice": hospice_readiness(getattr(request.app.state, "hospice_processor", None)),
     }
 
 

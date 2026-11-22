@@ -36,6 +36,10 @@ FQHC PPS pricing (77X claims through the CMS I/OCE and FQHC Pricer) is enabled
 with `FQHC_ENABLED=true` and remains disabled by default. See
 [FQHC PPS pricing](#fqhc-pps-pricing).
 
+Hospice pricing (81X/82X level-of-care lines through the CMS Hospice Pricer) is
+enabled with `HOSPICE_ENABLED=true` and remains disabled by default. See
+[Hospice pricing](#hospice-pricing).
+
 It does not invoke `Myelin.__enter__()`, so the unrelated CMS pricers are
 not initialized.
 
@@ -229,6 +233,67 @@ Run the checks with:
 
 The second runs the real I/OCE and FQHC jar on synthetic claims and checks the
 amounts against CMS's published base rates and the jar's GAF.
+
+## Hospice pricing
+
+With `HOSPICE_ENABLED=true` the bridge prices the level-of-care lines of
+Medicare hospice claims (bill types 81X/82X) with the unmodified CMS Hospice
+Pricer 2.7.1, whose jar hash is checked at startup. Dates of service from
+October 1, 2025 through September 30, 2027 (FY 2026, calculation version
+2026.0, and FY 2027, 2027.0) are supported.
+
+- `GET /api/v1/hospice/ready` reports the pinned release, the supported dates,
+  the latest hospice record in the provider file and the fiscal years whose
+  quality reporting results it can hold (`qualityIndicatorFiscalYears`). It
+  returns 503 while hospice is disabled. `/health/ready` and `/api/v1/version`
+  also carry a `hospice` block.
+- `POST /api/v1/hospice/process` takes the claim's bill type, CCN and/or NPI,
+  admission date, statement dates, value code 61 (`patientCbsa`) and G8
+  (`providerCbsa`) CBSAs, optional `priorBenefitDays` (default 0) and its 0651,
+  0652, 0655 and 0656 lines with their first date of service and units (days, or
+  15-minute increments for 0652). Visit, physician (0657) and other lines stay
+  with the caller.
+
+The jar mirrors FISS's four-slot record: it reads only the first billing group
+for each revenue code and returns four amounts in the order 0651, 0652, 0655,
+0656, labelled with the submitted revenue codes by position. The bridge
+therefore calls it once per line, under the processing lock, and reads each
+amount from its slot. Each routine home care line's high and low days are
+counted from the admission date (plus prior benefit days) to that line's date;
+a continuous home care day under 32 units is paid as one routine home care day.
+
+The quality reporting reduction comes from the provider file (OPSF) record for
+the CCN (or, without one, the single active hospice with the NPI) in effect on
+the through date: indicator `1` applies the reduced rates. When the provider
+file holds no hospice records for the claim's fiscal year, which is true for FY
+2027 until a provider file from October 2026 or later is loaded, full rates
+apply and the response says so (`qualitySource`, `qualityNote`).
+
+The request is refused with HTTP 422 when the jar would misprice it without an
+error: a claim spanning two months, a line before the admission date or outside
+the statement dates, a missing CBSA for a level of care in use (the jar uses a
+wage index of 0), continuous home care over 96 units on one line or two such
+lines on one day, a respite period over 5 days, or day-based lines covering the
+same day. It answers `UnableToPrice` (HTTP 200) with a reason code when:
+
+- a date falls outside the reconciled fiscal years (`HOSPICE_DATES_NOT_SUPPORTED`);
+- the provider file shows the CCN is not a hospice (`HOSPICE_PROVIDER_NOT_HOSPICE`)
+  or was terminated before the claim (`HOSPICE_PROVIDER_TERMINATED`);
+- a CBSA is not in the fiscal year's hospice wage index (`HOSPICE_CBSA_INVALID`),
+  the pricer refuses the units (`HOSPICE_UNITS_INVALID`) or returns another
+  code (`HOSPICE_PRICER_LINE_REJECTED`).
+
+The end-of-life service intensity add-on is not sent in this release. Run the
+checks with:
+
+```powershell
+.\.venv\Scripts\python.exe -m tests.test_hospice_release
+.\.venv\Scripts\python.exe -m tests.test_hospice_integration
+```
+
+The second runs the real jar on synthetic claims against a synthetic provider
+file and checks every amount against CMS's published FY 2026 and FY 2027 rates
+(CR 14190 and CR 14557, Tables 1-2).
 
 ## Swagger
 
