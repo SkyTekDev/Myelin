@@ -252,7 +252,10 @@ October 1, 2025 through September 30, 2027 (FY 2026, calculation version
   (`providerCbsa`) CBSAs, optional `priorBenefitDays` (default 0) and its 0651,
   0652, 0655 and 0656 lines with their first date of service and units (days, or
   15-minute increments for 0652). Visit, physician (0657) and other lines stay
-  with the caller.
+  with the caller. When the patient died, the request may also carry
+  `dateOfDeath` (the through date) and `endOfLifeAddOnUnits` (bridge 0.9.1+):
+  the qualifying nurse and social worker visit units on each of the last 7 days
+  of life, day 1 being the date of death.
 
 The jar mirrors FISS's four-slot record: it reads only the first billing group
 for each revenue code and returns four amounts in the order 0651, 0652, 0655,
@@ -261,6 +264,8 @@ therefore calls it once per line, under the processing lock, and reads each
 amount from its slot. Each routine home care line's high and low days are
 counted from the admission date (plus prior benefit days) to that line's date;
 a continuous home care day under 32 units is paid as one routine home care day.
+A routine home care line's units count its routine days only, so its days run
+from its date of service skipping any continuous home care days inside it.
 
 The quality reporting reduction comes from the provider file (OPSF) record for
 the CCN (or, without one, the single active hospice with the NPI) in effect on
@@ -273,8 +278,10 @@ The request is refused with HTTP 422 when the jar would misprice it without an
 error: a claim spanning two months, a line before the admission date or outside
 the statement dates, a missing CBSA for a level of care in use (the jar uses a
 wage index of 0), continuous home care over 96 units on one line or two such
-lines on one day, a respite period over 5 days, or day-based lines covering the
-same day. It answers `UnableToPrice` (HTTP 200) with a reason code when:
+lines on one day, a respite period over 5 days, two levels of care on one day,
+or add-on units on a day that is not a routine home care day (or with a date of
+death other than the through date). It answers `UnableToPrice` (HTTP 200) with
+a reason code when:
 
 - a date falls outside the reconciled fiscal years (`HOSPICE_DATES_NOT_SUPPORTED`);
 - the provider file shows the CCN is not a hospice (`HOSPICE_PROVIDER_NOT_HOSPICE`)
@@ -283,8 +290,14 @@ same day. It answers `UnableToPrice` (HTTP 200) with a reason code when:
   the pricer refuses the units (`HOSPICE_UNITS_INVALID`) or returns another
   code (`HOSPICE_PRICER_LINE_REJECTED`).
 
-The end-of-life service intensity add-on is not sent in this release. Run the
-checks with:
+The end-of-life service intensity add-on (Claims Processing Manual chapter 11,
+section 30.2.2) rides on one call: the jar prices it inside its routine home
+care rules, so the bridge sends the seven daily totals with the latest routine
+home care line, which then returns 77 (high) or 74 (low rate) instead of 75 or
+73. The jar pays each day's units, at most 16 (4 hours), at the continuous home
+care hourly rate for the patient's CBSA, rounded to cents. The response's
+`endOfLifeAddOn` lists each day's date, units, units paid and payment, and
+`totalPayment` includes the add-on. Run the checks with:
 
 ```powershell
 .\.venv\Scripts\python.exe -m tests.test_hospice_release
@@ -292,8 +305,8 @@ checks with:
 ```
 
 The second runs the real jar on synthetic claims against a synthetic provider
-file and checks every amount against CMS's published FY 2026 and FY 2027 rates
-(CR 14190 and CR 14557, Tables 1-2).
+file and checks every amount, the add-on included, against CMS's published FY
+2026 and FY 2027 rates (CR 14190 and CR 14557, Tables 1-2).
 
 ## Swagger
 

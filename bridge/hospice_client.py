@@ -6,6 +6,10 @@ it labels them with. Calling it once per line reproduces the manual's rules (the
 runs from the admission date to each line's date, the 8-hour minimum applies per CHC day). Requests
 and responses cross into Java as JSON through the jar's own Jackson mapper, so amounts stay exact
 decimals. Myelin's HospiceClient merges lines by revenue code and is not used here.
+
+The end-of-life service intensity add-on goes with exactly one call: the jar prices it from the seven daily unit totals
+only inside its routine home care rules, so the totals ride on the latest routine home care line's call. That call
+returns 74 or 77, and its total payment is the line's amount plus the add-on.
 """
 from __future__ import annotations
 
@@ -13,7 +17,7 @@ import hashlib
 import json
 import os
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -22,11 +26,21 @@ import jpype
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from bridge.hospice_models import HospiceClaimRequest, HospiceLineResult, HospiceProviderRecord, HospiceResponse
+from bridge.hospice_models import (
+    HospiceClaimRequest,
+    HospiceEndOfLifeAddOn,
+    HospiceEndOfLifeDay,
+    HospiceLineResult,
+    HospiceProviderRecord,
+    HospiceResponse,
+)
 from bridge.hospice_release import (
     CALCULATION_VERSIONS,
     CHC_MINIMUM_UNITS,
     CONTINUOUS_HOME_CARE,
+    END_OF_LIFE_DAYS,
+    END_OF_LIFE_MAXIMUM_DAILY_UNITS,
+    END_OF_LIFE_RETURN_CODES,
     FIRST_SERVICE_DATE,
     HOSPICE_PROVIDER_TYPE,
     INVALID_CBSA_RETURN_CODE,
@@ -202,9 +216,9 @@ class HospiceProcessor:
         return json.loads(str(self.mapper.writeValueAsString(response)), parse_float=Decimal)
 
     @staticmethod
-    def claim_data(payload: HospiceClaimRequest, line, quality: HospiceQuality) -> dict:
+    def claim_data(payload: HospiceClaimRequest, line, quality: HospiceQuality, end_of_life_units: list[int] | None = None) -> dict:
         ccn = payload.providerNumber or (quality.provider.ccn if quality.provider else "")
-        return {
+        data = {
             "providerCcn": ccn,
             "admissionDate": payload.admissionDate.isoformat(),
             # FISS sends the statement's from date; the jar picks the fiscal year from it.
@@ -216,12 +230,17 @@ class HospiceProcessor:
             "billingGroups": [{"revenueCode": line.revenueCode, "hcpcsCode": line.hcpcs,
                                "dateOfService": line.dateOfService.isoformat(), "units": line.units}],
         }
+        if end_of_life_units is not None:
+            # FISS's EOL day 1-7 add-on units: day 1 is the date of death.
+            data["endOfLifeAddOnDaysUnits"] = list(end_of_life_units)
+        return data
 
     def process(self, payload: HospiceClaimRequest, lock, bridge_version: str) -> HospiceResponse:
         base = dict(claimId=str(payload.claimId), bridgeVersion=bridge_version, pricerRelease=PRICER_RELEASE, jarSha256=JAR_SHA256,
                     admissionDate=payload.admissionDate, fromDate=payload.fromDate, throughDate=payload.throughDate,
                     patientCbsa=payload.patientCbsa, providerCbsa=payload.providerCbsa, priorBenefitDays=payload.priorBenefitDays,
-                    providerFileHospiceRecordsThrough=self.records_through)
+                    providerFileHospiceRecordsThrough=self.records_through, dateOfDeath=payload.dateOfDeath,
+                    endOfLifeAddOnUnits=payload.endOfLifeAddOnUnits)
 
         def unable(code: str, reason: str, **extra) -> HospiceResponse:
             return HospiceResponse(**{**base, **extra}, status="UnableToPrice", reasonCode=code, reason=reason)
@@ -238,10 +257,15 @@ class HospiceProcessor:
 
         context = dict(fiscalYear=year, qualityReduction=quality.reduction, qualitySource=quality.source,
                        qualityNote=quality.note, provider=quality.provider)
+        units = payload.endOfLifeAddOnUnits
+        # The request model guarantees a routine home care line on every day with add-on units.
+        attached = max((line for line in payload.claimLines if line.revenueCode == ROUTINE_HOME_CARE),
+                       key=lambda line: (line.dateOfService, line.lineNumber)) if units else None
         with lock:
-            outputs = [self.calculate(self.claim_data(payload, line, quality)) for line in payload.claimLines]
+            outputs = [self.calculate(self.claim_data(payload, line, quality, units if line is attached else None))
+                       for line in payload.claimLines]
 
-        lines, wage_indexes = [], set()
+        lines, wage_indexes, add_on = [], set(), None
         for line, cms in zip(payload.claimLines, outputs):
             code = (cms.get("returnCodeData") or {}).get("code")
             description = (cms.get("returnCodeData") or {}).get("description")
@@ -251,20 +275,26 @@ class HospiceProcessor:
                     f"(value code 61: {payload.patientCbsa or 'none'}; value code G8: {payload.providerCbsa or 'none'}).", **context)
             if code == INVALID_UNITS_RETURN_CODE:
                 return unable("HOSPICE_UNITS_INVALID", f"The CMS Hospice Pricer refused line {line.lineNumber}'s {line.units} units.", **context)
-            if code not in PRICED_RETURN_CODES:
+            if code not in PRICED_RETURN_CODES | END_OF_LIFE_RETURN_CODES:
                 return unable("HOSPICE_PRICER_LINE_REJECTED",
                     f"The CMS Hospice Pricer returned code {code} ({description}) for line {line.lineNumber}.", **context)
+            if (code in END_OF_LIFE_RETURN_CODES) != (line is attached):
+                raise RuntimeError("The CMS Hospice Pricer's end-of-life add-on return code does not match the call that carried the units.")
             if cms.get("calculationVersion") != CALCULATION_VERSIONS[year]:
                 return unable("HOSPICE_PRICER_VERSION_MISMATCH",
                     f"The CMS Hospice Pricer applied calculation version {cms.get('calculationVersion')}, not "
                     f"{CALCULATION_VERSIONS[year]} for FY {year}.", **context)
 
             payment = cms.get("paymentData") or {}
+            add_on_total = Decimal("0")
+            if line is attached:
+                add_on = self.end_of_life_add_on(payload, line, payment.get("endOfLifeAddOnDaysPayments") or [])
+                add_on_total = add_on.totalPayment
             amounts = [_decimal(item.get("amount")) for item in payment.get("billPayments") or []]
             slot = PAYMENT_SLOTS.index(line.revenueCode)
             if len(amounts) != len(PAYMENT_SLOTS) or any(amount is None for amount in amounts) \
                     or any(amount != 0 for index, amount in enumerate(amounts) if index != slot) \
-                    or _decimal(payment.get("totalPayment")) != amounts[slot]:
+                    or _decimal(payment.get("totalPayment")) != amounts[slot] + add_on_total:
                 raise RuntimeError("The CMS Hospice Pricer returned amounts outside the line's level-of-care slot.")
             high, low = int(payment.get("highRoutineHomeCareDays") or 0), int(payment.get("lowRoutineHomeCareDays") or 0)
             if (line.revenueCode == ROUTINE_HOME_CARE and high + low != line.units) or (line.revenueCode != ROUTINE_HOME_CARE and high + low):
@@ -286,7 +316,24 @@ class HospiceProcessor:
             calculationVersion=CALCULATION_VERSIONS[year],
             patientWageIndex=patient_index if payload.patientCbsa else None,
             providerWageIndex=provider_index if payload.providerCbsa else None,
-            totalPayment=sum((line.payment for line in lines), Decimal("0")),
+            totalPayment=sum((line.payment for line in lines), Decimal("0")) + (add_on.totalPayment if add_on else Decimal("0")),
             highRoutineHomeCareDays=sum(line.highRoutineHomeCareDays for line in lines),
             lowRoutineHomeCareDays=sum(line.lowRoutineHomeCareDays for line in lines),
+            endOfLifeAddOn=add_on,
             lines=lines)
+
+    @staticmethod
+    def end_of_life_add_on(payload: HospiceClaimRequest, line, payments: list) -> HospiceEndOfLifeAddOn:
+        """The jar's seven daily add-on payments for the units sent, checked against them day by day."""
+        units = payload.endOfLifeAddOnUnits
+        amounts = [_decimal(item.get("payment")) for item in payments]
+        if len(payments) != END_OF_LIFE_DAYS or [item.get("index") for item in payments] != list(range(1, END_OF_LIFE_DAYS + 1)) \
+                or any(amount is None or amount < 0 for amount in amounts) \
+                or any((amount == 0) != (count == 0) for amount, count in zip(amounts, units)):
+            raise RuntimeError("The CMS Hospice Pricer's end-of-life add-on does not match the units sent.")
+        days = [HospiceEndOfLifeDay(day=index + 1, dateOfService=payload.dateOfDeath - timedelta(days=index), units=count,
+                                    unitsPaid=min(count, END_OF_LIFE_MAXIMUM_DAILY_UNITS), payment=amount)
+                for index, (count, amount) in enumerate(zip(units, amounts))]
+        return HospiceEndOfLifeAddOn(dateOfDeath=payload.dateOfDeath, attachedClaimLineId=line.claimLineId,
+                                     attachedLineNumber=line.lineNumber, days=days,
+                                     totalPayment=sum(amounts, Decimal("0")))

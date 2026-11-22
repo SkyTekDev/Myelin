@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -11,6 +11,7 @@ from bridge.hospice_release import (
     CHC_MAXIMUM_UNITS,
     CONTINUOUS_HOME_CARE,
     DAY_LEVELS,
+    END_OF_LIFE_DAYS,
     GENERAL_INPATIENT_CARE,
     INPATIENT_RESPITE_CARE,
     RESPITE_MAXIMUM_DAYS,
@@ -41,6 +42,26 @@ class HospiceLine(HospiceApiModel):
         return self.dateOfService + timedelta(days=self.units - 1) if self.revenueCode in DAY_LEVELS else self.dateOfService
 
 
+def routine_home_care_days(lines: list[HospiceLine]) -> dict[date, HospiceLine]:
+    """Each routine home care day and its line.
+
+    A 0651 line's units count its routine home care days only: continuous home care days inside the period are billed on
+    their own dated 0652 lines (Claims Processing Manual chapter 11, section 30.3), so the walk skips them.
+    """
+    continuous = {line.dateOfService for line in lines if line.revenueCode == CONTINUOUS_HOME_CARE}
+    days: dict[date, HospiceLine] = {}
+    for line in (line for line in lines if line.revenueCode == ROUTINE_HOME_CARE):
+        day, counted = line.dateOfService, 0
+        while counted < line.units:
+            if day not in continuous:
+                if day in days:
+                    raise ValueError(f"Lines {days[day].lineNumber} and {line.lineNumber} both cover {day.isoformat()}; each day has one level of care.")
+                days[day] = line
+                counted += 1
+            day += timedelta(days=1)
+    return days
+
+
 class HospiceClaimRequest(HospiceApiModel):
     """A monthly hospice claim (81X/82X). The caller sends only its level-of-care lines."""
 
@@ -58,6 +79,13 @@ class HospiceClaimRequest(HospiceApiModel):
     providerCbsa: str | None = Field(default=None, pattern=r"^[0-9]{1,5}$")
     # Days of a prior hospice election that count toward the 60 high-rate days (CWF supplies them in FISS).
     priorBenefitDays: int = Field(default=0, ge=0, le=999)
+    # Sent only with add-on units: the claim's through date, which Medicare takes as the date of death for discharge
+    # status 40, 41 or 42.
+    dateOfDeath: date | None = None
+    # The qualifying registered nurse and social worker visit units on each of the last 7 days of life, day 1 being the
+    # date of death (FISS's EOL day 1-7 add-on units). The CMS jar pays at most 16 a day.
+    endOfLifeAddOnUnits: list[Annotated[int, Field(ge=0, le=999)]] | None = Field(
+        default=None, min_length=END_OF_LIFE_DAYS, max_length=END_OF_LIFE_DAYS)
     claimLines: list[HospiceLine] = Field(min_length=1, max_length=450)
 
     @field_validator("providerNumber")
@@ -79,10 +107,16 @@ class HospiceClaimRequest(HospiceApiModel):
             raise ValueError("Hospice claims cover one calendar month; split the claim at the month boundary.")
         if len({str(line.claimLineId) for line in self.claimLines}) != len(self.claimLines):
             raise ValueError("claimLineId values must be unique.")
+        routine = routine_home_care_days(self.claimLines)
+        last_routine_day: dict[str, date] = {}
+        for day, line in routine.items():
+            key = str(line.claimLineId)
+            last_routine_day[key] = max(last_routine_day.get(key, day), day)
         for line in self.claimLines:
+            last_day = last_routine_day[str(line.claimLineId)] if line.revenueCode == ROUTINE_HOME_CARE else line.last_day
             if line.dateOfService < self.admissionDate:
                 raise ValueError(f"Line {line.lineNumber} is dated before the admission date; the CMS pricer pays it $0 without an error.")
-            if not self.fromDate <= line.dateOfService <= self.throughDate or line.last_day > self.throughDate:
+            if not self.fromDate <= line.dateOfService <= self.throughDate or last_day > self.throughDate:
                 raise ValueError(f"Line {line.lineNumber} runs outside the claim's fromDate-throughDate.")
             if line.revenueCode == CONTINUOUS_HOME_CARE and line.units > CHC_MAXIMUM_UNITS:
                 raise ValueError(f"Line {line.lineNumber}: continuous home care is billed per day, at most {CHC_MAXIMUM_UNITS} "
@@ -95,10 +129,10 @@ class HospiceClaimRequest(HospiceApiModel):
             run = run + current.units if previous is not None and previous.last_day + timedelta(days=1) == current.dateOfService else current.units
             if run > RESPITE_MAXIMUM_DAYS:
                 raise ValueError(f"Line {current.lineNumber}: consecutive respite lines exceed {RESPITE_MAXIMUM_DAYS} days.")
-        # A day-based line covers at least its first date plus units - 1 days (a routine home care period may also
-        # contain continuous home care days, which are billed on their own 0652 lines and not counted in its units).
-        days: dict[date, HospiceLine] = {}
-        for line in (line for line in self.claimLines if line.revenueCode in DAY_LEVELS):
+        # Routine home care days (the walk above) and inpatient days (0655/0656: the first date plus units - 1 days) must
+        # not overlap.
+        days: dict[date, HospiceLine] = dict(routine)
+        for line in (line for line in self.claimLines if line.revenueCode in (INPATIENT_RESPITE_CARE, GENERAL_INPATIENT_CARE)):
             day = line.dateOfService
             while day <= line.last_day:
                 if day in days:
@@ -119,6 +153,19 @@ class HospiceClaimRequest(HospiceApiModel):
             raise ValueError("patientCbsa (value code 61) is required with 0651/0652 lines; without it the CMS pricer uses a wage index of 0.")
         if revenue & {INPATIENT_RESPITE_CARE, GENERAL_INPATIENT_CARE} and not self.providerCbsa:
             raise ValueError("providerCbsa (value code G8) is required with 0655/0656 lines; without it the CMS pricer uses a wage index of 0.")
+        if (self.dateOfDeath is None) != (self.endOfLifeAddOnUnits is None):
+            raise ValueError("Send dateOfDeath and endOfLifeAddOnUnits together.")
+        if self.dateOfDeath is not None:
+            if self.dateOfDeath != self.throughDate:
+                raise ValueError("dateOfDeath must be the claim's throughDate: Medicare takes the through date as the date of death "
+                                 "for discharge status 40, 41 or 42.")
+            if not any(self.endOfLifeAddOnUnits):
+                raise ValueError("endOfLifeAddOnUnits needs at least one unit; omit the add-on fields when no visit qualifies.")
+            for index, units in enumerate(self.endOfLifeAddOnUnits):
+                day = self.dateOfDeath - timedelta(days=index)
+                if units and day not in routine:
+                    raise ValueError(f"endOfLifeAddOnUnits day {index + 1} ({day.isoformat()}) is not a routine home care day; "
+                                     "the add-on applies only on routine home care days.")
         return self
 
 
@@ -157,6 +204,30 @@ class HospiceLineResult(BaseModel):
     paidAsRoutineHomeCareDay: bool = False
 
 
+class HospiceEndOfLifeDay(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    # 1 is the date of death, 7 six days before it.
+    day: int
+    dateOfService: date
+    units: int
+    # At most 16 (4 hours) a day are paid.
+    unitsPaid: int
+    payment: Decimal
+
+
+class HospiceEndOfLifeAddOn(BaseModel):
+    """The CMS Hospice Pricer's service intensity add-on, priced with one routine home care line's call."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    dateOfDeath: date
+    attachedClaimLineId: int | str
+    attachedLineNumber: int
+    days: list[HospiceEndOfLifeDay]
+    totalPayment: Decimal
+
+
 class HospiceResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -184,7 +255,11 @@ class HospiceResponse(BaseModel):
     provider: HospiceProviderRecord | None = None
     # The latest effective date of any hospice record in the loaded provider file.
     providerFileHospiceRecordsThrough: date | None = None
+    # The level-of-care payments plus the end-of-life add-on.
     totalPayment: Decimal | None = None
     highRoutineHomeCareDays: int | None = None
     lowRoutineHomeCareDays: int | None = None
+    dateOfDeath: date | None = None
+    endOfLifeAddOnUnits: list[int] | None = None
+    endOfLifeAddOn: HospiceEndOfLifeAddOn | None = None
     lines: list[HospiceLineResult] = Field(default_factory=list)

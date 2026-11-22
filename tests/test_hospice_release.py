@@ -124,6 +124,29 @@ rejected(npi="123")
 rejected(unexpected="value")
 assert HospiceClaimRequest.model_validate(request_data(providerNumber="14a513")).providerNumber == "14A513"
 
+# A routine home care line's units count its routine days only, so continuous home care days inside the period push
+# its last day out: 29 routine days from July 1 around CHC on July 10 and 11 end on July 31.
+HospiceClaimRequest.model_validate(request_data(providerCbsa=None, claimLines=[
+    line(1, "0651", "2026-07-01", 29), line(2, "0652", "2026-07-10", 40), line(3, "0652", "2026-07-11", 36)]))
+rejected(providerCbsa=None, claimLines=[line(1, "0651", "2026-07-02", 30), line(2, "0652", "2026-07-10", 40)])   # 30 routine days end Aug 1
+rejected(claimLines=[line(1, "0651", "2026-07-01", 9), line(2, "0652", "2026-07-05", 40), line(3, "0656", "2026-07-10", 2)])  # routine day 9 is July 10
+
+# End-of-life add-on units: seven daily totals, day 1 being the date of death (the through date), on routine home care days only.
+death = dict(providerCbsa=None, claimLines=[line(1, "0651", "2026-07-01", 31)], dateOfDeath="2026-07-31")
+with_units = HospiceClaimRequest.model_validate(request_data(**death, endOfLifeAddOnUnits=[8, 16, 20, 0, 0, 0, 4]))
+assert with_units.endOfLifeAddOnUnits == [8, 16, 20, 0, 0, 0, 4] and with_units.dateOfDeath == date(2026, 7, 31)
+rejected(**death)                                                                   # a date of death without units
+rejected(providerCbsa=None, claimLines=[line(1, "0651", "2026-07-01", 31)], endOfLifeAddOnUnits=[4, 0, 0, 0, 0, 0, 0])
+rejected(**{**death, "dateOfDeath": "2026-07-30"}, endOfLifeAddOnUnits=[4, 0, 0, 0, 0, 0, 0])   # not the through date
+rejected(**death, endOfLifeAddOnUnits=[0, 0, 0, 0, 0, 0, 0])                        # no units at all
+rejected(**death, endOfLifeAddOnUnits=[4, 0, 0, 0, 0, 0])                           # six days
+rejected(**death, endOfLifeAddOnUnits=[-1, 4, 0, 0, 0, 0, 0])
+inpatient_end = dict(claimLines=[line(1, "0651", "2026-07-01", 27), line(2, "0656", "2026-07-28", 4)], dateOfDeath="2026-07-31")
+rejected(**inpatient_end, endOfLifeAddOnUnits=[4, 0, 0, 0, 0, 0, 0])                # July 31 is a GIP day
+HospiceClaimRequest.model_validate(request_data(**inpatient_end, endOfLifeAddOnUnits=[0, 0, 0, 0, 4, 0, 0]))   # July 27 is routine
+rejected(providerCbsa=None, claimLines=[line(1, "0651", "2026-07-01", 30), line(2, "0652", "2026-07-31", 40)],
+         dateOfDeath="2026-07-31", endOfLifeAddOnUnits=[4, 0, 0, 0, 0, 0, 0])      # July 31 is a CHC day
+
 # Provider-file quality lookup on a synthetic OPSF table.
 engine = create_engine("sqlite://")
 OPSF.__table__.create(engine)
@@ -193,6 +216,7 @@ assert (later.reduction, later.source) == (True, "ProviderFile"), "a provider fi
 # Readiness reflects the switch, the release and the provider file's quality coverage.
 state = readiness(None)
 assert state["enabled"] is False and state["ready"] is False and state["calculationVersions"] == {"2026": "2026.0", "2027": "2027.0"}
+assert state["endOfLifeAddOn"] is True, "readiness says the bridge takes end-of-life add-on units (0.9.1+)"
 assert state["qualityIndicatorFiscalYears"] == [] and state["providerFileHospiceRecordsThrough"] is None
 coverage = readiness(SimpleNamespace(records_through=date(2026, 5, 7)))
 assert coverage["enabled"] is True and coverage["qualityIndicatorFiscalYears"] == [2026]

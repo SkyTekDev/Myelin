@@ -64,6 +64,13 @@ def inpatient(year, level, wi, days, reduced=False):
     return cents(daily(year, level, wi, reduced) * days)
 
 
+def sia(year, wi, units, reduced=False):
+    """Manual section 30.2.2: each day's units (at most 16, 4 hours) / 4 hours at the CHC hourly rate, the daily CHC rate / 24
+    rounded half up to cents; each day's amount rounded half up to cents."""
+    hourly = cents(daily(year, "chc", wi, reduced) / 24)
+    return [cents(D(min(count, 16)) / 4 * hourly) for count in units]
+
+
 def line(number, revenue, dos, units, hcpcs="Q5001"):
     return dict(claimLineId=f"L{number}", lineNumber=number, revenueCode=revenue, hcpcs=hcpcs, dateOfService=dos, units=units)
 
@@ -172,6 +179,39 @@ def run():
     assert h.providerWageIndex == D("0.8692")
     i = price(claim("I", [line(1, "0651", "2026-10-01", 3)], patientCbsa="50025", providerCbsa=None, **october))
     assert i.totalPayment == rhc(2027, WI[2027]["50025"], 3, 0) and i.patientWageIndex == D("0.4076") and i.providerWageIndex is None
+
+    # End-of-life service intensity add-on: units for days 1-7 counting back from the date of death (the through date),
+    # priced with one routine home care line's call, which returns 77 (high) or 74 (low rate days).
+    eol = dict(providerCbsa=None, dateOfDeath="2026-07-31")
+    chicago = WI[2026]["16984"]
+    s1 = price(claim("S1", [line(1, "0651", "2026-07-01", 31)], endOfLifeAddOnUnits=[8, 16, 20, 0, 0, 0, 4], **eol))
+    expected = sia(2026, chicago, [8, 16, 20, 0, 0, 0, 4])
+    assert expected == [D("141.92"), D("283.84"), D("283.84"), D("0.00"), D("0.00"), D("0.00"), D("70.96")], expected
+    assert [day.payment for day in s1.endOfLifeAddOn.days] == expected and s1.endOfLifeAddOn.totalPayment == D("780.56")
+    assert [day.unitsPaid for day in s1.endOfLifeAddOn.days] == [8, 16, 16, 0, 0, 0, 4], "a 20-unit day is paid as 16"
+    assert [day.dateOfService for day in s1.endOfLifeAddOn.days] == [date(2026, 7, 31 - index) for index in range(7)]
+    assert s1.lines[0].pricerReturnCode == "77" and s1.lines[0].payment == rhc(2026, chicago, 31, 0) == D("7263.41")
+    assert s1.totalPayment == D("8043.97") and s1.endOfLifeAddOn.attachedClaimLineId == "L1"
+    s2 = price(claim("S2", [line(1, "0651", "2026-07-01", 31)], providerNumber="141524", npi="1467410282",
+                     endOfLifeAddOnUnits=[16, 0, 0, 0, 0, 0, 0], **eol))
+    assert s2.qualityReduction and s2.endOfLifeAddOn.days[0].payment == sia(2026, chicago, [16], reduced=True)[0], "reduced CHC rate"
+    s3 = price(claim("S3", [line(1, "0651", "2026-07-01", 31)], admission="2026-04-01", endOfLifeAddOnUnits=[4, 0, 0, 0, 0, 0, 0], **eol))
+    assert s3.lines[0].pricerReturnCode == "74" and s3.lines[0].payment == rhc(2026, chicago, 0, 31)
+    assert s3.endOfLifeAddOn.days[0].payment == sia(2026, chicago, [4])[0] == D("70.96")
+    s4 = price(claim("S4", [line(1, "0651", "2026-10-01", 31)], providerCbsa=None, dateOfDeath="2026-10-31",
+                     endOfLifeAddOnUnits=[0, 0, 0, 0, 0, 0, 12], **october))
+    assert s4.fiscalYear == 2027 and s4.endOfLifeAddOn.days[6].payment == sia(2027, WI[2027]["16984"], [12])[0]
+    assert s4.endOfLifeAddOn.days[6].dateOfService == date(2026, 10, 25)
+    # A crisis CHC day on July 25 inside one routine home care line: its 30 routine days run to July 31; the CHC day has no units.
+    s5 = price(claim("S5", [line(1, "0651", "2026-07-01", 30), line(2, "0652", "2026-07-25", 40)],
+                     endOfLifeAddOnUnits=[4, 4, 4, 4, 4, 4, 0], **eol))
+    assert [item.pricerReturnCode for item in s5.lines] == ["77", "00"] and s5.endOfLifeAddOn.days[6].payment == D("0.00")
+    assert s5.totalPayment == rhc(2026, chicago, 30, 0) + chc(2026, chicago, 40, 25) + sum(sia(2026, chicago, [4] * 6), D("0"))
+    # Two routine lines around the CHC day: the later one carries the add-on.
+    s6 = price(claim("S6", [line(1, "0651", "2026-07-01", 24), line(2, "0652", "2026-07-25", 40), line(3, "0651", "2026-07-26", 6)],
+                     endOfLifeAddOnUnits=[4, 4, 4, 4, 4, 4, 0], **eol))
+    assert [item.pricerReturnCode for item in s6.lines] == ["75", "00", "77"] and s6.endOfLifeAddOn.attachedClaimLineId == "L3"
+    assert s6.endOfLifeAddOn.totalPayment == s5.endOfLifeAddOn.totalPayment == D("425.76")
 
     # Refusals.
     j = price(claim("J", [line(1, "0651", "2026-07-01", 5)], patientCbsa="12345"))

@@ -39,7 +39,7 @@ from bridge.opps_client import WindowsSafeOppsClient
 from bridge.provider_context import parse_provider_types, supplied_provider
 
 
-BRIDGE_VERSION = "0.9.0"
+BRIDGE_VERSION = "0.9.1"
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 JAR_PATH = Path(
