@@ -12,7 +12,10 @@ logger = logging.getLogger("qon_ioce_opps_api.hospice")
 
 def readiness(processor) -> dict:
     through = getattr(processor, "records_through", None)
+    exported = getattr(processor, "export_date", None)
     return {"enabled": processor is not None, "ready": processor is not None and jpype.isJVMStarted(), **release_info(),
+            "providerFileExportDate": exported.isoformat() if exported else None,
+            # The latest hospice record effective on or before the export date (later-dated records do not count).
             "providerFileHospiceRecordsThrough": through.isoformat() if through else None,
             # Fiscal years whose quality reporting results the loaded provider file can hold; other years price at full rates.
             "qualityIndicatorFiscalYears": [year for year in SUPPORTED_FISCAL_YEARS

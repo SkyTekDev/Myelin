@@ -243,7 +243,8 @@ October 1, 2025 through September 30, 2027 (FY 2026, calculation version
 2026.0, and FY 2027, 2027.0) are supported.
 
 - `GET /api/v1/hospice/ready` reports the pinned release, the supported dates,
-  the latest hospice record in the provider file and the fiscal years whose
+  the provider file's export date (`providerFileExportDate`, bridge 0.9.2+), its
+  latest hospice record effective by that date and the fiscal years whose
   quality reporting results it can hold (`qualityIndicatorFiscalYears`). It
   returns 503 while hospice is disabled. `/health/ready` and `/api/v1/version`
   also carry a `hospice` block.
@@ -270,9 +271,15 @@ from its date of service skipping any continuous home care days inside it.
 The quality reporting reduction comes from the provider file (OPSF) record for
 the CCN (or, without one, the single active hospice with the NPI) in effect on
 the through date: indicator `1` applies the reduced rates. When the provider
-file holds no hospice records for the claim's fiscal year, which is true for FY
-2027 until a provider file from October 2026 or later is loaded, full rates
-apply and the response says so (`qualitySource`, `qualityNote`).
+file holds no hospice records for the claim's fiscal year, full rates apply and
+the response says so (`qualitySource`, `qualityNote`). Only records effective on
+or before the file's export date count toward that (bridge 0.9.2+), so a
+provider's scheduled change dated after the export does not make a later year
+look loaded. Medicare's contractors enter each hospice's record for a new fiscal
+year over its first weeks: in CMS's November 23, 2026 export, 3,228 of the 4,396
+active hospices had an FY 2027 record, close to FY 2026's 3,309 after a full
+year. Hospices without one keep their earlier record and its indicator, as FISS
+does.
 
 The request is refused with HTTP 422 when the jar would misprice it without an
 error: a claim spanning two months, a line before the admission date or outside

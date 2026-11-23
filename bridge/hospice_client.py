@@ -118,11 +118,25 @@ def _record(row, claim_npi: str | None) -> HospiceProviderRecord:
                                  npiMatchesClaim=None if claim_npi is None or npi is None else npi == claim_npi)
 
 
-def hospice_records_through(engine) -> date | None:
-    """The latest effective date of any hospice (provider type 35) record in the provider file."""
+def provider_file_export_date(engine) -> date | None:
+    """The provider file's export date (every row of one CMS export carries it), or None without one."""
     with Session(engine) as session:
-        return _date(session.scalar(select(func.max(OPSF.effective_date))
-                                    .where(func.trim(OPSF.provider_type) == HOSPICE_PROVIDER_TYPE)))
+        return _date(session.scalar(select(func.max(OPSF.export_date))))
+
+
+def hospice_records_through(engine) -> date | None:
+    """The latest effective date of any hospice (provider type 35) record in the provider file, up to its export date.
+
+    CMS's export can hold records dated after the export, such as a provider's scheduled changes. They say nothing
+    about how current the file is, so they would make a fiscal year look loaded before its quality results are; only
+    records effective on or before the export date count. Without an export date every record counts.
+    """
+    with Session(engine) as session:
+        exported = session.scalar(select(func.max(OPSF.export_date)))
+        query = select(func.max(OPSF.effective_date)).where(func.trim(OPSF.provider_type) == HOSPICE_PROVIDER_TYPE)
+        if exported:
+            query = query.where(OPSF.effective_date <= exported)
+        return _date(session.scalar(query))
 
 
 def resolve_quality(session: Session, payload: HospiceClaimRequest, records_through: date | None) -> HospiceQuality:
@@ -191,6 +205,7 @@ class HospiceProcessor:
 
         self.engine = engine
         self.records_through = hospice_records_through(engine)
+        self.export_date = provider_file_export_date(engine)
         self.url_loader = UrlLoader()
         self.url_loader.load_urls([jar.as_uri()])
         loader = self.url_loader.class_loader

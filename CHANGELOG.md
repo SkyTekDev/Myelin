@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Bridge 0.9.2: hospice provider-file coverage.** The fiscal years whose
+  quality reporting results the provider file can hold now count only hospice
+  records effective on or before the file's export date. A provider's scheduled
+  change dated after the export no longer makes a later fiscal year look loaded
+  (CMS's November 23, 2026 export holds two, for hospice 491665, effective in
+  January and October 2027). `GET /api/v1/hospice/ready` also reports
+  `providerFileExportDate`. FY 2026-2027 pricing is unchanged.
 - **Bridge 0.9.1: hospice end-of-life add-on.** Hospice requests may carry
   `dateOfDeath` (the claim's through date) and `endOfLifeAddOnUnits`, the
   qualifying nurse and social worker visit units on each of the last 7 days of

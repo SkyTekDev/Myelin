@@ -16,7 +16,7 @@ from pydantic import ValidationError
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from bridge.hospice_client import HospiceProviderError, hospice_records_through, resolve_quality
+from bridge.hospice_client import HospiceProviderError, hospice_records_through, provider_file_export_date, resolve_quality
 from bridge.hospice_models import HospiceClaimRequest, HospiceResponse
 from bridge.hospice_release import (
     CALCULATION_VERSIONS,
@@ -172,6 +172,20 @@ with Session(engine) as session:
 
 through = hospice_records_through(engine)
 assert through == date(2026, 5, 7), through
+assert provider_file_export_date(engine) is None, "a provider file without export dates: every record counts"
+
+# A record dated after the export (a provider's scheduled change) does not make the file look newer than it is,
+# as in CMS's November 23, 2026 export, which holds hospice 491665's records effective in January and October 2027.
+exported = create_engine("sqlite://")
+OPSF.__table__.create(exported)
+with Session(exported) as session:
+    session.add_all([OPSF(provider_ccn="141513", effective_date=20261001, provider_type="35", export_date=20261123),
+                     OPSF(provider_ccn="491665", effective_date=20270101, provider_type="35", export_date=20261123),
+                     OPSF(provider_ccn="491665", effective_date=20271001, provider_type="35", export_date=20261123),
+                     OPSF(provider_ccn="140001", effective_date=20261115, provider_type="00", export_date=20261123)])
+    session.commit()
+assert provider_file_export_date(exported) == date(2026, 11, 23)
+assert hospice_records_through(exported) == date(2026, 10, 1), "only hospice records effective by the export date count"
 
 
 def quality(**changes):
@@ -218,9 +232,13 @@ state = readiness(None)
 assert state["enabled"] is False and state["ready"] is False and state["calculationVersions"] == {"2026": "2026.0", "2027": "2027.0"}
 assert state["endOfLifeAddOn"] is True, "readiness says the bridge takes end-of-life add-on units (0.9.1+)"
 assert state["qualityIndicatorFiscalYears"] == [] and state["providerFileHospiceRecordsThrough"] is None
+assert state["providerFileExportDate"] is None
 coverage = readiness(SimpleNamespace(records_through=date(2026, 5, 7)))
-assert coverage["enabled"] is True and coverage["qualityIndicatorFiscalYears"] == [2026]
+assert coverage["enabled"] is True and coverage["qualityIndicatorFiscalYears"] == [2026] and coverage["providerFileExportDate"] is None
 assert readiness(SimpleNamespace(records_through=date(2026, 10, 1)))["qualityIndicatorFiscalYears"] == [2026, 2027]
+refreshed = readiness(SimpleNamespace(records_through=date(2026, 10, 1), export_date=date(2026, 11, 23)))
+assert (refreshed["providerFileExportDate"], refreshed["providerFileHospiceRecordsThrough"]) == ("2026-11-23", "2026-10-01")
+assert refreshed["qualityIndicatorFiscalYears"] == [2026, 2027]
 try:
     ready(SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(hospice_processor=None))))
     raise AssertionError("Readiness succeeded with hospice disabled.")
