@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Bridge 0.9.2: hospice provider-file coverage.** The fiscal years whose
+  quality reporting results the provider file can hold now count only hospice
+  records effective on or before the file's export date. A provider's scheduled
+  change dated after the export no longer makes a later fiscal year look loaded
+  (CMS's November 23, 2026 export holds two, for hospice 491665, effective in
+  January and October 2027). `GET /api/v1/hospice/ready` also reports
+  `providerFileExportDate`. FY 2026-2027 pricing is unchanged.
+- **Bridge 0.9.1: hospice end-of-life add-on.** Hospice requests may carry
+  `dateOfDeath` (the claim's through date) and `endOfLifeAddOnUnits`, the
+  qualifying nurse and social worker visit units on each of the last 7 days of
+  life (day 1 the date of death, routine home care days only). The units ride on
+  the latest routine home care line's call, which returns 74 or 77, and the
+  response's `endOfLifeAddOn` lists each day's units, units paid (at most 16)
+  and the CMS jar's payment; `totalPayment` includes it. Routine home care lines
+  now skip continuous home care days inside them when their days are counted.
+  Readiness reports `endOfLifeAddOn: true`.
+- **Bridge 0.9.0: hospice pricing.** `POST /api/v1/hospice/process` prices the
+  0651, 0652, 0655 and 0656 lines of 81X/82X claims with the unmodified CMS
+  Hospice Pricer 2.7.1 (calculation versions 2026.0 and 2027.0), one call per
+  line, for dates of service in FY 2026-2027. The quality reporting reduction
+  comes from the OPSF record in effect; years the provider file cannot cover
+  price at full rates. `GET /api/v1/hospice/ready` reports the pinned release and
+  the provider file's quality coverage. Off unless `HOSPICE_ENABLED=true`; the
+  jar hash is checked at startup. The ECS deploy script gains `-EnableHospice`.
+  The FY 2026 jar (2.5.1) moves to `jars/retired`. See `README-bridge.md`.
 - **Bridge 0.8.1: October 2026 FQHC telehealth.** With the October 2026 I/OCE
   (27.3.0.8) in `jars/`, `/api/v1/fqhc/process` accepts distant-site telehealth
   billed with the service's own code and modifier 93 or 95 (CR 14468); the lines

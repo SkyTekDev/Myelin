@@ -59,7 +59,13 @@ param(
     # selected container. Omitting this option preserves the current task's FQHC
     # configuration. The bridge refuses to start if the image's FQHC jar does not
     # match the reconciled release.
-    [switch]$EnableFqhc
+    [switch]$EnableFqhc,
+
+    # Explicitly enable the hospice endpoint (CMS Hospice Pricer) in the selected
+    # container. Omitting this option preserves the current task's hospice
+    # configuration. The bridge refuses to start if the image's hospice jar does
+    # not match the reconciled release.
+    [switch]$EnableHospice
 )
 
 Set-StrictMode -Version Latest
@@ -644,6 +650,7 @@ $enabledSettings = [ordered]@{}
 if ($EnableSnf) { $enabledSettings["SNF_ENABLED"] = "-EnableSnf" }
 if ($EnableEsrd) { $enabledSettings["ESRD_ENABLED"] = "-EnableEsrd" }
 if ($EnableFqhc) { $enabledSettings["FQHC_ENABLED"] = "-EnableFqhc" }
+if ($EnableHospice) { $enabledSettings["HOSPICE_ENABLED"] = "-EnableHospice" }
 
 if ($null -ne $containerDefinition.PSObject.Properties["secrets"]) {
     foreach ($settingName in $enabledSettings.Keys) {
