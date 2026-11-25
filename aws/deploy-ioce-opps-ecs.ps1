@@ -71,7 +71,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$ScriptVersion = "4.2-explicit-esrd-enable"
+$ScriptVersion = "4.3-target-health-fix"
 Write-Host "Deployment script version: $ScriptVersion" -ForegroundColor DarkGray
 
 function Write-Step {
@@ -353,6 +353,30 @@ function Remove-ObjectProperty {
     }
 }
 
+function Get-OptionalProperty {
+    param(
+        [object]$InputObject,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Name
+    )
+
+    # The AWS CLI leaves out fields that do not apply: a healthy target has no
+    # Reason, and a container that never ran has no exitCode. Strict mode
+    # throws on a missing property, so read optional fields through here.
+    if ($null -eq $InputObject) {
+        return $null
+    }
+
+    $property = $InputObject.PSObject.Properties[$Name]
+
+    if ($null -eq $property) {
+        return $null
+    }
+
+    return $property.Value
+}
+
 function Get-GeneratedImageTag {
     $timestamp = (Get-Date).ToUniversalTime().ToString("yyyyMMdd-HHmmss")
     $prefix = $EnvironmentName.Trim().ToLowerInvariant()
@@ -388,9 +412,12 @@ function Show-DeploymentDiagnostics {
             "--services", $ServiceName
         )
 
-        $events = @($serviceResponse.services[0].events) |
+        # @() keeps a single event a list: strict mode rejects .Count on one object.
+        $events = @(
+            @($serviceResponse.services[0].events) |
             Select-Object -First 12 |
             Select-Object createdAt, message
+        )
 
         if ($events.Count -gt 0) {
             $events | Format-Table -Wrap -AutoSize
@@ -433,14 +460,14 @@ function Show-DeploymentDiagnostics {
         foreach ($task in @($tasksResponse.tasks)) {
             Write-Host ""
             Write-Host "Task: $($task.taskArn)"
-            Write-Host "Stopped reason: $($task.stoppedReason)"
+            Write-Host "Stopped reason: $(Get-OptionalProperty -InputObject $task -Name 'stoppedReason')"
 
             foreach ($container in @($task.containers)) {
                 Write-Host (
                     "Container {0}: exitCode={1}; reason={2}" -f
                     $container.name,
-                    $container.exitCode,
-                    $container.reason
+                    (Get-OptionalProperty -InputObject $container -Name "exitCode"),
+                    (Get-OptionalProperty -InputObject $container -Name "reason")
                 )
             }
         }
@@ -463,7 +490,12 @@ function Show-TargetHealth {
     }
 
     foreach ($loadBalancer in $loadBalancers) {
-        if ([string]::IsNullOrWhiteSpace($loadBalancer.targetGroupArn)) {
+        # A Classic Load Balancer entry names the balancer and has no target group.
+        $targetGroupArn = Get-OptionalProperty `
+            -InputObject $loadBalancer `
+            -Name "targetGroupArn"
+
+        if ([string]::IsNullOrWhiteSpace($targetGroupArn)) {
             continue
         }
 
@@ -471,13 +503,13 @@ function Show-TargetHealth {
             Write-Host ""
             Write-Host (
                 "Target health for {0}:" -f
-                $loadBalancer.targetGroupArn
+                $targetGroupArn
             ) -ForegroundColor Yellow
 
             $targetResponse = Invoke-AwsJson -Arguments @(
                 "elbv2", "describe-target-health",
                 "--target-group-arn",
-                $loadBalancer.targetGroupArn
+                $targetGroupArn
             )
 
             $rows = foreach (
@@ -485,12 +517,16 @@ function Show-TargetHealth {
                     $targetResponse.TargetHealthDescriptions
                 )
             ) {
+                # A healthy target reports only its State; the other states
+                # add a Reason and a Description.
+                $health = $description.TargetHealth
+
                 [pscustomobject]@{
                     Target = $description.Target.Id
-                    Port = $description.Target.Port
-                    State = $description.TargetHealth.State
-                    Reason = $description.TargetHealth.Reason
-                    Description = $description.TargetHealth.Description
+                    Port = Get-OptionalProperty -InputObject $description.Target -Name "Port"
+                    State = $health.State
+                    Reason = Get-OptionalProperty -InputObject $health -Name "Reason"
+                    Description = Get-OptionalProperty -InputObject $health -Name "Description"
                 }
             }
 
